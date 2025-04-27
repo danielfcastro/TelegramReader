@@ -1,4 +1,3 @@
-
 # 📄 README.md — Projeto Telegram Crypto Signal Bot
 
 ## 📚 Descrição
@@ -188,3 +187,40 @@ docker-compose up -d
 ---
 
 # 🚀 Bora automatizar!
+---
+
+## 🌐 Rodar o Painel Web
+
+O Painel Web permite visualizar em tempo real:
+
+- Sinais captados
+- Status de execução
+- Ordens pendentes ou executadas
+
+### Como rodar o painel:
+
+1. Instale o Flask, se ainda não tiver:
+
+```bash
+pip install flask
+```
+
+2. Vá até a pasta do painel:
+
+```bash
+cd web_dashboard
+```
+
+3. Inicie o servidor:
+
+```bash
+python app.py
+```
+
+4. Acesse no navegador:
+
+> http://localhost:5000/
+
+O painel mostrará os sinais captados e seu status!
+
+---

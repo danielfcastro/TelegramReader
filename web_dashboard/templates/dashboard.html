@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Telegram Crypto Bot - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <h1 class="mb-4">📈 Painel de Sinais - Telegram Crypto Bot</h1>
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Data/Hora</th>
+                    <th>Par</th>
+                    <th>Tipo</th>
+                    <th>Entrada (min-max)</th>
+                    <th>Stoploss</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sinal in sinais %}
+                <tr>
+                    <td>{{ sinal[0] }}</td>
+                    <td>{{ sinal[1] }}</td>
+                    <td>{{ sinal[2] }}</td>
+                    <td>{{ sinal[3] }}</td>
+                    <td>{{ sinal[4] }} - {{ sinal[5] }}</td>
+                    <td>{{ sinal[6] }}</td>
+                    <td>
+                        {% if sinal[7] == 0 %}
+                            <span class="badge bg-warning text-dark">Pendente</span>
+                        {% else %}
+                            <span class="badge bg-success">Executado</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
