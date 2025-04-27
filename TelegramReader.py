@@ -84,14 +84,27 @@ async def main():
     @client.on(events.NewMessage(chats=grupo_entidade))
     async def handler(event):
         sender = await event.get_sender()
-        nome = sender.first_name if sender else "Desconhecido"
-        mensagem = event.text
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        if sender:
+            if hasattr(sender, 'first_name'):
+                nome = sender.first_name
+            elif hasattr(sender, 'title'):
+                nome = sender.title
+            else:
+                nome = "Desconhecido"
+        else:
+            nome = "Desconhecido"
 
         data_hoje = datetime.now().strftime('%Y-%m-%d')
         nome_arquivo = os.path.join(pasta_logs, f"log_{nome_grupo_limpo}_{data_hoje}.txt")
 
-        linha = f"[{timestamp}] [{nome}] > {mensagem}\n"
+        if event.message.message:
+            conteudo = event.message.message
+        else:
+            conteudo = "<mensagem sem texto (mídia ou outro conteúdo)>"
+
+        linha = f"[{timestamp}] [{nome}] > {conteudo}\n"
 
         print(linha.strip())
 
