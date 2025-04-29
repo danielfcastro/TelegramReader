@@ -175,3 +175,9 @@ cython_debug/
 
 #Session
 minha_sessao.session
+
+#logs
+logs/
+
+#database
+./database/*.db

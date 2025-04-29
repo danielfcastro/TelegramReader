@@ -1,12 +1,13 @@
-
-from telethon import TelegramClient, events
-from telethon.tl.types import PeerChannel
-from telethon.errors import ChannelInvalidError
-from datetime import datetime
-import sqlite3
 import os
 import re
 import json
+import sqlite3
+import psycopg2
+import psycopg2.extras
+from datetime import datetime
+from telethon import TelegramClient, events
+from telethon.tl.types import PeerChannel
+from telethon.errors import ChannelInvalidError
 import logging
 
 # Configurar pastas de logs e jsons
@@ -34,18 +35,84 @@ def carregar_config(path):
     return config
 
 temp_config = carregar_config('config.properties')
+db_type = temp_config.get('db_type', 'sqlite')
+db_path = temp_config.get('sqlite_db_path', 'database/sinais_novo.db')
+db_host = temp_config.get('db_host', 'localhost')
+db_port = int(temp_config.get('db_port', 5432))
+db_name = temp_config.get('db_name', '')
+db_user = temp_config.get('db_user', '')
+db_password = temp_config.get('db_password', '')
+
 api_id = int(temp_config['api_id'])
 api_hash = temp_config['api_hash']
 grupo_padrao = int(temp_config['grupo_id'])
-db_path = temp_config.get('sqlite_db_path', 'database/sinais_novo.db')
 
 session_name = 'minha_sessao'
 client = TelegramClient(session_name, api_id, api_hash)
 
+# Funções de banco
 def criar_conexao():
-    if not os.path.exists('database'):
-        os.makedirs('database')
-    return sqlite3.connect(db_path)
+    if db_type == 'sqlite':
+        if not os.path.exists('database'):
+            os.makedirs('database')
+        conn = sqlite3.connect(db_path)
+    elif db_type == 'postgres':
+        conn = psycopg2.connect(
+            host=db_host,
+            port=db_port,
+            dbname=db_name,
+            user=db_user,
+            password=db_password
+        )
+    else:
+        raise ValueError("db_type inválido no config.properties")
+    return conn
+
+def criar_tabela_se_nao_existir():
+    conn = criar_conexao()
+    cursor = conn.cursor()
+    if db_type == 'sqlite':
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS sinais (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                data_hora TEXT,
+                par TEXT,
+                tipo_ordem TEXT,
+                margem TEXT,
+                alavancagem TEXT,
+                entrada_inferior REAL,
+                entrada_superior REAL,
+                tp1 REAL,
+                tp2 REAL,
+                tp3 REAL,
+                tp4 REAL,
+                stoploss REAL,
+                texto_original TEXT,
+                flag_executado INTEGER
+            )
+        ''')
+    elif db_type == 'postgres':
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS sinais (
+                id SERIAL PRIMARY KEY,
+                data_hora TIMESTAMP,
+                par TEXT,
+                tipo_ordem TEXT,
+                margem TEXT,
+                alavancagem TEXT,
+                entrada_inferior DOUBLE PRECISION,
+                entrada_superior DOUBLE PRECISION,
+                tp1 DOUBLE PRECISION,
+                tp2 DOUBLE PRECISION,
+                tp3 DOUBLE PRECISION,
+                tp4 DOUBLE PRECISION,
+                stoploss DOUBLE PRECISION,
+                texto_original TEXT,
+                flag_executado SMALLINT
+            )
+        ''')
+    conn.commit()
+    conn.close()
 
 def limpar_simbolos(texto):
     return texto.replace('💸', '').replace('🕒', '').replace('✅', '')
@@ -55,6 +122,7 @@ def salvar_json(dados, prefixo="mensagem"):
     filename = f"logs/jsons/{prefixo}_{timestamp}.json"
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(dados, f, ensure_ascii=False, indent=2)
+    print(json.dumps(dados, indent=2))
 
 def limpar_par(texto):
     match = re.search(r'\[(.*?)\/USDT\]', texto)
@@ -120,43 +188,34 @@ def extrair_sinal(texto):
         logging.error(f"Erro ao extrair sinal: {e}")
         return None
 
-def extrair_monitoramento(texto):
-    try:
-        linhas = texto.split('\n')
-        pair = price = profit = spent = instruction = tp_done = None
-
-        for linha in linhas:
-            linha = linha.strip()
-            if '/' in linha and 'USDT' in linha:
-                pair = linha
-            elif linha.startswith('Price'):
-                price = float(linha.split(' ')[-1])
-            elif 'Profit' in linha:
-                match = re.search(r'>(\s*)(\d+)', linha)
-                if match:
-                    profit = int(match.group(2))
-            elif 'TARGET' in linha and 'DONE' in linha:
-                match = re.search(r'TARGET #(\d+) DONE', linha)
-                if match:
-                    tp_done = f"tp{match.group(1)}"
-            elif linha.startswith('Spent'):
-                spent = linha.split(':', 1)[-1].strip()
-            elif linha.startswith('*') or linha.startswith('__*'):
-                instruction = linha.replace('__*', '').replace('*', '').strip()
-
-        return {
-            'pair': pair,
-            'price': price,
-            'profit': profit,
-            'spent': spent,
-            'instruction': instruction,
-            'target_done': tp_done
-        }
-    except Exception as e:
-        logging.error(f"Erro ao extrair monitoramento: {e}")
-        return None
+def inserir_sinal(sinal):
+    conn = criar_conexao()
+    cursor = conn.cursor()
+    if db_type == 'sqlite':
+        cursor.execute('''
+            INSERT INTO sinais (data_hora, par, tipo_ordem, margem, alavancagem, entrada_inferior, entrada_superior, tp1, tp2, tp3, tp4, stoploss, texto_original, flag_executado)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            sinal['data_hora'], sinal['par'], sinal['tipo_ordem'], sinal['margem'], sinal['alavancagem'],
+            sinal['entrada_inferior'], sinal['entrada_superior'],
+            sinal['tp1'], sinal['tp2'], sinal['tp3'], sinal['tp4'],
+            sinal['stoploss'], sinal['texto_original'], sinal['flag_executado']
+        ))
+    else:
+        cursor.execute('''
+            INSERT INTO sinais (data_hora, par, tipo_ordem, margem, alavancagem, entrada_inferior, entrada_superior, tp1, tp2, tp3, tp4, stoploss, texto_original, flag_executado)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ''', (
+            sinal['data_hora'], sinal['par'], sinal['tipo_ordem'], sinal['margem'], sinal['alavancagem'],
+            sinal['entrada_inferior'], sinal['entrada_superior'],
+            sinal['tp1'], sinal['tp2'], sinal['tp3'], sinal['tp4'],
+            sinal['stoploss'], sinal['texto_original'], sinal['flag_executado']
+        ))
+    conn.commit()
+    conn.close()
 
 async def main():
+    criar_tabela_se_nao_existir()
     await client.start()
 
     usar_padrao = input(f"Usar grupo padrão do config (ID {grupo_padrao})? [s/n]: ").strip().lower()
@@ -182,22 +241,19 @@ async def main():
         if event.text:
             texto_limpo = limpar_simbolos(event.text)
             logging.info(f"Mensagem recebida: {texto_limpo}")
-            if 'ENTRY:' not in texto_limpo:
-                dados_monitor = extrair_monitoramento(texto_limpo)
-                if dados_monitor:
-                    salvar_json(dados_monitor, prefixo="monitoramento")
-                    print("\n📋 Monitoramento capturado:")
-                    print(json.dumps(dados_monitor, indent=2))
-            else:
+            if 'ENTRY:' in texto_limpo:
                 sinal = extrair_sinal(texto_limpo)
                 if sinal:
                     inserir_sinal(sinal)
-                    salvar_json({
-                        'tipo': 'sinal',
-                        **sinal
-                    }, prefixo="sinal")
+                    salvar_json({'tipo': 'sinal', **sinal}, prefixo="sinal")
                 else:
                     logging.warning("Não foi possível extrair sinal da mensagem.")
+            else:
+                salvar_json({
+                    'tipo': 'monitoramento',
+                    'data_hora': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    'texto': texto_limpo
+                }, prefixo="monitoramento")
 
     await client.run_until_disconnected()
 
