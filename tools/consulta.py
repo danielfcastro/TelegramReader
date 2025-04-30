@@ -1,7 +1,7 @@
 import sqlite3
 
 # Caminho do banco de dados
-db_path = 'database/sinais.db'
+db_path = '../database/sinais.db'
 
 # Função para conectar e buscar as ordens
 def consultar_ordens():

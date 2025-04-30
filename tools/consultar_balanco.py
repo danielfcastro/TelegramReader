@@ -5,7 +5,7 @@ import requests
 import json
 import os
 
-def carregar_config(path='config.properties'):
+def carregar_config(path='../config.properties'):
     config = {}
     if not os.path.exists(path):
         raise FileNotFoundError(f"Arquivo de configuração {path} não encontrado.")

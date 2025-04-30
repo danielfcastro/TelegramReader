@@ -22,6 +22,17 @@ def criar_banco():
             targets TEXT,
             flag_executado BOOLEAN DEFAULT 0
         );
+                   
+        CREATE TABLE IF NOT EXISTS monitoramentos (
+            id SERIAL PRIMARY KEY,
+            data_hora TIMESTAMP,
+            par TEXT,
+            price DOUBLE PRECISION,
+            profit INTEGER,
+            spent TEXT,
+            instruction TEXT,
+            target_done TEXT
+        );                   
     ''')
     conn.commit()
     conn.close()
