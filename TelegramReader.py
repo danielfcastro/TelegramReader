@@ -120,7 +120,7 @@ async def main():
 
             # ✅ Lógica de break-even ao atingir TP2
             if monitoramento.get("tp") == "TP2":
-                from bybit_trading import set_break_even
+                from integration.bybit_trading import set_break_even
                 try:
                     with open("sinal.json", "r", encoding="utf-8") as f:
                         sinal_anterior = json.load(f)

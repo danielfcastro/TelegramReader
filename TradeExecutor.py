@@ -22,9 +22,9 @@ is_testnet = config.get("is_testnet", "false").lower() == "true"
 
 # Carga dinâmica do módulo correto
 if broker == "bybit":
-    import bybit_trading as trading_impl
+    import integration.bybit_trading as trading_impl
 elif broker == "bingx":
-    import bingx_trading as trading_impl
+    import integration.bingx_trading as trading_impl
 else:
     raise ValueError(f"Broker '{broker}' não suportado.")
 
