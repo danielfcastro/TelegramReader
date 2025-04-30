@@ -181,3 +181,7 @@ logs/
 
 #database
 ./database/*.db
+
+#session files
+minha_sessao.session*
+minha_sessao.session-journal
