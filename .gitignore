@@ -173,9 +173,6 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-#Session
-minha_sessao.session
-
 #logs
 logs/
 
@@ -183,5 +180,4 @@ logs/
 ./database/*.db
 
 #session files
-minha_sessao.session*
-minha_sessao.session-journal
+minha_sessao.*

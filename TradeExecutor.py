@@ -46,6 +46,7 @@ def ajustar_trade(monitoramento):
 
 # Exemplo de uso direto
 if __name__ == "__main__":
-    with open("exemplo_sinal.json", "r", encoding="utf-8") as f:
-        sinal = json.load(f)
-        executar_trade(sinal)
+    #with open("exemplo_sinal.json", "r", encoding="utf-8") as f:
+    #    sinal = json.load(f)
+    #    executar_trade(sinal)
+    print(f"🚀 A espera de sinais...")

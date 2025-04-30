@@ -117,6 +117,22 @@ async def main():
         if monitoramento:
             logging.info(f"📈 Monitoramento identificado para {monitoramento['pair']}")
             salvar_json_arquivo(monitoramento, "monitoramento")
+
+            # ✅ Lógica de break-even ao atingir TP2
+            if monitoramento.get("tp") == "TP2":
+                from bybit_trading import set_break_even
+                try:
+                    with open("sinal.json", "r", encoding="utf-8") as f:
+                        sinal_anterior = json.load(f)
+                        if sinal_anterior["pair"].replace("/", "") == monitoramento["pair"].replace("/", ""):
+                            entry_price = (sinal_anterior["entry_low"] + sinal_anterior["entry_high"]) / 2
+                            set_break_even(monitoramento["pair"].replace("/", ""), entry_price)
+                            logging.info(f"🎯 Stop Loss ajustado para break-even ({entry_price}) em {monitoramento['pair']}")
+                        else:
+                            logging.warning("❗ O par do monitoramento não corresponde ao último sinal salvo.")
+                except Exception as e:
+                    logging.error(f"Erro ao aplicar break-even: {e}")
+
             TradeExecutor.ajustar_trade(monitoramento)
             return
 

@@ -16,31 +16,14 @@ session = HTTP(
     api_secret=api_secret
 )
 
+#Ajusta a quantidade para o step definido pelo símbolo
+# Exemplo: se o step for 0.01 e a quantidade for 0.123456, retorna 0.12
 def ajustar_quantidade(qty, step):
     step_decimal = Decimal(step)
     qty_decimal = Decimal(str(qty))
     return float((qty_decimal // step_decimal) * step_decimal)
 
-def obter_preco_mercado(symbol):
-    try:
-        response = session.get_tickers(category="linear", symbol=symbol)
-        if response["retCode"] == 0:
-            return float(response["result"]["list"][0]["lastPrice"])
-    except Exception as e:
-        print("Erro ao obter preço de mercado:", e)
-    return None
-
-def obter_saldo_disponivel():
-    try:
-        response = session.get_wallet_balance(accountType="UNIFIED", coin="USDT")
-        print("🧾 Resposta da API:", response)
-        if response["retCode"] == 0:
-            conta = response["result"]["list"][0]
-            return float(conta.get("totalAvailableBalance") or 0.0)
-    except Exception as e:
-        print("Erro ao consultar saldo:", e)
-    raise Exception("Não foi possível obter saldo disponível em USDT.")
-
+# Obtém os parâmetros do símbolo, como step, min_qty e min_notional
 def obter_parametros_simbolo(symbol):
     try:
         response = session.get_instruments_info(category="linear", symbol=symbol)
@@ -56,6 +39,57 @@ def obter_parametros_simbolo(symbol):
         print("Erro ao obter parâmetros do símbolo:", e)
     raise Exception("Não foi possível obter parâmetros do símbolo.")
 
+# Obtém o preço de mercado atual do símbolo
+def obter_preco_mercado(symbol):
+    try:
+        response = session.get_tickers(category="linear", symbol=symbol)
+        if response["retCode"] == 0:
+            return float(response["result"]["list"][0]["lastPrice"])
+    except Exception as e:
+        print("Erro ao obter preço de mercado:", e)
+    return None
+
+# Obtém o saldo disponível em USDT
+def obter_saldo_disponivel():
+    try:
+        response = session.get_wallet_balance(accountType="UNIFIED", coin="USDT")
+        print("🧾 Resposta da API:", response)
+        if response["retCode"] == 0:
+            conta = response["result"]["list"][0]
+            return float(conta.get("totalAvailableBalance") or 0.0)
+    except Exception as e:
+        print("Erro ao consultar saldo:", e)
+    raise Exception("Não foi possível obter saldo disponível em USDT.")
+
+# Configura o Stop Loss para o preço de entrada (break-even)
+def set_break_even(symbol):
+    try:
+        # 1. Obtem a posição ativa
+        position = session.get_positions(category="linear", symbol=symbol)
+        if position["retCode"] != 0 or not position["result"]["list"]:
+            print(f"❌ Não foi possível obter posição ativa para {symbol}")
+            return
+
+        entry_price = float(position["result"]["list"][0]["entryPrice"])
+        if entry_price == 0:
+            print(f"⚠️ Nenhuma posição ativa para {symbol}.")
+            return
+
+        # 2. Move Stop Loss para o entryPrice
+        response = session.set_trading_stop(
+            category="linear",
+            symbol=symbol,
+            stopLoss=str(entry_price),
+            slTriggerBy="MarkPrice",
+            tpslMode="Full",
+            slOrderType="Market",
+            positionIdx=0
+        )
+        print(f"✅ SL movido para break-even ({entry_price}) em {symbol}:", response)
+    except Exception as e:
+        print(f"❌ Erro ao mover SL para break-even em {symbol}:", e)
+
+# Abre uma ordem de trade com Take Profits (TPs) e Stop Loss (SL)
 def abrir_ordem_com_tps(sinal):
     print("🔐 Consultando saldo para calcular valor do trade...")
     saldo = obter_saldo_disponivel()
