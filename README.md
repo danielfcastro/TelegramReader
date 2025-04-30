@@ -224,3 +224,12 @@ python app.py
 O painel mostrará os sinais captados e seu status!
 
 ---
+
+TODO
+
+To use Demo Trading API, you need to:
+1) switch over to Demo on Mainnet (bybit.com)
+2) head over to https://www.bybit.com/app/user/api-management
+3) create an API key while in Demo Trading mode
+
+You can now use this API for Demo Trading. Assuming you use pybit, it's done by setting testnet=False and demo=True
