@@ -46,6 +46,7 @@ ProjetoTelegramTradeBot/
 ├── TelegramReader.py
 ├── TradeExecutor.py
 └── utils.py
+
 ```
 
 ---
@@ -288,3 +289,4 @@ Este projeto integra sinais de trade recebidos via Telegram com execução autom
 - Adicionar tratamento automático de monitoramentos para ajuste de SL ou fechamento parcial.
 - Implementar painel web com Flask para visualizar ordens, TPs e desempenho da conta.
 - Integração com sistema de relatórios mensais.
+=======

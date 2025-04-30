@@ -181,3 +181,7 @@ logs/
 
 #session files
 minha_sessao.*
+=======
+#Session
+minha_sessao.session
+>>>>>>> development

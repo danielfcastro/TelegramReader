@@ -1,12 +1,12 @@
+from telethon import TelegramClient, events
+from telethon.tl.types import PeerChannel, PeerChat
+from telethon.errors import ChannelInvalidError, ChatIdInvalidError
+from datetime import datetime
+import sqlite3
 import os
 import re
 import json
 import logging
-import sqlite3
-from datetime import datetime
-from telethon import TelegramClient, events
-from telethon.tl.types import PeerChannel, PeerChat
-from telethon.errors import ChannelInvalidError, ChatIdInvalidError
 from extrator_sinal import extrair_sinal_trade, extrair_monitoramento_json
 from utils import carregar_config, limpar_nome, criar_pasta, obter_entidade
 import TradeExecutor
