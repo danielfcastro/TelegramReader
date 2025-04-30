@@ -17,20 +17,35 @@ Este projeto é dividido em **dois serviços independentes**:
 
 ```
 ProjetoTelegramTradeBot/
-├── TelegramSignalReader.py
-├── TradeExecutor.py
-├── start_all.py
 ├── database/
-│   ├── sinais.db
 │   ├── criar_tabela.py
+│   ├── sinais.db
+│   ├── upgrade_database.py
+├── example/
+│   ├── exemplo_sinal.json
+├── integration/
+│   ├── bingx_trading.py
+│   ├── bybit_trading.py
 ├── logs/
-│   ├── telegram_reader.log
-│   ├── trade_executor.log
+├── venv/
+├── web_dashboard/
+│   ├── templates/
+│   │   ├── apdashboardp.html
+│   ├── app.py
+├── .env
+├── .gitignore
 ├── config.properties
-├── requirements.txt
-├── start_bot.bat
 ├── docker-compose.yml
-└── README.md
+├── extrator_sinal.py
+├── ler_json.py
+├── ler_sinais.py
+├── minha_sessao.session
+├── README.md
+├── requirements.txt
+├── start_all.py
+├── TelegramReader.py
+├── TradeExecutor.py
+└── utils.py
 ```
 
 ---
