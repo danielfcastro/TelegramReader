@@ -6,6 +6,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from telethon import TelegramClient, events
 from extrator_sinal import extrair_sinal_trade, extrair_monitoramento_json
+import utils
 import psycopg2
 
 load_dotenv()
@@ -13,7 +14,7 @@ load_dotenv()
 api_id = os.getenv("api_id")
 api_hash = os.getenv("api_hash")
 session_name = os.getenv("session_name")
-grupo_entidade = int(os.getenv("group_id"))
+group_id = int(os.getenv("group_id"))
 
 db_params = {
     "host": os.getenv("db_host"),
@@ -69,6 +70,12 @@ def inserir_monitoramento(mon):
     conn.commit()
 
 async def main():
+    grupo_entidade = await utils.obter_entidade(client, group_id)
+    grupo_nome = getattr(grupo_entidade, 'title', f"grupo_{group_id}")
+    nome_grupo_limpo = utils.limpar_nome(grupo_nome)
+    grupo_id = grupo_entidade.id 
+
+    print(f"\nMonitorando e gravando mensagens no grupo: {grupo_nome}")
     @client.on(events.NewMessage(chats=grupo_entidade))
     async def handler(event):
         mensagem = event.text
