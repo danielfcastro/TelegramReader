@@ -17,6 +17,8 @@ session = HTTP(
     api_secret=api_secret
 )
 
+proporcoes = [0.1, 0.2, 0.5, 0.1]
+
 def ajustar_quantidade(qty, step):
     step = float(step)
     qty_ajustada = math.floor(qty / step) * step
@@ -58,41 +60,48 @@ def obter_saldo_disponivel():
     raise Exception("Não foi possível obter saldo disponível em USDT.")
 
 def enviar_ordem_sem_tp_sl(sinal):
-    saldo = obter_saldo_disponivel()
-    percentual = float(os.getenv("TRADE_PERCENTAGE", "3"))
-    valor_trade = saldo * percentual / 100
-
     symbol = sinal["pair"].replace("/", "")
     preco_mercado = obter_preco_mercado(symbol)
     if preco_mercado is None:
-        print(f"❌ Par {symbol} não está disponível na testnet/broker selecionado.")
-        from TradeExecutor import deletar_sinal
-        deletar_sinal(sinal["id"])
+        print(f"❌ Não foi possível obter preço para enviar ordem de {symbol}")
         return False
 
-    step, min_qty, min_notional = obter_parametros_simbolo(symbol)
-    qty = valor_trade / preco_mercado
-    qty = max(qty, min_qty)
-    qty = ajustar_quantidade(qty, step)
-
-    print(f"➡️ Ordem: {symbol} | Tipo: {sinal['type']} | Preço mercado: {preco_mercado} | Quantidade: {qty}")
-
     try:
-        resposta = session.place_order(
+        step, min_qty, _ = obter_parametros_simbolo(symbol)
+        saldo = obter_saldo_disponivel()
+        valor_trade = saldo * float(os.getenv("TRADE_PERCENTAGE", "3")) / 100
+        qty = valor_trade / preco_mercado
+        qty = max(qty, min_qty)
+        qty = ajustar_quantidade(qty, step)
+
+        side = "Buy" if sinal["type"].upper() == "LONG" else "Sell"
+
+        # NOVO: extrair tradeMode e leverage do sinal
+        margin = sinal["margem"].lower()
+        trade_mode = 0 if "cross" in margin else 1
+
+        leverage_str = sinal.get("alavancagem", "1X").replace("X", "")
+        leverage = int(leverage_str) if leverage_str.isdigit() else 1
+
+        response = session.place_order(
             category="linear",
             symbol=symbol,
-            side="Buy" if sinal["type"] == "LONG" else "Sell",
+            side=side,
             orderType="Market",
             qty=str(qty),
             orderLinkId=f"trade_{int(time.time())}",
             timeInForce="IOC",
-            isLeverage=0
+            isLeverage=0,
+            tradeMode=trade_mode,
+            leverage=leverage,
         )
-        print("📥 Ordem enviada:", resposta)
-        return True
+
+        print(f"📥 Ordem enviada: {response}")
+        return response["retCode"] == 0
     except Exception as e:
-        print("Erro ao enviar ordem:", e)
+        print("❌ Erro ao enviar ordem:", e)
         return False
+
 
 def configurar_take_profits(sinal):
     try:
@@ -108,7 +117,6 @@ def configurar_take_profits(sinal):
         qty = max(valor_trade / preco_mercado, min_qty)
         qty = ajustar_quantidade(qty, step)
 
-        proporcoes = [0.2, 0.3, 0.3, 0.2]
         tps = [sinal.get("tp1"), sinal.get("tp2"), sinal.get("tp3"), sinal.get("tp4")]
         quantidades = [ajustar_quantidade(qty * p, step) for p in proporcoes]
 

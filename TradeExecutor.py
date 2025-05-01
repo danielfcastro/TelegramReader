@@ -43,9 +43,12 @@ def buscar_sinal_config():
     with conectar_db() as conn:
         with conn.cursor() as cur:
             cur.execute("""
-                SELECT id, par, tipo_ordem, stoploss, tp1, tp2, tp3, tp4, flag_tp_configurado, flag_sl_configurado 
+                SELECT id, par, tipo_ordem, stoploss, tp1, tp2, tp3, tp4, 
+                       flag_tp_configurado, flag_sl_configurado 
                 FROM sinais
-                WHERE flag_ordem_enviada = 1 AND not (flag_tp_configurado = true AND flag_sl_configurado = true)
+                WHERE flag_ordem_enviada = 1 
+                  AND ((flag_tp_configurado = false AND tentativas_tp <3)
+                        OR (flag_sl_configurado = false AND tentativas_sl <3))
                 ORDER BY id ASC
                 LIMIT 1
             """)
@@ -63,6 +66,27 @@ def buscar_sinal_config():
                     "flag_tp_configurado": row[8],
                     "flag_sl_configurado": row[9]
                 }
+
+def incrementar_tentativas_tp(id_sinal):
+    with conectar_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE sinais
+                SET tentativas_tp = tentativas_tp + 1
+                WHERE id = %s
+            """, (id_sinal,))
+            conn.commit()
+
+def incrementar_tentativas_sl(id_sinal):
+    with conectar_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE sinais
+                SET tentativas_sl = tentativas_sl + 1
+                WHERE id = %s
+            """, (id_sinal,))
+            conn.commit()
+
 
 def marcar_ordem_enviada(sinal_id):
     with conectar_db() as conn:
@@ -113,10 +137,14 @@ def loop_configuracao_tp_sl():
                 if not sinal["flag_tp_configurado"]:
                     if configurar_take_profits(sinal):
                         marcar_tp_configurado(sinal["id"])
+                    else:
+                        incrementar_tentativas_tp(sinal["id"])
 
                 if not sinal["flag_sl_configurado"]:
                     if configurar_stop_loss(sinal):
                         marcar_sl_configurado(sinal["id"])
+                    else:
+                        incrementar_tentativas_sl(sinal["id"])
         except Exception as e:
             print("❌ Erro no loop de configuração de TP/SL:", e)
         time.sleep(5)
