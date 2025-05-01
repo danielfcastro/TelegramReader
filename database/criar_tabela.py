@@ -24,7 +24,8 @@ def criar_banco():
             tp3 real,
             tp4 real,
             stoploss real,
-            flag_executado INTEGER DEFAULT 0,
+            flag_ordem_enviada smallint DEFAULT 0,
+            flag_tp_sl_configurado smallint DEFAULT 0,
             CONSTRAINT sinais_pkey PRIMARY KEY (id)
         );
                    
@@ -58,11 +59,17 @@ def criar_banco():
             WITH (deduplicate_items=True)
             TABLESPACE pg_default;                                            
 
-        CREATE INDEX IF NOT EXISTS idx_sinais_flag_executado
+        CREATE INDEX IF NOT EXISTS idx_sinais_flag_ordem_enviada
             ON public.sinais USING btree
-            (flag_executado ASC NULLS LAST)
+            (flag_ordem_enviada ASC NULLS LAST)
             WITH (deduplicate_items=True)
-            TABLESPACE pg_default;                                                                                    
+            TABLESPACE pg_default;
+
+        CREATE INDEX IF NOT EXISTS idx_sinais_flag_tp_sl_configurado
+            ON public.sinais USING btree
+            (flag_tp_sl_configurado ASC NULLS LAST)
+            WITH (deduplicate_items=True)
+            TABLESPACE pg_default;                                          
     ''')
     conn.commit()
     conn.close()

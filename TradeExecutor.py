@@ -1,8 +1,9 @@
 import os
 import time
+import threading
 import psycopg2
 from dotenv import load_dotenv
-from integration.bybit_trading import abrir_ordem_com_tps, set_break_even
+from integration.bybit_trading import enviar_ordem_sem_tp_sl, configurar_take_profits, configurar_stop_loss
 
 load_dotenv()
 
@@ -15,84 +16,123 @@ def conectar_db():
         password=os.getenv("DB_PASSWORD")
     )
 
-def buscar_sinais_nao_executados():
+def buscar_sinal_execucao():
     with conectar_db() as conn:
         with conn.cursor() as cur:
             cur.execute("""
-                SELECT id, par, tipo_ordem, entrada_inferior, entrada_superior,
-                       tp1, tp2, tp3, tp4, stoploss
+                SELECT id, par, tipo_ordem, stoploss, tp1, tp2, tp3, tp4
                 FROM sinais
-                WHERE flag_executado = 0
-                ORDER BY data_hora ASC
+                WHERE flag_ordem_enviada = 0
+                ORDER BY id ASC
                 LIMIT 1
             """)
-            return cur.fetchone()
+            row = cur.fetchone()
+            if row:
+                return {
+                    "id": row[0],
+                    "pair": row[1],
+                    "type": row[2],
+                    "stoploss": row[3],
+                    "tp1": row[4],
+                    "tp2": row[5],
+                    "tp3": row[6],
+                    "tp4": row[7]
+                }
 
-def marcar_sinal_como_executado(sinal_id):
+def buscar_sinal_config():
     with conectar_db() as conn:
         with conn.cursor() as cur:
             cur.execute("""
-                UPDATE sinais
-                SET flag_executado = 1
-                WHERE id = %s
+                SELECT id, par, tipo_ordem, stoploss, tp1, tp2, tp3, tp4, flag_tp_configurado, flag_sl_configurado 
+                FROM sinais
+                WHERE flag_ordem_enviada = 1 AND not (flag_tp_configurado = true AND flag_sl_configurado = true)
+                ORDER BY id ASC
+                LIMIT 1
+            """)
+            row = cur.fetchone()
+            if row:
+                return {
+                    "id": row[0],
+                    "pair": row[1],
+                    "type": row[2],
+                    "stoploss": row[3],
+                    "tp1": row[4],
+                    "tp2": row[5],
+                    "tp3": row[6],
+                    "tp4": row[7],
+                    "flag_tp_configurado": row[8],
+                    "flag_sl_configurado": row[9]
+                }
+
+def marcar_ordem_enviada(sinal_id):
+    with conectar_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE sinais SET flag_ordem_enviada = 1 WHERE id = %s
             """, (sinal_id,))
             conn.commit()
 
-def buscar_break_even():
+def marcar_tp_configurado(id_sinal):
     with conectar_db() as conn:
         with conn.cursor() as cur:
-            cur.execute("""
-                SELECT id, par FROM break_even
-                WHERE flag_executado = 0
-                ORDER BY data_hora ASC
-                LIMIT 1
-            """)
-            return cur.fetchone()
-
-def marcar_break_even_executado(break_even_id):
-    with conectar_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("""
-                UPDATE break_even
-                SET flag_executado = 1
-                WHERE id = %s
-            """, (break_even_id,))
+            cur.execute("UPDATE sinais SET flag_tp_configurado = TRUE WHERE id = %s", (id_sinal,))
             conn.commit()
 
-def loop_principal():
-    print("🚀 Iniciando loop de execução de sinais...")
+def marcar_sl_configurado(id_sinal):
+    with conectar_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE sinais SET flag_sl_configurado = TRUE WHERE id = %s", (id_sinal,))
+            conn.commit()
+
+def deletar_sinal(sinal_id):
+    with conectar_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM sinais WHERE id = %s", (sinal_id,))
+            conn.commit()
+
+def loop_execucao_ordens():
     while True:
         try:
-            sinal = buscar_sinais_nao_executados()
+            sinal = buscar_sinal_execucao()
             if sinal:
-                print(f"🟡 Executando sinal: {sinal[1]} ({sinal[2]})")
-                sinal_dict = {
-                    "pair": sinal[1],
-                    "type": sinal[2],
-                    "entry_low": float(sinal[3]),
-                    "entry_high": float(sinal[4]),
-                    "tp1": float(sinal[5]),
-                    "tp2": float(sinal[6]),
-                    "tp3": float(sinal[7]),
-                    "tp4": float(sinal[8]),
-                    "stoploss": float(sinal[9])
-                }
-                sucesso = abrir_ordem_com_tps(sinal_dict)
+                print(f"🟡 Enviando ordem para {sinal['pair']}")
+                sucesso = enviar_ordem_sem_tp_sl(sinal)
                 if sucesso:
-                    marcar_sinal_como_executado(sinal[0])
-                else:
-                    print(f"⚠️ Ordem para {sinal[1]} não foi executada com sucesso. Não será marcada como executada.")                
-
-            be = buscar_break_even()
-            if be:
-                print(f"🟠 Ajustando break-even para: {be[1]}")
-                set_break_even(be[1].replace("/", ""))
-                marcar_break_even_executado(be[0])
-
+                    marcar_ordem_enviada(sinal["id"])
+            time.sleep(5)
         except Exception as e:
-            print(f"❌ Erro no loop principal: {e}")
+            print("❌ Erro no loop de execução de ordens:", e)
 
+def loop_configuracao_tp_sl():
+    while True:
+        try:
+            sinal = buscar_sinal_config()
+            if sinal:
+                print(f"⚙️ Configurando TP/SL para {sinal['pair']}")
+
+                if not sinal["flag_tp_configurado"]:
+                    if configurar_take_profits(sinal):
+                        marcar_tp_configurado(sinal["id"])
+
+                if not sinal["flag_sl_configurado"]:
+                    if configurar_stop_loss(sinal):
+                        marcar_sl_configurado(sinal["id"])
+        except Exception as e:
+            print("❌ Erro no loop de configuração de TP/SL:", e)
         time.sleep(5)
 
+
 if __name__ == "__main__":
-    loop_principal()
+    print("🚀 Executor iniciado com loops paralelos.")
+
+    t1 = threading.Thread(target=loop_execucao_ordens, daemon=True)
+    t2 = threading.Thread(target=loop_configuracao_tp_sl, daemon=True)
+
+    t1.start()
+    t2.start()
+
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("\n🛑 Execução do bot interrompida pelo usuário.")

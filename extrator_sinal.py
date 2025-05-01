@@ -2,11 +2,12 @@ import re
 
 def extrair_sinal_trade(mensagem):
     try:
-        pair_match = re.search(r"(?:🟢|🔴)?([A-Z0-9]+/USDT)", mensagem)
-        type_match = re.search(r"(LONG|BUY|SHORT|SELL)", mensagem, re.IGNORECASE)
-        entry_match = re.search(r"ENTRY: *[<\[]?([0-9\.]+)-([0-9\.]+)[>\]]?", mensagem)
-        sl_match = re.search(r"STOP ?LOSS: *[\[]?([0-9\.]+)[\]]?", mensagem, re.IGNORECASE)
-        targets = re.findall(r"\[([0-9\.]+)\]", mensagem)
+        pair_match = re.search(r"\[([A-Z0-9]+/USDT)\]", mensagem)
+        type_match = re.search(r"\*\*(LONG|BUY|SHORT|SELL)\*\*", mensagem, re.IGNORECASE)
+        entry_match = re.search(r"ENTRY:\s*[<\[]?([0-9\.]+)-([0-9\.]+)[>\]]?", mensagem, re.IGNORECASE)
+        sl_match = re.search(r"STOPLOSS:\s*[\[]?([0-9\.]+)[\]]?", mensagem, re.IGNORECASE)
+        margin_match = re.search(r"Margin:\s*(\w+),\s*(\d+)X", mensagem, re.IGNORECASE)
+        targets = re.findall(r"\[\`?([0-9\.]+)\`?\]", mensagem)
 
         if not (pair_match and type_match and entry_match and sl_match):
             return None
@@ -16,14 +17,19 @@ def extrair_sinal_trade(mensagem):
             "type": type_match.group(1).upper(),
             "entry_low": float(entry_match.group(1)),
             "entry_high": float(entry_match.group(2)),
-            "stoploss": float(sl_match.group(1))
+            "stoploss": float(sl_match.group(1)),
         }
+
+        if margin_match:
+            sinal["margin"] = margin_match.group(1).capitalize()
+            sinal["leverage"] = margin_match.group(2) + "X"
 
         for i, alvo in enumerate(targets[:4], start=1):
             sinal[f"tp{i}"] = float(alvo)
 
         return sinal
-    except Exception:
+    except Exception as e:
+        print("Erro ao extrair sinal:", e)
         return None
 
 def extrair_monitoramento_json(mensagem):
