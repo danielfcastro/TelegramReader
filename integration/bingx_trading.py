@@ -6,9 +6,9 @@ from pybit.unified_trading import HTTP
 
 load_dotenv()
 
-api_key = os.getenv("bybit_api_key")
-api_secret = os.getenv("bybit_api_secret")
-api_url = os.getenv("bybit_api_url")
+api_key = os.getenv("broker_api_key")
+api_secret = os.getenv("broker_api_secret")
+api_url = os.getenv("broker_api_url")
 
 session = HTTP(
     testnet="testnet" in api_url,

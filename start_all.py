@@ -7,19 +7,35 @@ def salvar_env_com_base_no_config(broker, is_testnet):
 
     is_testnet_str = "true" if is_testnet else "false"
     env_lines = [
+        f"#broker configuration",
         f"BROKER={broker}",
-        f"IS_TESTNET={is_testnet_str}"
+        f"IS_TESTNET={is_testnet_str}",
+        f"",
     ]
-    env_lines.append(f"trade_percentage={config['trade_percentage']}")
     if broker == "bybit":
         if is_testnet:
-            env_lines.append(f"bybit_api_key={config['bybit_api_key_testnet']}")
-            env_lines.append(f"bybit_api_secret={config['bybit_api_secret_testnet']}")
-            env_lines.append(f"bybit_api_url={config['bybit_api_url_testnet']}")
+            env_lines.append(f"broker_api_key={config['bybit_api_key_testnet']}")
+            env_lines.append(f"broker_api_secret={config['bybit_api_secret_testnet']}")
+            env_lines.append(f"broker_api_url={config['bybit_api_url_testnet']}")
         else:
-            env_lines.append(f"bybit_api_key={config['bybit_api_key']}")
-            env_lines.append(f"bybit_api_secret={config['bybit_api_secret']}")
-            env_lines.append(f"bybit_api_url={config['bybit_api_url']}")
+            env_lines.append(f"broker_api_key={config['bybit_api_key']}")
+            env_lines.append(f"broker_api_secret={config['bybit_api_secret']}")
+            env_lines.append(f"broker_api_url={config['bybit_api_url']}")
+
+    env_lines.append(f"")
+    env_lines.append(f"#db configuration")
+    env_lines.append(f"db_type={config['db_type']}")
+    env_lines.append(f"db_host={config['db_host']}")
+    env_lines.append(f"db_port={config['db_port']}")
+    env_lines.append(f"db_name={config['db_name']}")
+    env_lines.append(f"db_user={config['db_user']}")
+    env_lines.append(f"db_password={config['db_password']}")
+    env_lines.append(f"")
+    env_lines.append(f"#telegram configuration")
+    env_lines.append(f"api_id={config['api_id']}")
+    env_lines.append(f"api_hash={config['api_hash']}")
+    env_lines.append(f"group_id={config['group_id']}")
+    env_lines.append(f"session_name={config['session_name']}")
 
     with open(".env", "w") as f:
         f.write("\n".join(env_lines) + "\n")

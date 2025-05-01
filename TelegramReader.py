@@ -1,139 +1,91 @@
+
 import os
-import re
 import json
 import logging
-import sqlite3
 from datetime import datetime
+from dotenv import load_dotenv
 from telethon import TelegramClient, events
-from telethon.tl.types import PeerChannel, PeerChat
-from telethon.errors import ChannelInvalidError, ChatIdInvalidError
 from extrator_sinal import extrair_sinal_trade, extrair_monitoramento_json
-from utils import carregar_config, limpar_nome, criar_pasta, obter_entidade
-import TradeExecutor
+import psycopg2
 
-config = carregar_config()
+load_dotenv()
 
-api_id = int(config['api_id'])
-api_hash = config['api_hash']
-grupo_padrao = int(config['grupo_id'])
-db_mode = config.get("database_mode", "sqlite")
-db_path = config.get("sqlite_db_path", "database/sinais.db")
+api_id = os.getenv("api_id")
+api_hash = os.getenv("api_hash")
+session_name = os.getenv("session_name")
+grupo_entidade = int(os.getenv("group_id"))
 
-session_name = 'minha_sessao'
-pasta_logs = 'logs'
+db_params = {
+    "host": os.getenv("db_host"),
+    "port": os.getenv("db_port"),
+    "dbname": os.getenv("db_name"),
+    "user": os.getenv("db_user"),
+    "password": os.getenv("db_password")
+}
+
+conn = psycopg2.connect(**db_params)
+cur = conn.cursor()
+
+LOG_DIR = "logs"
+os.makedirs(LOG_DIR, exist_ok=True)
+logging.basicConfig(
+    filename=os.path.join(LOG_DIR, "telegram_reader.log"),
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    encoding="utf-8"
+)
 
 client = TelegramClient(session_name, api_id, api_hash)
 
-criar_pasta(pasta_logs)
-criar_pasta(os.path.dirname(db_path))
-
-logging.basicConfig(
-    filename='logs/telegram_reader.log',
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
-
-def salvar_json_arquivo(objeto, nome_base):
-    nome_arquivo = os.path.join(pasta_logs, f"{nome_base}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
-    with open(nome_arquivo, 'w', encoding='utf-8') as f:
-        json.dump(objeto, f, ensure_ascii=False, indent=2)
-    logging.info(f"📁 JSON salvo em: {nome_arquivo}")
-
-def salvar_sinal_db(sinal):
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS sinais (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            data TEXT,
-            par TEXT,
-            tipo TEXT,
-            entrada_inferior REAL,
-            entrada_superior REAL,
-            tp1 REAL,
-            tp2 REAL,
-            tp3 REAL,
-            tp4 REAL,
-            stoploss REAL,
-            executado TEXT DEFAULT 'Não'
-        )
-    ''')
-    cursor.execute('''
-        INSERT INTO sinais (data, par, tipo, entrada_inferior, entrada_superior, tp1, tp2, tp3, tp4, stoploss)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (
-        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        sinal['pair'], sinal['type'], sinal['entry_low'], sinal['entry_high'],
-        sinal.get('tp1'), sinal.get('tp2'), sinal.get('tp3'), sinal.get('tp4'), sinal['stoploss']
-    ))
+def inserir_sinal(sinal, texto_original):
+    sql = '''
+    INSERT INTO sinais (
+        data_hora, par, tipo_ordem, margem, alavancagem,
+        entrada_inferior, entrada_superior,
+        tp1, tp2, tp3, tp4, stoploss, texto_original, flag_executado
+    ) VALUES (
+        %s, %s, %s, %s, %s,
+        %s, %s,
+        %s, %s, %s, %s, %s, %s, 0
+    );
+    '''
+    valores = (
+        datetime.now(), sinal["pair"], sinal["type"], sinal.get("margin", ""), sinal.get("leverage", ""),
+        sinal["entry_low"], sinal["entry_high"],
+        sinal.get("tp1"), sinal.get("tp2"), sinal.get("tp3"), sinal.get("tp4"),
+        sinal["stoploss"], texto_original
+    )
+    print("SQL SINAL:", cur.mogrify(sql, valores).decode())
+    cur.execute(sql, valores)
     conn.commit()
-    conn.close()
+
+def inserir_monitoramento(mon):
+    if mon["tp"] != "TP2" or not any("break-even" in i.lower() or "breakeven" in i.lower() for i in mon["instructions"]):
+        return
+    sql = "INSERT INTO break_even (data_hora, par, flag_executado) VALUES (%s, %s, 0);"
+    valores = (datetime.now(), mon["pair"])
+    print("SQL MONITORAMENTO:", cur.mogrify(sql, valores).decode())
+    cur.execute(sql, valores)
+    conn.commit()
 
 async def main():
-    await client.start()
-
-    usar_padrao = input(f"Usar grupo padrão do config (ID {grupo_padrao})? [s/n]: ").strip().lower()
-
-    if usar_padrao == 's':
-        grupo_entidade = await client.get_entity(PeerChannel(grupo_padrao))
-    else:
-        escolha = input("Você quer usar [1] Nome do grupo ou [2] ID do grupo? Digite 1 ou 2: ")
-        if escolha == '1':
-            grupo_input = input("Digite o NOME do grupo exatamente como aparece: ").strip()
-            grupo_entidade = await client.get_entity(grupo_input)
-        elif escolha == '2':
-            id_input = input("Digite o ID do grupo: ").strip()
-            grupo_entidade = await obter_entidade(client, id_input)
-            if grupo_entidade is None:
-                print("Não foi possível localizar o grupo/canal com o ID informado.")
-                return
-        else:
-            print("Escolha inválida.")
-            return
-
-    grupo_nome = getattr(grupo_entidade, 'title', f"grupo_{grupo_entidade.id}")
-    nome_grupo_limpo = limpar_nome(grupo_nome)
-
-    print(f"\n📡 Monitorando mensagens no grupo: {grupo_nome}")
-    print(f"Logs serão salvos em: {pasta_logs}/\n")
-
     @client.on(events.NewMessage(chats=grupo_entidade))
     async def handler(event):
         mensagem = event.text
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
         print(f"[{timestamp}] Mensagem recebida:", mensagem)
         logging.info(f"Mensagem recebida: {mensagem}")
 
         sinal = extrair_sinal_trade(mensagem)
         if sinal:
-            logging.info(f"✅ Sinal identificado para {sinal['pair']} ({sinal['type']})")
-            salvar_sinal_db(sinal)
-            salvar_json_arquivo(sinal, "sinal")
-            TradeExecutor.executar_trade(sinal)
+            inserir_sinal(sinal, mensagem)
+            logging.info(f"✅ Sinal inserido para {sinal['pair']}")
             return
 
         monitoramento = extrair_monitoramento_json(mensagem)
         if monitoramento:
-            logging.info(f"📈 Monitoramento identificado para {monitoramento['pair']}")
-            salvar_json_arquivo(monitoramento, "monitoramento")
-
-            # ✅ Lógica de break-even ao atingir TP2
-            if monitoramento.get("tp") == "TP2":
-                from integration.bybit_trading import set_break_even
-                try:
-                    with open("sinal.json", "r", encoding="utf-8") as f:
-                        sinal_anterior = json.load(f)
-                        if sinal_anterior["pair"].replace("/", "") == monitoramento["pair"].replace("/", ""):
-                            entry_price = (sinal_anterior["entry_low"] + sinal_anterior["entry_high"]) / 2
-                            set_break_even(monitoramento["pair"].replace("/", ""), entry_price)
-                            logging.info(f"🎯 Stop Loss ajustado para break-even ({entry_price}) em {monitoramento['pair']}")
-                        else:
-                            logging.warning("❗ O par do monitoramento não corresponde ao último sinal salvo.")
-                except Exception as e:
-                    logging.error(f"Erro ao aplicar break-even: {e}")
-
-            TradeExecutor.ajustar_trade(monitoramento)
+            inserir_monitoramento(monitoramento)
+            logging.info(f"📈 Monitoramento processado: {monitoramento['pair']}")
             return
 
         logging.warning("❌ Não foi possível extrair sinal ou monitoramento da mensagem.")
