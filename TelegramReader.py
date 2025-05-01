@@ -99,5 +99,10 @@ async def main():
 
     await client.run_until_disconnected()
 
-with client:
-    client.loop.run_until_complete(main())
+if __name__ == "__main__":
+    try:
+        with client:
+            client.loop.run_until_complete(main())
+    except KeyboardInterrupt:
+        print("\n🛑 Execução do TelegramReader interrompida pelo usuário.")
+

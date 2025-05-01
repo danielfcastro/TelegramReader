@@ -74,5 +74,9 @@ if __name__ == "__main__":
     t1.start()
     t2.start()
 
+try:
     t1.join()
     t2.join()
+except KeyboardInterrupt:
+    print("\n🛑 Execução do bot interrompida pelo usuário.")
+
