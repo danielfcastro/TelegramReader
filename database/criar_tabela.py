@@ -44,7 +44,25 @@ def criar_banco():
             data_hora TEXT,
             par TEXT,
             flag_executado INTEGER DEFAULT 0
-        );                                                         
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_brkeven_flag_executado
+            ON public.break_even USING btree
+            (flag_executado ASC NULLS LAST)
+            WITH (deduplicate_items=True)
+            TABLESPACE pg_default;
+
+        CREATE INDEX IF NOT EXISTS idx_id
+            ON public.break_even USING btree
+            (id ASC NULLS LAST)
+            WITH (deduplicate_items=True)
+            TABLESPACE pg_default;                                            
+
+        CREATE INDEX IF NOT EXISTS idx_sinais_flag_executado
+            ON public.sinais USING btree
+            (flag_executado ASC NULLS LAST)
+            WITH (deduplicate_items=True)
+            TABLESPACE pg_default;                                                                                    
     ''')
     conn.commit()
     conn.close()
