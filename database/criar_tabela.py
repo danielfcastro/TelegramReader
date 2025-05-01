@@ -9,18 +9,23 @@ def criar_banco():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS sinais (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            data_hora TEXT,
-            par TEXT,
-            tipo_ordem TEXT,
-            margem TEXT,
-            alavancagem TEXT,
-            entry_min REAL,
-            entry_max REAL,
-            stoploss REAL,
-            targets TEXT,
-            flag_executado BOOLEAN DEFAULT 0
+        CREATE TABLE IF NOT EXISTS public.sinais
+        (
+            id integer NOT NULL DEFAULT nextval('sinais_id_seq'::regclass),
+            data_hora text COLLATE pg_catalog."default",
+            par text COLLATE pg_catalog."default",
+            tipo_ordem text COLLATE pg_catalog."default",
+            margem text COLLATE pg_catalog."default",
+            alavancagem text COLLATE pg_catalog."default",
+            entrada_inferior real,
+            entrada_superior real,
+            tp1 real,
+            tp2 real,
+            tp3 real,
+            tp4 real,
+            stoploss real,
+            flag_executado integer DEFAULT 0,
+            CONSTRAINT sinais_pkey PRIMARY KEY (id)
         );
                    
         CREATE TABLE IF NOT EXISTS monitoramentos (

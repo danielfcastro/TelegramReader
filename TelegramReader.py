@@ -37,23 +37,23 @@ logging.basicConfig(
 
 client = TelegramClient(session_name, api_id, api_hash)
 
-def inserir_sinal(sinal, texto_original):
+def inserir_sinal(sinal):
     sql = '''
     INSERT INTO sinais (
         data_hora, par, tipo_ordem, margem, alavancagem,
         entrada_inferior, entrada_superior,
-        tp1, tp2, tp3, tp4, stoploss, texto_original, flag_executado
+        tp1, tp2, tp3, tp4, stoploss, flag_executado
     ) VALUES (
         %s, %s, %s, %s, %s,
         %s, %s,
-        %s, %s, %s, %s, %s, %s, 0
+        %s, %s, %s, %s, %s, 0
     );
     '''
     valores = (
         datetime.now(), sinal["pair"], sinal["type"], sinal.get("margin", ""), sinal.get("leverage", ""),
         sinal["entry_low"], sinal["entry_high"],
         sinal.get("tp1"), sinal.get("tp2"), sinal.get("tp3"), sinal.get("tp4"),
-        sinal["stoploss"], texto_original
+        sinal["stoploss"]
     )
     print("SQL SINAL:", cur.mogrify(sql, valores).decode())
     cur.execute(sql, valores)
@@ -78,7 +78,7 @@ async def main():
 
         sinal = extrair_sinal_trade(mensagem)
         if sinal:
-            inserir_sinal(sinal, mensagem)
+            inserir_sinal(sinal)
             logging.info(f"✅ Sinal inserido para {sinal['pair']}")
             return
 
