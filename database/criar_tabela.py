@@ -24,7 +24,7 @@ def criar_banco():
             tp3 real,
             tp4 real,
             stoploss real,
-            flag_executado integer DEFAULT 0,
+            flag_executado INTEGER DEFAULT 0,
             CONSTRAINT sinais_pkey PRIMARY KEY (id)
         );
                    
@@ -37,7 +37,14 @@ def criar_banco():
             spent TEXT,
             instruction TEXT,
             target_done TEXT
-        );                   
+        );
+
+        CREATE TABLE IF NOT EXISTS public.break_even (
+            id SERIAL PRIMARY KEY,
+            data_hora TEXT,
+            par TEXT,
+            flag_executado INTEGER DEFAULT 0
+        );                                                         
     ''')
     conn.commit()
     conn.close()
