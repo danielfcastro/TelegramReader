@@ -23,7 +23,7 @@ class BingXBroker(BrokerInterface):
         signature = hmac.new(
             self.SECRET_KEY.encode("utf-8"),
             payload.encode("utf-8"),
-            digestmod=hashlib.sha256
+            digestmod=sha256
         ).hexdigest()
         return signature
 
