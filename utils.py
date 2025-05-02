@@ -3,6 +3,11 @@ import re
 from telethon.tl.types import PeerChannel, PeerChat
 from telethon.errors import ChannelInvalidError, ChatIdInvalidError
 
+def ajustar_quantidade(qty, step):
+    step = float(step)
+    qty_ajustada = math.floor(qty / step) * step
+    return round(qty_ajustada, str(step)[::-1].find('.'))
+
 def carregar_config(path='config.properties'):
     config = {}
     if not os.path.exists(path):

@@ -1,0 +1,180 @@
+import os
+import time
+import hmac
+import json
+import requests
+from decimal import Decimal
+from hashlib import sha256
+from dotenv import load_dotenv
+
+from integration.BrokerInterface import BrokerInterface
+from utils import ajustar_quantidade
+from database.db import marcar_ordem_enviada, incrementar_retry_order
+
+load_dotenv()
+
+class BingXBroker(BrokerInterface):
+    def __init__(self):
+        self.API_URL = os.getenv("broker_api_url")
+        self.API_KEY = os.getenv("broker_api_key")
+        self.SECRET_KEY = os.getenv("broker_api_secret")
+
+    def _get_sign(self, payload):
+        signature = hmac.new(
+            self.SECRET_KEY.encode("utf-8"),
+            payload.encode("utf-8"),
+            digestmod=hashlib.sha256
+        ).hexdigest()
+        return signature
+
+    def _send_request(self, method, path, params):
+        query = self._build_query(params)
+        sign = self._get_sign(query)
+        url = f"{self.API_URL}{path}?{query}&signature={sign}"
+        headers = {
+            'X-BX-APIKEY': self.API_KEY
+        }
+        response = requests.request(method, url, headers=headers)
+        return response.json()
+
+    def _build_query(self, params):
+        sorted_params = sorted(params.items())
+        query = "&".join(f"{k}={v}" for k, v in sorted_params)
+        timestamp = f"timestamp={int(time.time() * 1000)}"
+        return f"{query}&{timestamp}" if query else timestamp
+
+    def obter_preco_mercado(self, symbol):
+        path = "/openApi/swap/v2/quote/premiumIndex"
+        response = self._send_request("GET", path, {"symbol": symbol})
+        if response["code"] == 0:
+            return float(response["data"]["markPrice"])
+        raise Exception(f"❌ Erro ao obter preço de mercado de {symbol}")
+
+    def obter_saldo_disponivel(self):
+        try:
+            path = "/openApi/swap/v3/user/balance"
+            params = {}
+            response = self._send_request("GET", path, params)
+            print("🧾 Resposta da API:", response)
+
+            if response["code"] == 0 and response.get("data"):
+                for item in response["data"]:
+                    if item["asset"] == "USDT":
+                        return float(item.get("availableMargin", 0.0))
+        except Exception as e:
+            print("Erro ao consultar saldo disponível:", e)
+        raise Exception("Não foi possível obter saldo disponível em USDT.")
+
+    def set_leverage(self, symbol, side, leverage):
+        path = "/openApi/swap/v2/trade/leverage"
+        params = {
+            "symbol": symbol,
+            "side": side,
+            "leverage": str(leverage)
+        }
+        query = self._build_query(params)
+        sign = self._get_sign(query)
+        url = f"{self.API_URL}{path}?{query}&signature={sign}"
+
+        try:
+            response = requests.post(url, headers={'X-BX-APIKEY': self.API_KEY}).json()
+            print("🪙 Leverage configurado:", response)
+        except Exception as e:
+            print("Erro ao configurar leverage:", e)
+
+    def enviar_ordem_tp_sl(self, sinal):
+        symbol = sinal["par"].replace("/", "-").upper()
+        side = "BUY" if sinal["tipo_ordem"].upper() == "LONG" else "SELL"
+        side_leverage = "LONG" if side == "BUY" else "SHORT"
+        leverage = int(sinal["alavancagem"].replace("X", ""))
+
+        try:
+            # Configura o leverage antes de enviar a ordem
+            self.set_leverage(symbol=symbol, side=side_leverage, leverage=leverage)
+            
+            saldo = self.obter_saldo_disponivel()
+            preco_mercado = self.obter_preco_mercado(symbol)
+            valor_trade = saldo * float(os.getenv("TRADE_PERCENTAGE", "3")) / 100
+            quantidade_total = valor_trade / preco_mercado
+
+            proporcoes = [0.1, 0.2, 0.5, 0.1]
+            quantidades = [ajustar_quantidade(quantidade_total * p, step=0.0001) for p in proporcoes]
+            preco_tp = float(sinal["tp"])
+            preco_sl = float(sinal["stoploss"])
+
+            ordens = []
+            for q in quantidades:
+                ordem = {
+                    "symbol": symbol,
+                    "side": side,
+                    "positionSide": side_leverage,
+                    "type": "MARKET",
+                    "quantity": q,
+                    "takeProfit": json.dumps({
+                        "type": "TAKE_PROFIT_MARKET",
+                        "quantity": q,
+                        "stopPrice": preco_tp,
+                        "workingType": "MARK_PRICE"
+                    }),
+                    "stopLoss": json.dumps({
+                        "type": "STOP_MARKET",
+                        "quantity": q,
+                        "stopPrice": preco_sl,
+                        "workingType": "MARK_PRICE"
+                    })
+                }
+                ordens.append(ordem)
+
+            body = {
+                "batchOrders": json.dumps(ordens)
+            }
+
+            path = "/openApi/swap/v2/trade/batchOrders"
+            response = self._send_request("POST", path, {}, body)
+
+            if response["code"] == 0 and "orders" in response["data"]:
+                print("📥 Ordens enviadas com sucesso:", response["data"])
+                order_id = response["data"]["orders"][0]["orderId"]
+                return True, preco_mercado, order_id
+            else:
+                print("⚠️ Falha ao enviar ordens:", response)
+                return False, 0.0, 0
+        except Exception as e:
+            print("❌ Erro ao enviar ordens BingX:", e)
+            return False, 0.0, 0
+
+    def ajustar_para_break_even(self, id, order_id, entry_price, tipo_ordem, par):
+        from database.db import executar_select  # ajuste conforme seu utilitário real
+
+        try:
+            symbol = par.replace("/", "-").upper()
+            side = "BUY" if tipo_ordem.upper() == "LONG" else "SELL"
+            position_side = "LONG" if tipo_ordem.upper() == "LONG" else "SHORT"
+
+            body = {
+                "symbol": symbol,
+                "side": side,
+                "positionSide": position_side,
+                "type": "MARKET",
+                "clientOrderId": order_id,
+                "stopLoss": json.dumps({
+                    "type": "STOP_MARKET",
+                    "stopPrice": entry_price,
+                    "workingType": "MARK_PRICE"
+                })
+            }
+
+            path = "/openApi/swap/v2/trade/order"
+            response = self._send_request("POST", path, {}, body)
+
+            if response["code"] == 0:
+                print(f"🟢 Break Even ajustado para {par}")
+                return True
+            else:
+                print(f"❌ Erro ao ajustar BE para {par}: {response}")
+                return False
+
+        except Exception as e:
+            print(f"❌ Erro no ajuste de break even para {par}:", e)
+            return False
+
