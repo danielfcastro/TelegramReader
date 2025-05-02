@@ -87,7 +87,6 @@ def incrementar_tentativas_sl(id_sinal):
             """, (id_sinal,))
             conn.commit()
 
-
 def marcar_ordem_enviada(sinal_id):
     with conectar_db() as conn:
         with conn.cursor() as cur:
@@ -148,7 +147,6 @@ def loop_configuracao_tp_sl():
         except Exception as e:
             print("❌ Erro no loop de configuração de TP/SL:", e)
         time.sleep(5)
-
 
 if __name__ == "__main__":
     print("🚀 Executor iniciado com loops paralelos.")

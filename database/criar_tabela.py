@@ -25,7 +25,10 @@ def criar_banco():
             tp4 real,
             stoploss real,
             flag_ordem_enviada smallint DEFAULT 0,
-            flag_tp_sl_configurado smallint DEFAULT 0,
+            flag_tp_configurado boolean DEFAULT false,
+            flag_sl_configurado boolean DEFAULT false,
+            tentativas_tp smallint DEFAULT 0,
+            tentativas_sl smallint DEFAULT 0,
             CONSTRAINT sinais_pkey PRIMARY KEY (id)
         );
                    
@@ -65,11 +68,40 @@ def criar_banco():
             WITH (deduplicate_items=True)
             TABLESPACE pg_default;
 
-        CREATE INDEX IF NOT EXISTS idx_sinais_flag_tp_sl_configurado
+        CREATE INDEX IF NOT EXISTS idx_sinais_flag_tp_configurado
             ON public.sinais USING btree
-            (flag_tp_sl_configurado ASC NULLS LAST)
+            (flag_tp_configurado ASC NULLS LAST)
             WITH (deduplicate_items=True)
-            TABLESPACE pg_default;                                          
+            TABLESPACE pg_default;
+
+        CREATE INDEX IF NOT EXISTS idx_sinais_flag_sl_configuradoo
+            ON public.sinais USING btree
+            (flag_sl_configurado ASC NULLS LAST)
+            WITH (deduplicate_items=True)
+            TABLESPACE pg_default;
+
+        CREATE INDEX IF NOT EXISTS idx_sinais_flag_tp_configurado
+            ON public.sinais USING btree
+            (flag_tp_configurado ASC NULLS LAST)
+            WITH (deduplicate_items=True)
+            TABLESPACE pg_default;
+
+        CREATE INDEX IF NOT EXISTS idx_sinais_flag_sl_configurado
+            ON public.sinais USING btree
+            (flag_sl_configurado ASC NULLS LAST)
+            WITH (deduplicate_items=True)
+            TABLESPACE pg_default; 
+        CREATE INDEX IF NOT EXISTS idx_sinais_tentativas_tp
+            ON public.sinais USING btree
+            (tentativas_tp ASC NULLS LAST)
+            WITH (deduplicate_items=True)
+            TABLESPACE pg_default;
+
+        CREATE INDEX IF NOT EXISTS idx_sinais_tentativas_sl
+            ON public.sinais USING btree
+            (tentativas_sl ASC NULLS LAST)
+            WITH (deduplicate_items=True)
+            TABLESPACE pg_default;                                                          
     ''')
     conn.commit()
     conn.close()

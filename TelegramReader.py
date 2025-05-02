@@ -1,4 +1,3 @@
-
 import os
 import json
 import logging
@@ -105,4 +104,3 @@ if __name__ == "__main__":
             client.loop.run_until_complete(main())
     except KeyboardInterrupt:
         print("\n🛑 Execução do TelegramReader interrompida pelo usuário.")
-
