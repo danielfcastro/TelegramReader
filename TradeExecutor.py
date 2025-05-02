@@ -1,158 +1,164 @@
-import sqlite3
 import os
 import time
-import hmac
-import hashlib
-import requests
-from datetime import datetime
+import threading
+import psycopg2
+from dotenv import load_dotenv
+from integration.bybit_trading import enviar_ordem_sem_tp_sl, configurar_take_profits, configurar_stop_loss
 
-# Função para carregar o arquivo de configuração
-def carregar_config(path):
-    config = {}
-    if not os.path.exists(path):
-        print(f"Arquivo de configuração {path} não encontrado.")
-        exit(1)
-    with open(path, 'r', encoding='utf-8') as f:
-        for linha in f:
-            linha = linha.strip()
-            if linha and not linha.startswith('#'):
-                chave, valor = linha.split('=', 1)
-                config[chave.strip()] = valor.strip()
-    return config
+load_dotenv()
 
-# Carregar configurações
-temp_config = carregar_config('config.properties')
+def conectar_db():
+    return psycopg2.connect(
+        host=os.getenv("DB_HOST"),
+        port=os.getenv("DB_PORT"),
+        dbname=os.getenv("DB_NAME"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD")
+    )
 
-bybit_api_key = temp_config['bybit_api_key']
-bybit_api_secret = temp_config['bybit_api_secret']
-trade_percentage = float(temp_config.get('trade_percentage', 3))
-db_path = temp_config.get('sqlite_db_path', 'database/sinais.db')
+def buscar_sinal_execucao():
+    with conectar_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT id, par, tipo_ordem, stoploss, tp1, tp2, tp3, tp4
+                FROM sinais
+                WHERE flag_ordem_enviada = 0
+                ORDER BY id ASC
+                LIMIT 1
+            """)
+            row = cur.fetchone()
+            if row:
+                return {
+                    "id": row[0],
+                    "pair": row[1],
+                    "type": row[2],
+                    "stoploss": row[3],
+                    "tp1": row[4],
+                    "tp2": row[5],
+                    "tp3": row[6],
+                    "tp4": row[7]
+                }
 
-BYBIT_TESTNET_URL = "https://api-testnet.bybit.com"
+def buscar_sinal_config():
+    with conectar_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT id, par, tipo_ordem, stoploss, tp1, tp2, tp3, tp4, 
+                       flag_tp_configurado, flag_sl_configurado 
+                FROM sinais
+                WHERE flag_ordem_enviada = 1 
+                  AND ((flag_tp_configurado = false AND tentativas_tp <3)
+                        OR (flag_sl_configurado = false AND tentativas_sl <3))
+                ORDER BY id ASC
+                LIMIT 1
+            """)
+            row = cur.fetchone()
+            if row:
+                return {
+                    "id": row[0],
+                    "pair": row[1],
+                    "type": row[2],
+                    "stoploss": row[3],
+                    "tp1": row[4],
+                    "tp2": row[5],
+                    "tp3": row[6],
+                    "tp4": row[7],
+                    "flag_tp_configurado": row[8],
+                    "flag_sl_configurado": row[9]
+                }
 
-def criar_conexao():
-    """Cria a conexão com o banco de dados."""
-    return sqlite3.connect(db_path)
+def incrementar_tentativas_tp(id_sinal):
+    with conectar_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE sinais
+                SET tentativas_tp = tentativas_tp + 1
+                WHERE id = %s
+            """, (id_sinal,))
+            conn.commit()
 
-def gerar_assinatura(api_secret, params):
-    """Gera a assinatura HMAC-SHA256 para a ByBIT."""
-    sorted_params = "&".join([f"{k}={v}" for k, v in sorted(params.items())])
-    return hmac.new(
-        api_secret.encode('utf-8'),
-        sorted_params.encode('utf-8'),
-        hashlib.sha256
-    ).hexdigest()
+def incrementar_tentativas_sl(id_sinal):
+    with conectar_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE sinais
+                SET tentativas_sl = tentativas_sl + 1
+                WHERE id = %s
+            """, (id_sinal,))
+            conn.commit()
 
-def consultar_saldo():
-    endpoint = "/v2/private/wallet/balance"
-    url = BYBIT_TESTNET_URL + endpoint
-    timestamp = str(int(time.time() * 1000))
-    params = {
-        "api_key": bybit_api_key,
-        "timestamp": timestamp
-    }
-    params['sign'] = gerar_assinatura(bybit_api_secret, params)
+def marcar_ordem_enviada(sinal_id):
+    with conectar_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE sinais SET flag_ordem_enviada = 1 WHERE id = %s
+            """, (sinal_id,))
+            conn.commit()
 
-    response = requests.get(url, params=params)
-    data = response.json()
+def marcar_tp_configurado(id_sinal):
+    with conectar_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE sinais SET flag_tp_configurado = TRUE WHERE id = %s", (id_sinal,))
+            conn.commit()
 
-    if data.get('result') and 'USDT' in data['result']:
-        saldo = float(data['result']['USDT']['available_balance'])
-        print(f"Saldo disponível: {saldo} USDT")
-        return saldo
-    else:
-        print("Erro ao consultar saldo:", data)
-        return 0.0
+def marcar_sl_configurado(id_sinal):
+    with conectar_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE sinais SET flag_sl_configurado = TRUE WHERE id = %s", (id_sinal,))
+            conn.commit()
 
-def consultar_preco_atual(par):
-    endpoint = "/v2/public/tickers"
-    url = BYBIT_TESTNET_URL + endpoint
-    params = {
-        "symbol": par.replace("/", "")
-    }
-    response = requests.get(url, params=params)
-    data = response.json()
+def deletar_sinal(sinal_id):
+    with conectar_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM sinais WHERE id = %s", (sinal_id,))
+            conn.commit()
 
-    if data.get('result'):
-        preco = float(data['result'][0]['last_price'])
-        print(f"Preço atual de {par}: {preco}")
-        return preco
-    else:
-        print("Erro ao consultar preço:", data)
-        return None
-
-def criar_ordem_limitada(par, side, qty, price, stop_loss):
-    endpoint = "/v2/private/order/create"
-    url = BYBIT_TESTNET_URL + endpoint
-    timestamp = str(int(time.time() * 1000))
-
-    params = {
-        "api_key": bybit_api_key,
-        "symbol": par.replace("/", ""),
-        "side": side.capitalize(),  # "Buy" ou "Sell"
-        "order_type": "Limit",
-        "qty": qty,
-        "price": price,
-        "time_in_force": "GoodTillCancel",
-        "stop_loss": stop_loss,
-        "reduce_only": False,
-        "close_on_trigger": False,
-        "position_idx": 0,  # Cross margin
-        "timestamp": timestamp
-    }
-
-    params['sign'] = gerar_assinatura(bybit_api_secret, params)
-
-    response = requests.post(url, data=params)
-    data = response.json()
-
-    if data.get("result"):
-        print(f"✅ Ordem enviada para {par} com preço {price}")
-        return True
-    else:
-        print("Erro ao enviar ordem:", data)
-        return False
-
-def atualizar_sinal(id_sinal):
-    conn = criar_conexao()
-    cursor = conn.cursor()
-    cursor.execute('UPDATE sinais SET flag_executado = 1 WHERE id = ?', (id_sinal,))
-    conn.commit()
-    conn.close()
-    print(f"⚡ Sinal {id_sinal} marcado como executado.")
-
-def processar_sinais():
+def loop_execucao_ordens():
     while True:
-        conn = criar_conexao()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM sinais WHERE flag_executado = 0 ORDER BY id ASC')
-        sinais = cursor.fetchall()
-        conn.close()
+        try:
+            sinal = buscar_sinal_execucao()
+            if sinal:
+                print(f"🟡 Enviando ordem para {sinal['pair']}")
+                sucesso = enviar_ordem_sem_tp_sl(sinal)
+                if sucesso:
+                    marcar_ordem_enviada(sinal["id"])
+            time.sleep(5)
+        except Exception as e:
+            print("❌ Erro no loop de execução de ordens:", e)
 
-        for sinal in sinais:
-            id_sinal, data_hora, par, tipo_ordem, margem, alavancagem, entry_min, entry_max, stoploss, targets, flag_executado = sinal
+def loop_configuracao_tp_sl():
+    while True:
+        try:
+            sinal = buscar_sinal_config()
+            if sinal:
+                print(f"⚙️ Configurando TP/SL para {sinal['pair']}")
 
-            print(f"\n🔔 Processando sinal ID {id_sinal} - {par} ({tipo_ordem})")
+                if not sinal["flag_tp_configurado"]:
+                    if configurar_take_profits(sinal):
+                        marcar_tp_configurado(sinal["id"])
+                    else:
+                        incrementar_tentativas_tp(sinal["id"])
 
-            saldo = consultar_saldo()
-            preco_atual = consultar_preco_atual(par)
-
-            if saldo > 0 and preco_atual:
-                if entry_min <= preco_atual <= entry_max:
-                    valor_para_trade = saldo * (trade_percentage / 100)
-                    qty = round(valor_para_trade / preco_atual, 3)  # Arredonda para 3 casas
-
-                    sucesso = criar_ordem_limitada(par, tipo_ordem, qty, preco_atual, stoploss)
-
-                    if sucesso:
-                        atualizar_sinal(id_sinal)
-                else:
-                    print(f"⏳ Preço {preco_atual} fora do intervalo {entry_min}-{entry_max}. Aguardando...")
-            else:
-                print("❌ Sem saldo disponível ou preço inválido.")
-
-        print("🕒 Aguardando 30 segundos para nova verificação...")
-        time.sleep(30)
+                if not sinal["flag_sl_configurado"]:
+                    if configurar_stop_loss(sinal):
+                        marcar_sl_configurado(sinal["id"])
+                    else:
+                        incrementar_tentativas_sl(sinal["id"])
+        except Exception as e:
+            print("❌ Erro no loop de configuração de TP/SL:", e)
+        time.sleep(5)
 
 if __name__ == "__main__":
-    processar_sinais()
+    print("🚀 Executor iniciado com loops paralelos.")
+
+    t1 = threading.Thread(target=loop_execucao_ordens, daemon=True)
+    t2 = threading.Thread(target=loop_configuracao_tp_sl, daemon=True)
+
+    t1.start()
+    t2.start()
+
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("\n🛑 Execução do bot interrompida pelo usuário.")
