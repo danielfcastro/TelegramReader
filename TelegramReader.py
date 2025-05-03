@@ -4,7 +4,6 @@ import logging
 from datetime import datetime
 from dotenv import load_dotenv
 from telethon import TelegramClient, events
-from extrator_sinal import extrair_sinal_trade, extrair_monitoramento_json
 import utils
 import psycopg2
 
@@ -23,6 +22,17 @@ db_params = {
     "password": os.getenv("db_password")
 }
 
+from database.db import (
+    buscar_info_apos_sinal_de_monitoramento,
+    inserir_sinal,
+    marcar_ordem_para_be_executado    
+)
+
+from utils import (
+    extrair_sinal_trade,
+    extrair_monitoramento_json
+)
+
 conn = psycopg2.connect(**db_params)
 cur = conn.cursor()
 
@@ -36,37 +46,6 @@ logging.basicConfig(
 )
 
 client = TelegramClient(session_name, api_id, api_hash)
-
-def inserir_sinal(sinal):
-    sql = '''
-    INSERT INTO sinais (
-        data_hora, par, tipo_ordem, margem, alavancagem,
-        entrada_inferior, entrada_superior,
-        tp1, tp2, tp3, tp4, stoploss, flag_executado
-    ) VALUES (
-        %s, %s, %s, %s, %s,
-        %s, %s,
-        %s, %s, %s, %s, %s, 0
-    );
-    '''
-    valores = (
-        datetime.now(), sinal["pair"], sinal["type"], sinal.get("margin", ""), sinal.get("leverage", ""),
-        sinal["entry_low"], sinal["entry_high"],
-        sinal.get("tp1"), sinal.get("tp2"), sinal.get("tp3"), sinal.get("tp4"),
-        sinal["stoploss"]
-    )
-    print("SQL SINAL:", cur.mogrify(sql, valores).decode())
-    cur.execute(sql, valores)
-    conn.commit()
-
-def inserir_monitoramento(mon):
-    if mon["tp"] != "TP2" or not any("break-even" in i.lower() or "breakeven" in i.lower() for i in mon["instructions"]):
-        return
-    sql = "INSERT INTO break_even (data_hora, par, flag_executado) VALUES (%s, %s, 0);"
-    valores = (datetime.now(), mon["pair"])
-    print("SQL MONITORAMENTO:", cur.mogrify(sql, valores).decode())
-    cur.execute(sql, valores)
-    conn.commit()
 
 async def main():
     grupo_entidade = await utils.obter_entidade(client, group_id)
@@ -90,7 +69,11 @@ async def main():
 
         monitoramento = extrair_monitoramento_json(mensagem)
         if monitoramento:
-            inserir_monitoramento(monitoramento)
+            if monitoramento["tp"] != "TP2" or not any("break-even" in i.lower() or "breakeven" in i.lower() for i in monitoramento["instructions"]):
+                return
+            mon = buscar_info_apos_sinal_de_monitoramento(monitoramento)
+            for info in mon:
+                marcar_ordem_para_be_executado(info)
             logging.info(f"📈 Monitoramento processado: {monitoramento['pair']}")
             return
 
