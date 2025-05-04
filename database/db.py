@@ -1,5 +1,3 @@
-from operator import truediv
-
 import psycopg2
 import logging
 from datetime import datetime
@@ -77,6 +75,7 @@ def buscar_sinal_para_be():
         ORDER BY id ASC
     """
     resultado = executar_select(query)
+    return resultado if resultado is not None else []
 
 def marcar_ordem_enviada(id_sinal, entry_price, order_id):
     query = """
