@@ -1,5 +1,7 @@
 import time
+import os
 from types import NoneType
+import logging
 from database.db import (
     buscar_sinal_execucao,
     buscar_sinal_para_be,
@@ -12,12 +14,13 @@ from database.db import (
 #API_KEY ='bmIBQcCg2jzDwqRBoG6IBRo8KGIEJNcM0VjOMBI1yJxKgFMhg7nDQKs9bxsLBE355lS25Kgpwb3KPX1SnPdgQ'
 #SECRET_KEY='LsXlN8NeXdzmV2IkpCYDwrpRPzygRElUtthuKoQzGgszNsx2zFdYkfxERMnS9yeSGW55saxXsBF9fBg'
 
-debug = False
+trace = False
 #bingx = BingxAPI(API_KEY, SECRET_KEY, timestamp="local")
+logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 
 def iniciar_executor(broker):
     #print(bingx.get_perpetual_balance())
-    print("✅ Executor iniciado com 1 thread para trade + break even")
+    logger.info("✅ Executor iniciado com 1 thread para trade + break even")
 
     while True:
         try:
@@ -28,15 +31,15 @@ def iniciar_executor(broker):
             #    continue
             sinais = buscar_sinal_execucao()
             time.sleep(5)
-            if debug: 
-                print(f">>> tipo de sinais: {type(sinais)} | valor: {sinais!r}")
+            if trace:
+                logger.debug(">>> tipo de sinais: {type(sinais)} | valor: {sinais!r}")
                 if sinais is None:
-                    print("✅ É None mesmo")
+                    logger.debug("✅ É None mesmo")
                 else:
-                    print("🚫 NÃO é None")
+                    logger.debug("🚫 NÃO é None")
             if not isinstance(sinais, NoneType):
                 for sinal in sinais:
-                    print(f"📦 Enviando ordem para {sinal['par']}")
+                    logger.info("📦 Enviando ordem para {sinal['par']}")
                     sucesso, entry_price, order_id = broker.enviar_ordem_tp_sl(sinal)
                     if sucesso:
                         marcar_ordem_enviada(sinal["id"], entry_price, order_id)
@@ -47,7 +50,7 @@ def iniciar_executor(broker):
                 sinal_be = buscar_sinal_para_be()
                 for info in sinal_be:
                     if info:
-                        print(f"⚙️ Ajustando BE para {info['par']}")
+                        logger.info("⚙️ Ajustando BE para {info['par']}")
                         sucesso = broker.ajustar_para_break_even(
                             id=info["id"],
                             order_id=info["order_id"],
@@ -62,7 +65,7 @@ def iniciar_executor(broker):
             time.sleep(5)
 
         except KeyboardInterrupt:
-            print("\n🛑 Executor encerrado pelo usuário.")
+            logger.info("\n🛑 Executor encerrado pelo usuário.")
             break
         except Exception as e:
-            print(f"❌ Erro geral no executor: {e}")
+            logger.error(f"❌ Erro geral no executor: {e}")

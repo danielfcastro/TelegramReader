@@ -1,9 +1,23 @@
 import os
 import threading
 import sys
+import logging
+
 from utils import carregar_config
+from log.logger_config import configurar_logging
 from integration.BingXBroker import BingXBroker
 from TradeExecutor import iniciar_executor
+
+# Diretório de logs
+LOG_DIR = "logs"
+os.makedirs(LOG_DIR, exist_ok=True)
+
+# Configuração global de logging
+configurar_logging()
+
+# Silenciar logs detalhados de utils, mostrando apenas WARNING ou mais graves
+#logging.getLogger("utils").setLevel(logging.WARNING)
+logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 
 def salvar_env_com_base_no_config(broker, is_testnet):
     config = carregar_config()
@@ -45,11 +59,12 @@ def salvar_env_com_base_no_config(broker, is_testnet):
     with open(".env", "w") as f:
         f.write("\n".join(env_lines) + "\n")
 
-    print("\n📄 Variáveis de ambiente definidas:")
+    logger.debug("📄 Variáveis de ambiente definidas:")
     for linha in env_lines:
-        print("  ", linha)
+        logger.debug("  %s", linha)
 
 def iniciar_telegram_reader():
+    logger.info(f"🚦 Iniciando Telegram Reader...")
     os.system("python TelegramReader.py")
 
 def iniciar_trade_executor(broker):
@@ -64,17 +79,16 @@ def iniciar_com_broker(broker_name):
 
     t1.start()
     t2.start()
-
     try:
         while t1.is_alive() and t2.is_alive():
             t1.join(timeout=1)
             t2.join(timeout=1)
     except KeyboardInterrupt:
-        print("\n🛑 Execução do bot interrompida pelo usuário.")
+        logger.warning("\n🛑 Execução do bot interrompida pelo usuário.")
         sys.exit(0)
 
 if __name__ == "__main__":
-    print("🚀 Iniciando Telegram Signal Bot")
+    logger.info("🚦 Iniciando Telegram Signal Bot")
 
     broker = "bingx"
 
@@ -85,5 +99,5 @@ if __name__ == "__main__":
 
     salvar_env_com_base_no_config(broker, testnet)
 
-    print("\n🚦 Iniciando componentes...")
+    logger.info("🚦 Iniciando componentes...")
     iniciar_com_broker(broker)

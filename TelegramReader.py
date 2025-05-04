@@ -1,12 +1,15 @@
 import os
-import json
 import logging
-from datetime import datetime
-from dotenv import load_dotenv
-from telethon import TelegramClient, events
 import utils
 import psycopg2
 
+from datetime import datetime
+from dotenv import load_dotenv
+from log.logger_config import configurar_logging
+from telethon import TelegramClient, events
+
+logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
+configurar_logging()
 load_dotenv()
 
 api_id = os.getenv("api_id")
@@ -36,49 +39,39 @@ from utils import (
 conn = psycopg2.connect(**db_params)
 cur = conn.cursor()
 
-LOG_DIR = "logs"
-os.makedirs(LOG_DIR, exist_ok=True)
-logging.basicConfig(
-    filename=os.path.join(LOG_DIR, "telegram_reader.log"),
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    encoding="utf-8"
-)
-
 client = TelegramClient(session_name, api_id, api_hash)
 
 async def main():
     grupo_entidade = await utils.obter_entidade(client, group_id)
     grupo_nome = getattr(grupo_entidade, 'title', f"grupo_{group_id}")
-    nome_grupo_limpo = utils.limpar_nome(grupo_nome)
-    grupo_id = grupo_entidade.id 
+    #nome_grupo_limpo = utils.limpar_nome(grupo_nome)
+    grupo_id = grupo_entidade.id
+    logger.info(f"✅ Telegram Reader inciado a escuta de mensagens em grupo: {grupo_nome} e id: {grupo_id}")
 
-    print(f"\nMonitorando e gravando mensagens no grupo: {grupo_nome}")
     @client.on(events.NewMessage(chats=grupo_entidade))
     async def handler(event):
         mensagem = event.text
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        print(f"[{timestamp}] Mensagem recebida:")
-        print(mensagem)
-        logging.info(f"Mensagem recebida: {mensagem}")
+        logger.info(f"[{timestamp}] Mensagem recebida:")
+        logger.info(mensagem)
 
         sinal = extrair_sinal_trade(mensagem)
         if sinal:
             inserir_sinal_com_multiplos_tps(sinal)
-            logging.info(f"✅ Sinal inserido para {sinal['pair']}")
+            logger.info(f"✅ Sinal inserido para {sinal['pair']}")
             return
 
         monitoramento = extrair_monitoramento_json(mensagem)
-        if monitoramento:
-            if monitoramento["tp"] != "TP2" or not any("break-even" in i.lower() or "breakeven" in i.lower() for i in monitoramento["instructions"]):
-                return
+        if monitoramento and monitoramento["tp"] == "TP2":
             info = buscar_info_apos_sinal_de_monitoramento(monitoramento["pair"])
             if info:
                 ativar_break_even(info["id"])
-            logging.info(f"📈 Monitoramento processado: {monitoramento['pair']}")
+                logger.info(f"✅ Break-even ativado para {monitoramento['pair']}")
+            else:
+                logger.warning(f"⚠️ Nenhuma ordem encontrada para {monitoramento['pair']} ao tentar ativar BE.")
             return
 
-        logging.warning("❌ Não foi possível extrair sinal ou monitoramento da mensagem.")
+        logger.warning("❌ Não foi possível extrair sinal ou monitoramento da mensagem.")
 
     await client.run_until_disconnected()
 
