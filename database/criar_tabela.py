@@ -17,8 +17,6 @@ def criar_banco():
             tipo_ordem text COLLATE pg_catalog."default",
             margem text COLLATE pg_catalog."default",
             alavancagem text COLLATE pg_catalog."default",
-            entrada_inferior real,
-            entrada_superior real,
             tp real,
             sl real,
             flag_ordem_enviada boolean DEFAULT false,

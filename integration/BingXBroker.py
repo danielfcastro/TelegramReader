@@ -38,10 +38,13 @@ class BingXBroker(BrokerInterface):
         return response.json()
 
     def _build_query(self, params):
-        sorted_params = sorted(params.items())
+        # Sempre adiciona timestamp, mesmo que params esteja vazio
+        all_params = dict(params) if params else {}
+        all_params["timestamp"] = str(int(time.time() * 1000))
+
+        sorted_params = sorted(all_params.items())
         query = "&".join(f"{k}={v}" for k, v in sorted_params)
-        timestamp = f"timestamp={int(time.time() * 1000)}"
-        return f"{query}&{timestamp}" if query else timestamp
+        return query
 
     def obter_preco_mercado(self, symbol):
         path = "/openApi/swap/v2/quote/premiumIndex"
@@ -59,7 +62,7 @@ class BingXBroker(BrokerInterface):
 
             if response["code"] == 0 and response.get("data"):
                 for item in response["data"]:
-                    if item["asset"] == "USDT":
+                    if item["asset"] in ["USDT", "VST"]:
                         return float(item.get("availableMargin", 0.0))
         except Exception as e:
             print("Erro ao consultar saldo disponível:", e)
@@ -100,7 +103,7 @@ class BingXBroker(BrokerInterface):
             proporcoes = [0.1, 0.2, 0.5, 0.1]
             quantidades = [ajustar_quantidade(quantidade_total * p, step=0.0001) for p in proporcoes]
             preco_tp = float(sinal["tp"])
-            preco_sl = float(sinal["stoploss"])
+            preco_sl = float(sinal["sl"])
 
             ordens = []
             for q in quantidades:
@@ -125,12 +128,10 @@ class BingXBroker(BrokerInterface):
                 }
                 ordens.append(ordem)
 
-            body = {
-                "batchOrders": json.dumps(ordens)
-            }
-
-            path = "/openApi/swap/v2/trade/batchOrders"
-            response = self._send_request("POST", path, {}, body)
+            path = "/openApi/swap/v2/trade/order"
+            for body in ordens:
+                response = self._send_request("POST", path, body)
+                time.sleep(5)
 
             if response["code"] == 0 and "orders" in response["data"]:
                 print("📥 Ordens enviadas com sucesso:", response["data"])

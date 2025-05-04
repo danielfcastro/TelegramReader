@@ -8,7 +8,7 @@ from .utilities import get_system_time
 
 
 class BingxAPI(object):
-    ROOT_URL = "https://open-api.bingx.com"
+    ROOT_URL = "https://open-api-vst.bingx.com"
 
     def __init__(self, api_key, secret_key, timestamp="local"):
         self.API_KEY = api_key

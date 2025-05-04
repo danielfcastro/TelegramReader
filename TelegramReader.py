@@ -24,8 +24,8 @@ db_params = {
 
 from database.db import (
     buscar_info_apos_sinal_de_monitoramento,
-    inserir_sinal,
-    marcar_ordem_para_be_executado    
+    ativar_break_even,
+    inserir_sinal_com_multiplos_tps
 )
 
 from utils import (
@@ -58,12 +58,13 @@ async def main():
     async def handler(event):
         mensagem = event.text
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        print(f"[{timestamp}] Mensagem recebida:", mensagem)
+        print(f"[{timestamp}] Mensagem recebida:")
+        print(mensagem)
         logging.info(f"Mensagem recebida: {mensagem}")
 
         sinal = extrair_sinal_trade(mensagem)
         if sinal:
-            inserir_sinal(sinal)
+            inserir_sinal_com_multiplos_tps(sinal)
             logging.info(f"✅ Sinal inserido para {sinal['pair']}")
             return
 
@@ -71,9 +72,9 @@ async def main():
         if monitoramento:
             if monitoramento["tp"] != "TP2" or not any("break-even" in i.lower() or "breakeven" in i.lower() for i in monitoramento["instructions"]):
                 return
-            mon = buscar_info_apos_sinal_de_monitoramento(monitoramento)
-            for info in mon:
-                marcar_ordem_para_be_executado(info)
+            info = buscar_info_apos_sinal_de_monitoramento(monitoramento["pair"])
+            if info:
+                ativar_break_even(info["id"])
             logging.info(f"📈 Monitoramento processado: {monitoramento['pair']}")
             return
 

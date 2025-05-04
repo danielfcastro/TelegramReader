@@ -7,11 +7,16 @@ from database.db import (
     marcar_ordem_enviada,
     incrementar_retry_be,
     incrementar_retry_order,
-    conta_sinais_execucao    
 )
+#from bingx.api import BingxAPI
+#API_KEY ='bmIBQcCg2jzDwqRBoG6IBRo8KGIEJNcM0VjOMBI1yJxKgFMhg7nDQKs9bxsLBE355lS25Kgpwb3KPX1SnPdgQ'
+#SECRET_KEY='LsXlN8NeXdzmV2IkpCYDwrpRPzygRElUtthuKoQzGgszNsx2zFdYkfxERMnS9yeSGW55saxXsBF9fBg'
+
 debug = False
+#bingx = BingxAPI(API_KEY, SECRET_KEY, timestamp="local")
 
 def iniciar_executor(broker):
+    #print(bingx.get_perpetual_balance())
     print("✅ Executor iniciado com 1 thread para trade + break even")
 
     while True:

@@ -25,22 +25,30 @@ def carregar_config(path='config.properties'):
 import re
 
 def extrair_sinal_trade(mensagem):
+    print("📩 Mensagem recebida para extração:")
+    print(mensagem)
+
     try:
         pair_match = re.search(r"\[([A-Z0-9]+/USDT)\]", mensagem)
-        type_match = re.search(r"\*\*(LONG|BUY|SHORT|SELL)\*\*", mensagem, re.IGNORECASE)
-        entry_match = re.search(r"ENTRY:\s*[<\[]?([0-9\.]+)-([0-9\.]+)[>\]]?", mensagem, re.IGNORECASE)
-        sl_match = re.search(r"STOPLOSS:\s*[\[]?([0-9\.]+)[\]]?", mensagem, re.IGNORECASE)
+        type_match = re.search(r"(LONG|BUY|SHORT|SELL)", mensagem, re.IGNORECASE)
+        sl_match = re.search(r"\*\*STOPLOSS:\*\*\s*\[`?([0-9\.]+)`?\]", mensagem, re.IGNORECASE)
         margin_match = re.search(r"Margin:\s*(\w+),\s*(\d+)X", mensagem, re.IGNORECASE)
         targets = re.findall(r"\[\`?([0-9\.]+)\`?\]", mensagem)
 
-        if not (pair_match and type_match and entry_match and sl_match):
+        # DEBUG
+        print("🔎 Par:", pair_match.group(1) if pair_match else "N/A")
+        print("🔎 Tipo:", type_match.group(1) if type_match else "N/A")
+        print("🔎 SL:", sl_match.group(1) if sl_match else "N/A")
+        print("🔎 Targets:", targets)
+        print("🔎 Margem:", margin_match.groups() if margin_match else "N/A")
+
+        if not (pair_match and type_match and sl_match):
+            print("❌ Não foi possível extrair todos os campos obrigatórios.")
             return None
 
         sinal = {
             "pair": pair_match.group(1).upper(),
             "type": type_match.group(1).upper(),
-            "entry_low": float(entry_match.group(1)),
-            "entry_high": float(entry_match.group(2)),
             "stoploss": float(sl_match.group(1)),
         }
 
@@ -52,8 +60,9 @@ def extrair_sinal_trade(mensagem):
             sinal[f"tp{i}"] = float(alvo)
 
         return sinal
+
     except Exception as e:
-        print("Erro ao extrair sinal:", e)
+        print("❌ Erro ao extrair sinal:", e)
         return None
 
 def extrair_monitoramento_json(mensagem):

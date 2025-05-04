@@ -1,4 +1,5 @@
 import psycopg2
+from datetime import datetime
 from psycopg2 import sql
 from psycopg2.extras import RealDictCursor
 from contextlib import contextmanager
@@ -54,7 +55,7 @@ def conta_sinais_execucao():
 def buscar_sinal_execucao():
     query = """
         SELECT * FROM sinais
-        WHERE flag_ordem_enviada = false
+        WHERE flag_ordem_enviada = false and tentativas < 3
         ORDER BY id ASC
     """
     resultado = executar_select(query)
@@ -100,14 +101,36 @@ def desativar_be(id_sinal):
     """
     executar_update(query, {"id": id_sinal})
 
+def inserir_sinal_com_multiplos_tps(dados):
+    agora = datetime.utcnow().isoformat()
+
+    for i in range(1, 5):
+        tp_key = f"tp{i}"
+        print(tp_key)
+        if tp_key in dados and dados[tp_key] is not None:
+            novo_sinal = {
+                "data_hora": agora,
+                "par": dados["pair"],
+                "tipo_ordem": dados["type"],
+                "margem": dados.get("margin", "Cross"),
+                "alavancagem": dados.get("leverage", "20X"),
+                "tp": dados[tp_key],
+                "sl": dados["stoploss"],
+            }
+            print(f"📥 Inserindo sinal com TP{i}: {novo_sinal}")
+            inserir_sinal(novo_sinal)
+        else:
+            print(f"⚠️ TP{i} não encontrado ou é None")
+
+
 def inserir_sinal(dados):
     query = """
         INSERT INTO sinais (
             data_hora, par, tipo_ordem, margem, alavancagem,
-            entrada_inferior, entrada_superior, tp, sl
+             tp, sl
         ) VALUES (
             %(data_hora)s, %(par)s, %(tipo_ordem)s, %(margem)s, %(alavancagem)s,
-            %(entrada_inferior)s, %(entrada_superior)s, %(tp)s, %(sl)s
+            %(tp)s, %(sl)s
         )
     """
     executar_insert(query, dados)
@@ -115,7 +138,7 @@ def inserir_sinal(dados):
 def buscar_info_apos_sinal_de_monitoramento(par):
     query = """
         SELECT id, order_id, entry_price FROM sinais
-        WHERE par = %(par)s AND flag_ordem_enviada = true AND order_id != 0
+        WHERE par = %(par)s AND flag_ordem_enviada = true AND order_id != 0 AND ativar_be = false
         ORDER BY id DESC
         LIMIT 1
     """
