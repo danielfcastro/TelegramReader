@@ -22,12 +22,12 @@ def configurar_logging(log_level=logging.DEBUG, log_dir='logs', log_file='app.lo
 
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(ColoredFormatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        "%(asctime)s -  %(levelname)s - %(name)s - %(funcName)s - %(message)s"
     ))
 
     file_handler = logging.FileHandler(os.path.join(log_dir, log_file), encoding='utf-8')
     file_handler.setFormatter(logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        "%(asctime)s -  %(levelname)s - %(name)s - %(funcName)s - %(message)s"
     ))
 
     logging.basicConfig(
