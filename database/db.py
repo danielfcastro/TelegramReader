@@ -1,13 +1,19 @@
+from operator import truediv
+
 import psycopg2
+import logging
 from datetime import datetime
-from psycopg2 import sql
 from psycopg2.extras import RealDictCursor
 from contextlib import contextmanager
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
-debug = False
+logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
+
+debug_update=False
+debug_select=False
+debug_insert=True
 @contextmanager
 def conectar_db():
     conn = psycopg2.connect(
@@ -25,7 +31,8 @@ def conectar_db():
 def executar_select(query, params=None):
     with conectar_db() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            if debug: print("📥 SQL SELECT:", cur.mogrify(query, params).decode())
+            if debug_select:
+                logger.debug(f"📥 SQL SELECT: {cur.mogrify(query, params).decode()}", )
             cur.execute(query, params)
             resultados = cur.fetchall()
             return resultados
@@ -33,14 +40,16 @@ def executar_select(query, params=None):
 def executar_update(query, params=None):
     with conectar_db() as conn:
         with conn.cursor() as cur:
-            print("📤 SQL UPDATE:", cur.mogrify(query, params).decode())
+            if debug_update:
+                logger.debug(f"📤 SQL UPDATE: {cur.mogrify(query, params).decode()}")
             cur.execute(query, params)
             conn.commit()
 
 def executar_insert(query, params=None):
     with conectar_db() as conn:
         with conn.cursor() as cur:
-            print("➕ SQL INSERT:", cur.mogrify(query, params).decode())
+            if debug_insert:
+                logger.debug(f"➕ SQL INSERT: {cur.mogrify(query, params).decode()}")
             cur.execute(query, params)
             conn.commit()
 

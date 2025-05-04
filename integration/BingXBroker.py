@@ -4,6 +4,7 @@ import hmac
 import json
 import requests
 import logging
+import re
 from hashlib import sha256
 from dotenv import load_dotenv
 
@@ -26,7 +27,7 @@ class BingXBroker(BrokerInterface):
             payload.encode("utf-8"),
             digestmod=sha256
         ).hexdigest()
-        logger.debug(f"signature: {signature}")
+        #logger.debug(f"signature: {signature}")
         return signature
 
     def _send_request(self, method, path, params):
@@ -37,7 +38,7 @@ class BingXBroker(BrokerInterface):
             'X-BX-APIKEY': self.API_KEY
         }
         response = requests.request(method, url, headers=headers)
-        logger.debug(f"response: {response.json()}")
+        #logger.debug(f"response: {response.json()}")
         return response.json()
 
     def _build_query(self, params):
@@ -47,14 +48,14 @@ class BingXBroker(BrokerInterface):
 
         sorted_params = sorted(all_params.items())
         query = "&".join(f"{k}={v}" for k, v in sorted_params)
-        logger.debug(f"query: {query}")
+        #logger.debug(f"query: {query}")
         return query
 
     def obter_preco_mercado(self, symbol):
         path = "/openApi/swap/v2/quote/premiumIndex"
         response = self._send_request("GET", path, {"symbol": symbol})
-        if response["code"] == 0:
-            logger.debug(f"obter premium index: {response['data']['premiumIndex']}")
+        if response["code"] == 0 and response.get("data"):
+            logger.debug(f"obter markPrice: {response['data'].get('markPrice')}")
             return float(response["data"]["markPrice"])
         raise Exception(f"❌ Erro ao obter preço de mercado de {symbol}")
 
@@ -94,7 +95,7 @@ class BingXBroker(BrokerInterface):
     def enviar_ordem_tp_sl(self, sinal):
         symbol = sinal["par"].replace("/", "-").upper()
         side = "BUY" if sinal["tipo_ordem"].upper() == "LONG" else "SELL"
-        side_leverage = "LONG" if side == "BUY" else "SHORT"
+        side_leverage = "BOTH"
         leverage = int(sinal["alavancagem"].replace("X", ""))
         logger.debug(f"symbol: {symbol} - side: {side} - leverage: {leverage} - side_leverage: {side_leverage}")
         try:
@@ -134,6 +135,77 @@ class BingXBroker(BrokerInterface):
                         "workingType": "MARK_PRICE"
                     })
                 }
+                logger.debug(f"quantidades: {q} - valor: {q * preco_mercado}")
+                ordens.append(ordem)
+
+            path = "/openApi/swap/v2/trade/order"
+            for body in ordens:
+
+                response = self._send_request("POST", path, body)
+                logger.debug(f"response: {response} - body: {body} - path: {path} - POST")
+
+                if response["code"] == 0 and "orders" in response["data"]:
+                    order_id = response["data"]["orders"][0]["orderId"]
+                    logger.info(f"Ordens enviadas com sucesso - order_id: {order_id} - preco_mercado: {preco_mercado}")
+                    return True, preco_mercado, order_id
+                #elif response["code"] == 80001:
+                #    limite = self.extrair_limite_posicao(response)
+                #    logger.debug(f"limite: {limite}")
+                #    self.quebrar_ordens_por_limite(limite, valor_trade, preco_mercado, symbol, side, side_leverage, preco_tp, preco_sl)
+                else:
+                    logger.error(f"⚠️ Falha ao enviar ordens: {response}")
+                    return False, 0.0, 0
+                time.sleep(5)
+        except Exception as e:
+            print("❌ Erro ao enviar ordens BingX:", e)
+            return False, 0.0, 0
+
+    def extrair_limite_posicao(self, msg_erro):
+        """
+        Extrai o valor numérico da mensagem de erro indicando o limite máximo da posição.
+        Aceita um dicionário (response) ou string (msg).
+        """
+        if isinstance(msg_erro, dict):
+            msg_erro = msg_erro.get("msg", "")
+
+        if not isinstance(msg_erro, str):
+            return None
+
+        match = re.search(r'(\d+(?:\.\d+)?)\s*USDT', msg_erro)
+        if match:
+            return float(match.group(1))
+        return None
+
+    def quebrar_ordens_por_limite(self, limite, valor_tade, preco_mercado, symbol, side, side_leverage, preco_tp, preco_sl):
+        try:
+            quantidades = []
+            while valor_total > 0:
+                valor_parcial = min(valor_tade, limite)
+                quantidade = valor_parcial / preco_mercado
+                quantidades.append(round(quantidade, 4))
+                valor_tade -= valor_parcial
+
+            ordens = []
+            for q in quantidades:
+                ordem = {
+                    "symbol": symbol,
+                    "side": side,
+                    "positionSide": side_leverage,
+                    "type": "MARKET",
+                    "quantity": q,
+                    "takeProfit": json.dumps({
+                        "type": "TAKE_PROFIT_MARKET",
+                        "quantity": q,
+                        "stopPrice": preco_tp,
+                        "workingType": "MARK_PRICE"
+                    }),
+                    "stopLoss": json.dumps({
+                        "type": "STOP_MARKET",
+                        "quantity": q,
+                        "stopPrice": preco_sl,
+                        "workingType": "MARK_PRICE"
+                    })
+                }
                 ordens.append(ordem)
 
             path = "/openApi/swap/v2/trade/order"
@@ -141,14 +213,6 @@ class BingXBroker(BrokerInterface):
                 response = self._send_request("POST", path, body)
                 logger.debug(f"response: {response} - body: {body} - path: {path} - POST")
                 time.sleep(5)
-
-            if response["code"] == 0 and "orders" in response["data"]:
-                order_id = response["data"]["orders"][0]["orderId"]
-                logger.info(f"Ordens enviadas com sucesso - order_id: {order_id} - preco_mercado: {preco_mercado}")
-                return True, preco_mercado, order_id
-            else:
-                logger.error(f"⚠️ Falha ao enviar ordens: {response}")
-                return False, 0.0, 0
         except Exception as e:
             print("❌ Erro ao enviar ordens BingX:", e)
             return False, 0.0, 0
