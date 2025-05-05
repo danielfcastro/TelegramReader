@@ -1,5 +1,6 @@
 import os
 import threading
+import argparse
 import sys
 import logging
 
@@ -14,17 +15,18 @@ os.makedirs(LOG_DIR, exist_ok=True)
 
 # Configuração global de logging
 configurar_logging()
+broker=None
 
 # Silenciar logs detalhados de utils, mostrando apenas WARNING ou mais graves
 #logging.getLogger("utils").setLevel(logging.WARNING)
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 
-def salvar_env_com_base_no_config(broker, is_testnet):
+def salvar_env_com_base_no_config(_broker, is_testnet):
     config = carregar_config()
     is_testnet_str = "true" if is_testnet else "false"
     env_lines = [
         f"#broker configuration",
-        f"BROKER={broker}",
+        f"BROKER={_broker}",
         f"IS_TESTNET={is_testnet_str}",
         f"",
     ]
@@ -59,20 +61,21 @@ def salvar_env_com_base_no_config(broker, is_testnet):
     with open(".env", "w") as f:
         f.write("\n".join(env_lines) + "\n")
 
-    logger.debug("📄 Variáveis de ambiente definidas:")
+    logger.debug("📄 - Variáveis de ambiente definidas:")
     for linha in env_lines:
         logger.debug("  %s", linha)
 
 def iniciar_telegram_reader():
-    logger.info(f"🚦 Iniciando Telegram Reader...")
+    logger.info("🚦 - Iniciando Telegram Reader...")
     os.system("python TelegramReader.py")
 
-def iniciar_trade_executor(broker):
-    executor_loop = iniciar_executor(broker)
+def iniciar_trade_executor(_broker):
+    executor_loop = iniciar_executor(_broker)
     executor_loop()
 
 def iniciar_com_broker(broker_name):
-    broker = BingXBroker()
+    if broker_name == "bingx":
+        broker = BingXBroker()
 
     t1 = threading.Thread(target=iniciar_telegram_reader, daemon=True)
     t2 = threading.Thread(target=iniciar_trade_executor, args=(broker,), daemon=True)
@@ -84,20 +87,40 @@ def iniciar_com_broker(broker_name):
             t1.join(timeout=1)
             t2.join(timeout=1)
     except KeyboardInterrupt:
-        logger.warning("\n🛑 Execução do bot interrompida pelo usuário.")
+        logger.warning("🛑 - Execução do bot interrompida pelo usuário.")
         sys.exit(0)
 
 if __name__ == "__main__":
-    logger.info("🚦 Iniciando Telegram Signal Bot")
+    logger.info("🚦 - Iniciando Telegram Signal Bot")
 
+    parser = argparse.ArgumentParser(
+        description=(
+            "\033[92m🟢 Inicia o bot de sinais na rede desejada.\033[0m\n\n"
+            "\033[93m⚠️  REQUISITOS IMPORTANTES:\033[0m\n"
+            "   - Sua conta na corretora deve estar configurada da seguinte forma:\n"
+            "     \033[96m• Margin Mode:\033[0m      \033[91mCROSS\033[0m\n"
+            "     \033[96m• Position Mode:\033[0m    \033[91mONE-WAY\033[0m\n\n"
+            "\033[91mEssas configurações são OBRIGATÓRIAS para que o bot funcione corretamente.\033[0m"
+        ),
+        epilog=(
+            "\033[94m💡 EXEMPLOS DE USO:\033[0m\n"
+            "   \033[97mpython seu_arquivo.py --testnet\033[0m     \033[90m# Executa em ambiente de testes\033[0m\n"
+            "   \033[97mpython seu_arquivo.py --mainnet\033[0m     \033[90m# Executa em ambiente de produção\033[0m"
+        ),
+        formatter_class=argparse.RawTextHelpFormatter
+
+    )
+
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--testnet", action="store_true", help="Usar ambiente de testes (testnet)")
+    group.add_argument("--mainnet", action="store_true", help="Usar ambiente de produção (mainnet)")
+
+    args = parser.parse_args()
+
+    testnet = args.testnet
     broker = "bingx"
-
-    print("Deseja usar a testnet?")
-    print("1 - Sim")
-    print("2 - Não (Mainnet)")
-    testnet = input("Digite 1 ou 2: ").strip() == "1"
 
     salvar_env_com_base_no_config(broker, testnet)
 
-    logger.info("🚦 Iniciando componentes...")
+    logger.info("🚦 - Iniciando componentes...")
     iniciar_com_broker(broker)
