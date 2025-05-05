@@ -45,5 +45,6 @@ def configurar_logging(log_level=logging.DEBUG, log_dir='logs', log_file='app.lo
     logging.getLogger("telethon").setLevel(logging.INFO)
     logging.getLogger("telethon.network.mtprotosender").setLevel(logging.WARNING)
     logging.getLogger("telethon.extensions.messagepacker").setLevel(logging.WARNING)
+    logging.getLogger("telethon.client.updates").setLevel(logging.WARNING)
     logging.getLogger("asyncio").setLevel(logging.WARNING)
     logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
