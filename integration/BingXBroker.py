@@ -144,8 +144,8 @@ class BingXBroker(BrokerInterface):
                 response = self._send_request("POST", path, body)
                 logger.debug(f"response: {response} - body: {body} - path: {path} - POST")
 
-                if response["code"] == 0 and "orders" in response["data"]:
-                    order_id = response["data"]["orders"][0]["orderId"]
+                if response["code"] == 0:
+                    order_id = response["data"]["order"]["orderId"]
                     logger.info(f"Ordens enviadas com sucesso - order_id: {order_id} - preco_mercado: {preco_mercado}")
                     return True, preco_mercado, order_id
                 #elif response["code"] == 80001:
@@ -197,13 +197,15 @@ class BingXBroker(BrokerInterface):
                         "type": "TAKE_PROFIT_MARKET",
                         "quantity": q,
                         "stopPrice": preco_tp,
-                        "workingType": "MARK_PRICE"
+                        "workingType": "MARK_PRICE",
+                        "stopGuaranteed":"TAKE_PROFIT_MARKET"
                     }),
                     "stopLoss": json.dumps({
                         "type": "STOP_MARKET",
                         "quantity": q,
                         "stopPrice": preco_sl,
-                        "workingType": "MARK_PRICE"
+                        "workingType": "MARK_PRICE",
+                        "stopGuaranteed": "STOP_MARKET"
                     })
                 }
                 ordens.append(ordem)

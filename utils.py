@@ -71,7 +71,7 @@ def extrair_sinal_trade(mensagem):
 
 def extrair_monitoramento_json(mensagem):
     try:
-        logger.debug(f"<UNK> Mensagem: {mensagem}")
+        logger.debug(f"<MONITORAMENTO> Mensagem: {mensagem}")
         pair_match = re.search(r"([A-Z0-9]+/USDT)", mensagem)
         logger.debug(f"pair_match: {pair_match}")
         target_done = re.search(r"TARGET #(\d) DONE", mensagem, re.IGNORECASE)
