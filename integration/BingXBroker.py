@@ -148,7 +148,7 @@ class BingXBroker(BrokerInterface):
                 "positionSide": "BOTH",
                 "quantity": quantidade,
                 "side": side,
-                "symbol": par,
+                "symbol": symbol,
                 "type": "STOP_MARKET",
                 "stopPrice": entry_price
             }

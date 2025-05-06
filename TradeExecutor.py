@@ -84,7 +84,7 @@ def iniciar_executor(broker):
                             order_id=info["order_id"],
                             entry_price=info["entry_price"],
                             tipo_ordem=info["tipo_ordem"],
-                            par=info["par"].replace("/", "-").upper(),
+                            par=info["par"],
                             quantidade=info["quantidade"]
                         )
                         if sucesso:

@@ -58,7 +58,7 @@ async def main():
             inserir_sinal_com_multiplos_tps(dados)
             logger.info(f"✅ - Sinal inserido para {dados['pair']}")
             return
-        if tipo == "monitoramento":
+        elif tipo == "monitoramento":
             if dados["tp"] == "TP2":
                 info = buscar_info_apos_sinal_de_monitoramento(dados["pair"])
                 if info:
@@ -69,7 +69,8 @@ async def main():
                 return
             if dados["tp"] == "TP4":
                 logger.info("⚠️ - Ainda a ser implementado - enviar trailing stop para último lote 5")
-        logger.warning("❌ - Não foi possível extrair sinal ou monitoramento da mensagem.")
+        else:
+            logger.warning("❌ - Não foi possível extrair sinal ou monitoramento da mensagem.")
     await client.run_until_disconnected()
 
 if __name__ == "__main__":
