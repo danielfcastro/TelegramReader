@@ -24,7 +24,7 @@ def criar_banco():
             order_id bigint DEFAULT 0,
             entry_price real DEFAULT 0,
             quantidade real DEFAULT 0,
-            tentaivas_be smallint DEFAULT 0,
+            tentativas_be smallint DEFAULT 0,
             ativar_be boolean DEFAULT false,
             CONSTRAINT sinais_pkey PRIMARY KEY (id)
         );

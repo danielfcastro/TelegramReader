@@ -71,7 +71,7 @@ def buscar_sinal_execucao():
 def buscar_sinal_para_be():
     query = """
         SELECT * FROM sinais
-        WHERE ativar_be = true AND flag_ordem_enviada = true
+        WHERE ativar_be = true AND flag_ordem_enviada = true and tentativas_be <3
         ORDER BY id ASC
     """
     resultado = executar_select(query)
@@ -85,7 +85,6 @@ def marcar_ordem_enviada(id_sinal, entry_price, order_id, quantidade):
     """
     executar_update(query, {"id": id_sinal, "entry_price": entry_price, "order_id": order_id, "quantidade": quantidade})
 
-
 def incrementar_retry_order(id_sinal):
     query = """
         UPDATE sinais
@@ -97,7 +96,7 @@ def incrementar_retry_order(id_sinal):
 def incrementar_retry_be(id_sinal):
     query = """
         UPDATE sinais
-        SET tentaivas_be = tentaivas_be + 1
+        SET tentativas_be = tentativas_be + 1
         WHERE id = %(id)s
     """
     executar_update(query, {"id": id_sinal})

@@ -24,7 +24,7 @@ def iniciar_executor(broker):
     while True:
         try:
             sinais = buscar_sinal_execucao()
-            time.sleep(5)
+            time.sleep(2)
 
             if sinais:
                 saldo = broker.obter_saldo_disponivel()
@@ -84,7 +84,7 @@ def iniciar_executor(broker):
                             order_id=info["order_id"],
                             entry_price=info["entry_price"],
                             tipo_ordem=info["tipo_ordem"],
-                            par=info["par"],
+                            par=info["par"].replace("/", "-").upper(),
                             quantidade=info["quantidade"]
                         )
                         if sucesso:
@@ -92,7 +92,7 @@ def iniciar_executor(broker):
                         else:
                             incrementar_retry_be(info["id"])
 
-            time.sleep(5)
+            time.sleep(2)
 
         except KeyboardInterrupt:
             logger.info("🛑 - Executor encerrado pelo usuário.")
