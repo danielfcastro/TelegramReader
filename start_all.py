@@ -56,6 +56,9 @@ def salvar_env_com_base_no_config(_broker, is_testnet):
         f"api_hash={config['api_hash']}",
         f"group_id={config['group_id']}",
         f"session_name={config['session_name']}",
+        "",
+        "#trade configuration",
+        f"trade_percentage={config['trade_percentage']}"
     ])
 
     with open(".env", "w") as f:

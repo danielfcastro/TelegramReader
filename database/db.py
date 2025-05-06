@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 
-debug_update=False
+debug_update=True
 debug_select=False
 debug_insert=True
 @contextmanager
@@ -77,13 +77,14 @@ def buscar_sinal_para_be():
     resultado = executar_select(query)
     return resultado if resultado is not None else []
 
-def marcar_ordem_enviada(id_sinal, entry_price, order_id):
+def marcar_ordem_enviada(id_sinal, entry_price, order_id, quantidade):
     query = """
         UPDATE sinais
-        SET flag_ordem_enviada = true, entry_price = %(entry_price)s, order_id = %(order_id)s
+        SET flag_ordem_enviada = true, entry_price = %(entry_price)s, order_id = %(order_id)s, quantidade = %(quantidade)s
         WHERE id = %(id)s
     """
-    executar_update(query, {"id": id_sinal, "entry_price": entry_price, "order_id": order_id})
+    executar_update(query, {"id": id_sinal, "entry_price": entry_price, "order_id": order_id, "quantidade": quantidade})
+
 
 def incrementar_retry_order(id_sinal):
     query = """
@@ -111,10 +112,11 @@ def desativar_be(id_sinal):
 
 def inserir_sinal_com_multiplos_tps(dados):
     agora = datetime.utcnow().isoformat()
+    ids_inseridos = []
+    tps = []
 
     for i in range(1, 5):
         tp_key = f"tp{i}"
-        print(tp_key)
         if tp_key in dados and dados[tp_key] is not None:
             novo_sinal = {
                 "data_hora": agora,
@@ -125,11 +127,30 @@ def inserir_sinal_com_multiplos_tps(dados):
                 "tp": dados[tp_key],
                 "sl": dados["stoploss"],
             }
-            print(f"📥 Inserindo sinal com TP{i}: {novo_sinal}")
             inserir_sinal(novo_sinal)
+            # Busca o último ID inserido
+            resultado = executar_select("SELECT currval(pg_get_serial_sequence('sinais','id')) AS id")
+            ids_inseridos.append(resultado[0]["id"])
+            tps.append(dados[tp_key])
         else:
-            print(f"⚠️ TP{i} não encontrado ou é None")
+            print(f"⚠️ - TP{i} não encontrado ou é None")
 
+    # Calcular e aplicar quantidades
+    from utils import ajustar_quantidade
+    total = sum([0.1, 0.2, 0.5, 0.2])
+    proporcoes = [0.1, 0.2, 0.5, 0.2]
+    valor_total = 1  # mock inicial, o valor real será calculado no executor
+    precos = tps
+    soma_precos = sum(precos)
+    lista_id_quantidade = []
+
+    for i, id_sinal in enumerate(ids_inseridos):
+        proporcao = proporcoes[i]
+        preco_tp = precos[i]
+        quantidade = ajustar_quantidade(valor_total * proporcao / preco_tp, step=0.0001)
+        lista_id_quantidade.append((id_sinal, quantidade))
+
+    atualizar_quantidades(lista_id_quantidade)
 
 def inserir_sinal(dados):
     query = """
@@ -166,3 +187,20 @@ def marcar_ordem_para_be_executado(par):
     WHERE par = %(par)s AND flag_ordem_enviada = true
     """
     executar_update(sql, {"par": par})
+
+def atualizar_quantidades(lista_id_quantidade):
+    query = """
+        UPDATE sinais
+        SET quantidade = %(quantidade)s
+        WHERE id = %(id)s
+    """
+    for id_sinal, quantidade in lista_id_quantidade:
+        executar_update(query, {"id": id_sinal, "quantidade": quantidade})
+
+def desabilitar_sinal(id_sinal):
+    query = """
+        UPDATE sinais
+        SET tentativas = 3
+        WHERE id = %(id)s
+    """
+    executar_update(query, {"id": id_sinal})

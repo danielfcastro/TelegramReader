@@ -19,26 +19,22 @@ Este projeto é dividido em **dois serviços independentes**:
 ProjetoTelegramTradeBot/
 ├── database/
 │   ├── criar_tabela.py
-│   ├── sinais.db
-│   ├── upgrade_database.py
-├── example/
-│   ├── exemplo_sinal.json
+│   └── upgrade_database.py
 ├── integration/
-│   ├── bingx_trading.py
-│   ├── bybit_trading.py
+│   ├── BingXBroker.py
+│   └── BrokerInterface.py
+├── log/
+│   └── log_config.py
 ├── logs/
 ├── venv/
 ├── web_dashboard/
 │   ├── templates/
 │   │   ├── apdashboardp.html
-│   ├── app.py
+│   └── app.py
 ├── .env
 ├── .gitignore
 ├── config.properties
 ├── docker-compose.yml
-├── extrator_sinal.py
-├── ler_json.py
-├── ler_sinais.py
 ├── minha_sessao.session
 ├── README.md
 ├── requirements.txt
@@ -103,13 +99,13 @@ trade_percentage=3  # Percentual do saldo disponível para usar em cada trade
 database_mode=sqlite
 sqlite_db_path=database/sinais.db
 
-# Futuro (PostgreSQL)
-# database_mode=postgresql
-# postgres_host=localhost
-# postgres_port=5432
-# postgres_user=usuario
-# postgres_password=senha
-# postgres_db=sinais
+
+database_mode=postgresql
+postgres_host=localhost
+postgres_port=5432
+postgres_user=usuario
+postgres_password=senha
+postgres_db=sinais
 ```
 
 ---
@@ -127,7 +123,7 @@ python database/criar_tabela.py
 ### Forma 1: Script start_all.py
 
 ```bash
-python start_all.py
+python start_all.py --testnet
 ```
 
 ### Forma 2: Clique duplo no `start_bot.bat` (Windows)
@@ -137,7 +133,7 @@ python start_all.py
 ```bat
 @echo off
 cd /d %~dp0
-python start_all.py
+python start_all.py --testnet
 pause
 ```
 
@@ -179,8 +175,7 @@ docker-compose up -d
 
 ## 📋 Logs
 
-- Mensagens capturadas: `logs/telegram_reader.log`
-- Ordens enviadas: `logs/trade_executor.log`
+- Log da aplicação: `logs/app.log`
 
 ---
 
@@ -188,15 +183,14 @@ docker-compose up -d
 
 - Este projeto usa **ByBIT Testnet** — perfeito para treinar sem risco financeiro.
 - Posteriormente, será possível migrar para **produção real** na ByBIT com poucas alterações no endpoint e nas chaves.
-- O projeto já está preparado para usar **PostgreSQL** no lugar do SQLite quando for necessário escalar.
+- O projeto já está preparado para usar **PostgreSQL**
 
 ---
 
 ## 📈 Melhorias Futuras
 
-- Adicionar suporte a stop móvel (trailing stop).
-- Implementar múltiplos targets automáticos.
-- Conectar a APIs de corretoras alternativas (Binance, OKX, KuCoin).
+- dividir em 5 ordens [0.1, 0.2, 0.5, 0.1, 0.1]
+- Adicionar suporte a stop móvel (trailing stop) para o último lote de 10% 
 - Interface web para monitorar sinais em tempo real.
 
 ---

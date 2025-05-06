@@ -1,5 +1,5 @@
 from datetime import datetime
-from utils import extrair_sinal_trade
+from utils import extrair_mensagem_trade
 from database.db import inserir_sinal_com_multiplos_tps
 
 mensagem = """
@@ -14,7 +14,7 @@ Margin: Cross, 20X
 ❌️**STOPLOSS:** [`0.21776`]
 """
 
-sinal = extrair_sinal_trade(mensagem)
+sinal = extrair_mensagem_trade(mensagem)
 print(sinal)
 if sinal:
     print("✅ Inserindo sinal no banco de dados...")

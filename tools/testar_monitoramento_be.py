@@ -1,4 +1,4 @@
-from utils import extrair_monitoramento_json
+from utils import extrair_mensagem_monitoramento
 from database.db import buscar_info_apos_sinal_de_monitoramento, ativar_break_even
 
 mensagem = """
@@ -12,7 +12,7 @@ __*Fix another 20% profit
 *Move SL to breakeven price__
 """
 
-monitoramento = extrair_monitoramento_json(mensagem)
+monitoramento = extrair_mensagem_monitoramento(mensagem)
 
 if monitoramento:
     if monitoramento["tp"] == "TP2":

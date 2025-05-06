@@ -2,6 +2,8 @@
 import logging
 import os
 
+log_format = "%(asctime)s - %(levelname)-8s - %(name)-15s - %(funcName)-35s - %(message)s"
+
 class ColoredFormatter(logging.Formatter):
     COLORS = {
         'DEBUG': '\033[92m',   # verde
@@ -20,15 +22,12 @@ class ColoredFormatter(logging.Formatter):
 def configurar_logging(log_level=logging.DEBUG, log_dir='logs', log_file='app.log'):
     os.makedirs(log_dir, exist_ok=True)
 
+
     console_handler = logging.StreamHandler()
-    console_handler.setFormatter(ColoredFormatter(
-        "%(asctime)s -  %(levelname)s - %(name)s - %(funcName)s - %(message)s"
-    ))
+    console_handler.setFormatter(ColoredFormatter(log_format))
 
     file_handler = logging.FileHandler(os.path.join(log_dir, log_file), encoding='utf-8')
-    file_handler.setFormatter(logging.Formatter(
-        "%(asctime)s -  %(levelname)s - %(name)s - %(funcName)s - %(message)s"
-    ))
+    file_handler.setFormatter(logging.Formatter(log_format))
 
     logging.basicConfig(
         level=log_level,

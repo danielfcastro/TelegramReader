@@ -3,7 +3,6 @@ import logging
 import utils
 import psycopg2
 
-from datetime import datetime
 from dotenv import load_dotenv
 from log.logger_config import configurar_logging
 from telethon import TelegramClient, events
@@ -32,8 +31,7 @@ from database.db import (
 )
 
 from utils import (
-    extrair_sinal_trade,
-    extrair_monitoramento_json
+    classificar_mensagem
 )
 
 conn = psycopg2.connect(**db_params)
@@ -46,33 +44,32 @@ async def main():
     grupo_nome = getattr(grupo_entidade, 'title', f"grupo_{group_id}")
     #nome_grupo_limpo = utils.limpar_nome(grupo_nome)
     grupo_id = grupo_entidade.id
-    logger.info(f"✅ Telegram Reader inciado a escuta de mensagens em grupo: {grupo_nome} e id: {grupo_id}")
+    logger.info(f"✅ - Telegram Reader iniciado a escuta de mensagens em grupo: {grupo_nome} e id: {grupo_id}")
 
     @client.on(events.NewMessage(chats=grupo_entidade))
     async def handler(event):
         mensagem = event.text
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        logger.info(f"[{timestamp}] Mensagem recebida:")
-        logger.info(mensagem)
+        logger.info("Mensagem recebida - ainda não classificada entre sinal ou monitoramento:")
+        resultado = classificar_mensagem(mensagem)
+        tipo = resultado["tipo"]
+        dados = resultado["dados"]
 
-        sinal = extrair_sinal_trade(mensagem)
-        if sinal:
-            inserir_sinal_com_multiplos_tps(sinal)
-            logger.info(f"✅ Sinal inserido para {sinal['pair']}")
+        if tipo == "trade":
+            inserir_sinal_com_multiplos_tps(dados)
+            logger.info(f"✅ - Sinal inserido para {dados['pair']}")
             return
-
-        monitoramento = extrair_monitoramento_json(mensagem)
-        if monitoramento and monitoramento["tp"] == "TP2":
-            info = buscar_info_apos_sinal_de_monitoramento(monitoramento["pair"])
-            if info:
-                ativar_break_even(info["id"])
-                logger.info(f"✅ Break-even ativado para {monitoramento['pair']}")
-            else:
-                logger.warning(f"⚠️ Nenhuma ordem encontrada para {monitoramento['pair']} ao tentar ativar BE.")
-            return
-
-        logger.warning("❌ Não foi possível extrair sinal ou monitoramento da mensagem.")
-
+        if tipo == "monitoramento":
+            if dados["tp"] == "TP2":
+                info = buscar_info_apos_sinal_de_monitoramento(dados["pair"])
+                if info:
+                    ativar_break_even(info["id"])
+                    logger.info(f"✅ - Break-even ativado para {dados['pair']}")
+                else:
+                    logger.warning(f"⚠️ - Nenhuma ordem encontrada para {dados['pair']} ao tentar ativar BE.")
+                return
+            if dados["tp"] == "TP4":
+                logger.info("⚠️ - Ainda a ser implementado - enviar trailing stop para último lote 5")
+        logger.warning("❌ - Não foi possível extrair sinal ou monitoramento da mensagem.")
     await client.run_until_disconnected()
 
 if __name__ == "__main__":
@@ -80,4 +77,4 @@ if __name__ == "__main__":
         with client:
             client.loop.run_until_complete(main())
     except KeyboardInterrupt:
-        print("\n🛑 Execução do TelegramReader interrompida pelo usuário.")
+        print("🛑 - Execução do TelegramReader interrompida pelo usuário.")

@@ -13,10 +13,10 @@ def ajustar_quantidade(qty, step):
     return round(qty_ajustada, str(step)[::-1].find('.'))
 
 def carregar_config(path='config.properties'):
-    logger.info("🔧 Carregando configuração do arquivo: %s", path)
+    logger.info("🔧 - Carregando configuração do arquivo: %s", path)
     config = {}
     if not os.path.exists(path):
-        logger.error(f"Arquivo de configuração {path} não encontrado.")
+        logger.error(f"❌ - Arquivo de configuração {path} não encontrado.")
         exit(1)
     with open(path, 'r', encoding='utf-8') as f:
         for linha in f:
@@ -24,72 +24,64 @@ def carregar_config(path='config.properties'):
             if linha and not linha.startswith('#') and '=' in linha:
                 chave, valor = linha.split('=', 1)
                 config[chave.strip()] = valor.strip()
-    logger.info(f"🔧 Configuração do arquivo: {path} carregado")
+    logger.info(f"🔧 - Configuração do arquivo: {path} carregado")
     return config
 
-def extrair_sinal_trade(mensagem):
-    if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("📩 Mensagem recebida para extração:")
-        logger.debug(mensagem)
+def extrair_dados_mensagem(mensagem):
+    logger.debug("📩 - Analisando mensagem completa:")
+    logger.debug(f"\n{mensagem}")
 
-    try:
-        pair_match = re.search(r"\[([A-Z0-9]+/USDT)\]", mensagem)
-        type_match = re.search(r"(LONG|BUY|SHORT|SELL)", mensagem, re.IGNORECASE)
-        sl_match = re.search(r"\*\*STOPLOSS:\*\*\s*\[`?([0-9\.]+)`?\]", mensagem, re.IGNORECASE)
-        margin_match = re.search(r"Margin:\s*(\w+),\s*(\d+)X", mensagem, re.IGNORECASE)
-        targets = re.findall(r"\[`?([0-9\.]+)`?\]", mensagem)
+    dados = {}
 
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("🔎 Par: %s", pair_match.group(1) if pair_match else "N/A")
-            logger.debug("🔎 Tipo: %s", type_match.group(1) if type_match else "N/A")
-            logger.debug("🔎 SL: %s", sl_match.group(1) if sl_match else "N/A")
-            logger.debug("🔎 Targets: %s", targets)
-            logger.debug("🔎 Margem: %s", margin_match.groups() if margin_match else "N/A")
+    # Extração comum
+    pair_match = re.search(r"([A-Z0-9]+/USDT)", mensagem)
+    type_match = re.search(r"(LONG|BUY|SHORT|SELL)", mensagem, re.IGNORECASE)
+    sl_match = re.search(r"\*\*STOPLOSS:\*\*\s*\[`?([0-9\.]+)`?\]", mensagem, re.IGNORECASE)
+    margin_match = re.search(r"Margin:\s*(\w+),\s*(\d+)X", mensagem, re.IGNORECASE)
+    targets = re.findall(r"\[`?([0-9\.]+)`?\]", mensagem)
+    target_done = re.search(r"TARGET #(\d) DONE", mensagem, re.IGNORECASE)
 
-        if not (pair_match and type_match and sl_match):
-            logger.warning("❌ Não foi possível extrair todos os campos obrigatórios.")
-            return None
+    if pair_match:
+        dados["pair"] = pair_match.group(1).upper()
+    if type_match:
+        dados["type"] = type_match.group(1).upper()
+    if sl_match:
+        dados["stoploss"] = float(sl_match.group(1))
+    if margin_match:
+        dados["margin"] = margin_match.group(1).capitalize()
+        dados["leverage"] = margin_match.group(2) + "X"
+    if target_done:
+        dados["tp"] = f"TP{target_done.group(1)}"
+    for i, alvo in enumerate(targets[:4], start=1):
+        dados[f"tp{i}"] = float(alvo)
 
-        sinal = {
-            "pair": pair_match.group(1).upper(),
-            "type": type_match.group(1).upper(),
-            "stoploss": float(sl_match.group(1)),
-        }
+    logger.debug("🔎 - Par: %s", pair_match.group(1) if pair_match else "N/A")
+    logger.debug("🔎 - Tipo: %s", type_match.group(1) if type_match else "N/A")
+    logger.debug("🔎 - SL: %s", sl_match.group(1) if sl_match else "N/A")
+    logger.debug("🔎 - Targets extraídos: %s", ', '.join(targets) if targets else "N/A")
+    logger.debug("🔎 - TARGET: %s DONE", dados.get("tp", "N/A"))
+    logger.debug("🔎 - Margem: %s", margin_match.groups() if margin_match else "N/A")
+    logger.debug("🔎 - Target monitorado: %s", target_done.group(1) if target_done else "N/A")
 
-        if margin_match:
-            sinal["margin"] = margin_match.group(1).capitalize()
-            sinal["leverage"] = margin_match.group(2) + "X"
+    return dados
 
-        for i, alvo in enumerate(targets[:4], start=1):
-            sinal[f"tp{i}"] = float(alvo)
 
-        return sinal
 
-    except Exception as e:
-        logger.exception("❌ Erro ao extrair sinal: %s", e)
-        return None
+def classificar_mensagem(mensagem):
+    dados = extrair_dados_mensagem(mensagem)
+    _msg = {}
 
-def extrair_monitoramento_json(mensagem):
-    try:
-        logger.debug(f"<MONITORAMENTO> Mensagem: {mensagem}")
-        pair_match = re.search(r"([A-Z0-9]+/USDT)", mensagem)
-        logger.debug(f"pair_match: {pair_match}")
-        target_done = re.search(r"TARGET #(\d) DONE", mensagem, re.IGNORECASE)
-        logger.debug(f"target_done: {target_done}")
+    if "type" in dados and "stoploss" in dados:
+        _msg = {"tipo": "trade", "dados": dados}
+    elif "tp" in dados:
+        _msg = {"tipo": "monitoramento", "dados": {
+            "pair": dados.get("pair", "N/A"),
+            "tp": dados["tp"]
+        }}
+    else:
+        _msg = {"tipo": "desconhecido", "dados": dados}
 
-        monitoramento = {}
-
-        if pair_match:
-            monitoramento["pair"] = pair_match.group(1)
-        if target_done:
-            monitoramento["tp"] = f"TP{target_done.group(1)}"
-
-        if "pair" in monitoramento and "tp" in monitoramento:
-            return monitoramento
-        return None
-    except Exception as e:
-        logger.exception("Erro ao extrair monitoramento: %s", e)
-        return None
+    return _msg
 
 def limpar_nome(nome):
     nome = nome.replace(' ', '_')
@@ -112,12 +104,12 @@ async def obter_entidade(client, id_input):
     return None
 
 def imprimir_configuracoes_ambiente():
-    logger.info("\n📄 Variáveis de ambiente definidas:")
+    logger.info("📄 - Variáveis de ambiente definidas:")
     for chave in ["BROKER", "IS_TESTNET", "trade_percentage", "bybit_api_key", "bybit_api_secret", "bybit_api_url"]:
         valor = os.getenv(chave)
         logger.info("   %s=%s", chave, valor)
 
     is_testnet = os.getenv("IS_TESTNET", "false").strip('"').lower() == "true"
-    logger.info("\n🚦 Iniciando componentes...")
-    logger.info("🚀 Executando trade no broker: %s (Testnet=%s)", os.getenv('BROKER', '').upper(), is_testnet)
-    logger.info("🔐 Consultando saldo para calcular valor do trade...")
+    logger.info("🚦- Iniciando componentes...")
+    logger.info("🚀 - Executando trade no broker: %s (Testnet=%s)", os.getenv('BROKER', '').upper(), is_testnet)
+    logger.info("🔐 - Consultando saldo para calcular valor do trade...")

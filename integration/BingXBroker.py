@@ -4,12 +4,10 @@ import hmac
 import json
 import requests
 import logging
-import re
 from hashlib import sha256
 from dotenv import load_dotenv
 
 from integration.BrokerInterface import BrokerInterface
-from utils import ajustar_quantidade
 
 load_dotenv()
 
@@ -41,7 +39,8 @@ class BingXBroker(BrokerInterface):
         #logger.debug(f"response: {response.json()}")
         return response.json()
 
-    def _build_query(self, params):
+    @staticmethod
+    def _build_query(params):
         # Sempre adiciona timestamp, mesmo que params esteja vazio
         all_params = dict(params) if params else {}
         all_params["timestamp"] = str(int(time.time() * 1000))
@@ -88,160 +87,75 @@ class BingXBroker(BrokerInterface):
 
         try:
             response = requests.post(url, headers={'X-BX-APIKEY': self.API_KEY}).json()
-            logger.debug("🪙 Leverage configurado:", response)
+            logger.debug("✅ Leverage configurado:", response)
         except Exception as e:
             print("Erro ao configurar leverage:", e)
 
-    def enviar_ordem_tp_sl(self, sinal):
-        symbol = sinal["par"].replace("/", "-").upper()
-        side = "BUY" if sinal["tipo_ordem"].upper() == "LONG" else "SELL"
+    def enviar_ordem_tp_sl(self, symbol, side, leverage, side_leverage, tp, sl, quantidade, preco_mercado):
         side_leverage = "BOTH"
-        leverage = int(sinal["alavancagem"].replace("X", ""))
-        logger.debug(f"symbol: {symbol} - side: {side} - leverage: {leverage} - side_leverage: {side_leverage}")
+        logger.debug(f"symbol: {symbol} - side: {side} - leverage: {leverage} - side_leverage: {side_leverage} - tp: {tp} - sl: {sl} - quantidade: {quantidade} - preco_mercado: {preco_mercado}")
         try:
             # Configura o leverage antes de enviar a ordem
             self.set_leverage(symbol=symbol, side=side_leverage, leverage=leverage)
-            
-            saldo = self.obter_saldo_disponivel()
-            preco_mercado = self.obter_preco_mercado(symbol)
-            valor_trade = saldo * float(os.getenv("TRADE_PERCENTAGE", "3")) / 100
-            quantidade_total = valor_trade / preco_mercado
-            logger.debug(f"saldo: {saldo} - preco_mercado: {preco_mercado} - valor_tade: {valor_trade} - quantidade total: {quantidade_total}")
 
-            proporcoes = [0.1, 0.2, 0.5, 0.1]
-            quantidades = [ajustar_quantidade(quantidade_total * p, step=0.0001) for p in proporcoes]
-            preco_tp = float(sinal["tp"])
-            preco_sl = float(sinal["sl"])
-
-            logger.debug(f"quantidades: {quantidades} - preco_tp: {preco_tp} - preco_sl: {preco_sl}")
-            ordens = []
-            for q in quantidades:
-                ordem = {
-                    "symbol": symbol,
-                    "side": side,
-                    "positionSide": side_leverage,
-                    "type": "MARKET",
-                    "quantity": q,
-                    "takeProfit": json.dumps({
-                        "type": "TAKE_PROFIT_MARKET",
-                        "quantity": q,
-                        "stopPrice": preco_tp,
-                        "workingType": "MARK_PRICE"
-                    }),
-                    "stopLoss": json.dumps({
-                        "type": "STOP_MARKET",
-                        "quantity": q,
-                        "stopPrice": preco_sl,
-                        "workingType": "MARK_PRICE"
-                    })
-                }
-                logger.debug(f"quantidades: {q} - valor: {q * preco_mercado}")
-                ordens.append(ordem)
-
+            body = {
+                "symbol": symbol,
+                "side": side,
+                "positionSide": side_leverage,
+                "type": "MARKET",
+                "quantity": quantidade,
+                "stopGuaranteed": "true",
+                "takeProfit": json.dumps({
+                    "type": "TAKE_PROFIT_MARKET",
+                    "quantity": quantidade,
+                    "stopPrice": tp,
+                    "workingType": "MARK_PRICE"
+                }),
+                "stopLoss": json.dumps({
+                    "type": "STOP_MARKET",
+                    "quantity": quantidade,
+                    "stopPrice": sl,
+                    "workingType": "MARK_PRICE"
+                })
+            }
             path = "/openApi/swap/v2/trade/order"
-            for body in ordens:
 
-                response = self._send_request("POST", path, body)
-                logger.debug(f"response: {response} - body: {body} - path: {path} - POST")
+            response = self._send_request("POST", path, body)
+            logger.debug(f"response: {response} - body: {body} - path: {path} - POST")
+            time.sleep(2)
+            if response["code"] == 0:
+                order_id = response["data"]["order"]["orderId"]
+                logger.info(f"Ordens enviadas com sucesso - order_id: {order_id} - preco_mercado: {preco_mercado}")
+                return True, preco_mercado, order_id, quantidade
+            else:
+                codigo = response.get("code", "sem_codigo")
+                mensagem = response.get("msg", "Erro desconhecido")
+                motivo = f"[{codigo}] {mensagem}"
+                logger.error(f"❌ Falha ao enviar ordens: {motivo} - Dados: {response}")
+                return False, None, None, motivo
 
-                if response["code"] == 0:
-                    order_id = response["data"]["order"]["orderId"]
-                    logger.info(f"Ordens enviadas com sucesso - order_id: {order_id} - preco_mercado: {preco_mercado}")
-                    return True, preco_mercado, order_id
-                #elif response["code"] == 80001:
-                #    limite = self.extrair_limite_posicao(response)
-                #    logger.debug(f"limite: {limite}")
-                #    self.quebrar_ordens_por_limite(limite, valor_trade, preco_mercado, symbol, side, side_leverage, preco_tp, preco_sl)
-                else:
-                    logger.error(f"⚠️ Falha ao enviar ordens: {response}")
-                    return False, 0.0, 0
-                time.sleep(5)
         except Exception as e:
             print("❌ Erro ao enviar ordens BingX:", e)
             return False, 0.0, 0
 
-    def extrair_limite_posicao(self, msg_erro):
-        """
-        Extrai o valor numérico da mensagem de erro indicando o limite máximo da posição.
-        Aceita um dicionário (response) ou string (msg).
-        """
-        if isinstance(msg_erro, dict):
-            msg_erro = msg_erro.get("msg", "")
-
-        if not isinstance(msg_erro, str):
-            return None
-
-        match = re.search(r'(\d+(?:\.\d+)?)\s*USDT', msg_erro)
-        if match:
-            return float(match.group(1))
-        return None
-
-    def quebrar_ordens_por_limite(self, limite, valor_tade, preco_mercado, symbol, side, side_leverage, preco_tp, preco_sl):
-        try:
-            quantidades = []
-            while valor_total > 0:
-                valor_parcial = min(valor_tade, limite)
-                quantidade = valor_parcial / preco_mercado
-                quantidades.append(round(quantidade, 4))
-                valor_tade -= valor_parcial
-
-            ordens = []
-            for q in quantidades:
-                ordem = {
-                    "symbol": symbol,
-                    "side": side,
-                    "positionSide": side_leverage,
-                    "type": "MARKET",
-                    "quantity": q,
-                    "takeProfit": json.dumps({
-                        "type": "TAKE_PROFIT_MARKET",
-                        "quantity": q,
-                        "stopPrice": preco_tp,
-                        "workingType": "MARK_PRICE",
-                        "stopGuaranteed":"TAKE_PROFIT_MARKET"
-                    }),
-                    "stopLoss": json.dumps({
-                        "type": "STOP_MARKET",
-                        "quantity": q,
-                        "stopPrice": preco_sl,
-                        "workingType": "MARK_PRICE",
-                        "stopGuaranteed": "STOP_MARKET"
-                    })
-                }
-                ordens.append(ordem)
-
-            path = "/openApi/swap/v2/trade/order"
-            for body in ordens:
-                response = self._send_request("POST", path, body)
-                logger.debug(f"response: {response} - body: {body} - path: {path} - POST")
-                time.sleep(5)
-        except Exception as e:
-            print("❌ Erro ao enviar ordens BingX:", e)
-            return False, 0.0, 0
-
-    def ajustar_para_break_even(self, id, order_id, entry_price, tipo_ordem, par):
-
+    def ajustar_para_break_even(self, order_id, entry_price, tipo_ordem, par, quantidade):
         try:
             symbol = par.replace("/", "-").upper()
             side = "BUY" if tipo_ordem.upper() == "LONG" else "SELL"
             position_side = "LONG" if tipo_ordem.upper() == "LONG" else "SHORT"
             logger.debug(f"symbol: {symbol} - side: {side} - positionSide: {position_side}")
             body = {
-                "symbol": symbol,
+                "positionSide": "BOTH",
+                "quantity": quantidade,
                 "side": side,
-                "positionSide": position_side,
-                "type": "MARKET",
-                "clientOrderId": order_id,
-                "stopLoss": json.dumps({
-                    "type": "STOP_MARKET",
-                    "stopPrice": entry_price,
-                    "workingType": "MARK_PRICE"
-                })
+                "symbol": par,
+                "type": "STOP_MARKET",
+                "stopPrice": entry_price
             }
             logger.debug(f"body: {body}")
 
             path = "/openApi/swap/v2/trade/order"
-            response = self._send_request("POST", path, {}, body)
+            response = self._send_request("POST", path, body )
 
             if response["code"] == 0:
                 logger.info(f"🟢 Break Even ajustado para {par}")
