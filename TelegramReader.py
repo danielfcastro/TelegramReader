@@ -49,7 +49,7 @@ async def main():
     @client.on(events.NewMessage(chats=grupo_entidade))
     async def handler(event):
         mensagem = event.text
-        logger.info("Mensagem recebida - ainda não classificada entre sinal ou monitoramento:")
+        logger.info("🚦 - Mensagem recebida - ainda não classificada entre sinal ou monitoramento.")
         resultado = classificar_mensagem(mensagem)
         tipo = resultado["tipo"]
         dados = resultado["dados"]
@@ -71,6 +71,7 @@ async def main():
                 logger.info("⚠️ - Ainda a ser implementado - enviar trailing stop para último lote 5")
         else:
             logger.warning("❌ - Não foi possível extrair sinal ou monitoramento da mensagem.")
+        logger.info("✅ - Mensagem recebida e classificada.")
     await client.run_until_disconnected()
 
 if __name__ == "__main__":

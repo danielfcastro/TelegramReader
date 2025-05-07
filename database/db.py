@@ -3,6 +3,7 @@ import logging
 from datetime import datetime
 from psycopg2.extras import RealDictCursor
 from contextlib import contextmanager
+from utils import ajustar_quantidade
 import os
 from dotenv import load_dotenv
 
@@ -111,9 +112,6 @@ def desativar_be(id_sinal):
 
 def inserir_sinal_com_multiplos_tps(dados):
     agora = datetime.utcnow().isoformat()
-    ids_inseridos = []
-    tps = []
-
     for i in range(1, 5):
         tp_key = f"tp{i}"
         if tp_key in dados and dados[tp_key] is not None:
@@ -126,16 +124,14 @@ def inserir_sinal_com_multiplos_tps(dados):
                 "tp": dados[tp_key],
                 "sl": dados["stoploss"],
             }
-            inserir_sinal(novo_sinal)
-            # Busca o último ID inserido
-            resultado = executar_select("SELECT currval(pg_get_serial_sequence('sinais','id')) AS id")
-            ids_inseridos.append(resultado[0]["id"])
-            tps.append(dados[tp_key])
+            logger.info(f"📥 Inserindo sinal com TP{i}: {novo_sinal}")
+            id_inserido = inserir_sinal(novo_sinal)
+            logger.debug(f"🆔 ID gerado para TP{i}: {id_inserido}")
         else:
-            print(f"⚠️ - TP{i} não encontrado ou é None")
+            logger.warning(f"⚠️ TP{i} não encontrado ou é None")
 
     # Calcular e aplicar quantidades
-    from utils import ajustar_quantidade
+
     total = sum([0.1, 0.2, 0.5, 0.2])
     proporcoes = [0.1, 0.2, 0.5, 0.2]
     valor_total = 1  # mock inicial, o valor real será calculado no executor
@@ -155,13 +151,21 @@ def inserir_sinal(dados):
     query = """
         INSERT INTO sinais (
             data_hora, par, tipo_ordem, margem, alavancagem,
-             tp, sl
+            tp, sl
         ) VALUES (
             %(data_hora)s, %(par)s, %(tipo_ordem)s, %(margem)s, %(alavancagem)s,
             %(tp)s, %(sl)s
-        )
+        ) RETURNING id
     """
-    executar_insert(query, dados)
+    with conectar_db() as conn:
+        with conn.cursor() as cur:
+            if debug_insert:
+                logger.debug(f"➕ SQL INSERT: {cur.mogrify(query, dados).decode()}")
+            cur.execute(query, dados)
+            id_gerado = cur.fetchone()[0]
+            conn.commit()
+            return id_gerado
+
 
 def buscar_info_apos_sinal_de_monitoramento(par):
     query = """
@@ -182,7 +186,7 @@ def ativar_break_even(id_sinal):
 def marcar_ordem_para_be_executado(par):
     sql = """
     UPDATE sinais
-    SET ativar_be = true
+    SET ativar_be = false
     WHERE par = %(par)s AND flag_ordem_enviada = true
     """
     executar_update(sql, {"par": par})

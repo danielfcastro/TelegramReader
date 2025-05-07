@@ -6,12 +6,25 @@ class BrokerInterface(ABC):
         pass
 
     @abstractmethod
-    def ajustar_para_break_even(self, order_id, entry_price, tipo_ordem, par, quantidade):
+    def cancela_stop_loss(self, symbol):
+        pass
+
+    @abstractmethod
+    def ajustar_para_break_even(self, symbol, position_side, quantity, stop_price, order_id):
         pass
 
     @abstractmethod
     def obter_saldo_disponivel(self):
         pass
+
     @abstractmethod
     def obter_preco_mercado(self, symbol):
+        pass
+
+    @abstractmethod
+    def ativar_trailing_stop(self, symbol, order_id, side, quantity, price_rate, position_side):
+        pass
+
+    @abstractmethod
+    def get_open_order_info(self, symbol, order_id):
         pass

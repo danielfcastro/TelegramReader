@@ -79,13 +79,14 @@ def iniciar_executor(broker):
                 sinal_be = buscar_sinal_para_be()
                 for info in sinal_be:
                     if info:
+                        #(self, symbol, position_side, quantity, stop_price)
                         logger.info("⚙️ - Ajustando BE para {info['par']}")
                         sucesso = broker.ajustar_para_break_even(
-                            order_id=info["order_id"],
-                            entry_price=info["entry_price"],
-                            tipo_ordem=info["tipo_ordem"],
-                            par=info["par"],
-                            quantidade=info["quantidade"]
+                            symbol=info["par"].replace("/", "-").upper(),
+                            position_side="LONG" if info["tipo_ordem"].upper() == "LONG" else "SHORT",
+                            quantity=info["quantidade"],
+                            stop_price=info["entry_price"],
+                            order_id=info["order_id"]
                         )
                         if sucesso:
                             marcar_ordem_para_be_executado(info["par"])

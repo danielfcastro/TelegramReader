@@ -138,33 +138,97 @@ class BingXBroker(BrokerInterface):
             print("❌ Erro ao enviar ordens BingX:", e)
             return False, 0.0, 0
 
-    def ajustar_para_break_even(self, order_id, entry_price, tipo_ordem, par, quantidade):
+    def cancela_stop_loss(self, symbol):
         try:
-            symbol = par.replace("/", "-").upper()
-            side = "BUY" if tipo_ordem.upper() == "LONG" else "SELL"
-            position_side = "LONG" if tipo_ordem.upper() == "LONG" else "SHORT"
-            logger.debug(f"symbol: {symbol} - side: {side} - positionSide: {position_side}")
+            path = "/openApi/swap/v2/trade/allOpenOrders"
             body = {
-                "positionSide": "BOTH",
-                "quantity": quantidade,
-                "side": side,
                 "symbol": symbol,
-                "type": "STOP_MARKET",
-                "stopPrice": entry_price
+                "type": "STOP_MARKET"
             }
-            logger.debug(f"body: {body}")
+            response = self._send_request("DELETE", path, body)
+            logger.debug(f"🧹 Cancelamento de SL: {response}")
+            return response
+        except Exception as e:
+            logger.exception(f"❌ Erro ao cancelar SL para {symbol}: {e}")
+
+    def ajustar_para_break_even(self, symbol, position_side, quantity, stop_price, order_id):
+        try:
+            cancel = self.cancela_stop_loss(symbol)
+            orders = self.get_open_order_info(symbol,order_id)
+            side = "SELL" if position_side.upper() == "LONG" else "BUY"
+            position_side = position_side.upper()
+            logger.debug(
+                f"🛡️ Ajustando Stop Loss - symbol: {symbol}, side: {side}, position_side: {position_side}, stop_price: {stop_price}")
 
             path = "/openApi/swap/v2/trade/order"
-            response = self._send_request("POST", path, body )
+            body = {
+                "symbol": symbol,
+                "side": side,
+                "type": "STOP_MARKET",
+                "stopPrice": stop_price,
+                "positionSide": "BOTH",
+                "quantity": orders['data']['order']['executedQty'],
+                "recvWindow": "10000"
+            }
+
+            headers = {
+                "X-BX-APIKEY": self.API_KEY
+            }
+
+            response = self._send_request("POST", path, body)
+            logger.debug(f"📩 Resposta do SL: {response} - body: {body} - path: {path} - POST")
 
             if response["code"] == 0:
-                logger.info(f"🟢 Break Even ajustado para {par}")
+                logger.info(f"✅ Stop Loss ajustado com sucesso para {symbol}")
                 return True
             else:
-                logger.error(f"❌ Erro ao ajustar BE para {par}: {response}")
+                logger.error(f"❌ Erro ao ajustar SL para {symbol}: {response}")
                 return False
 
         except Exception as e:
-            print(f"❌ Erro no ajuste de break even para {par}:", e)
+            logger.exception(f"❌ Exceção ao ajustar SL para {symbol}: {e}")
             return False
 
+    def ativar_trailing_stop(self, symbol, order_id, side, quantity, price_rate, position_side):
+        try:
+            path = "/openApi/swap/v2/trade/order"
+            logger.debug(f"🚦 Ativando trailing stop para {symbol} com ordem {order_id}")
+
+            params = {
+                "cancelReplaceMode": "ALLOW_FAILURE",
+                "cancelOrderId": order_id,
+                "cancelRestrictions": "ONLY_NEWS",
+                "symbol": symbol,
+                "side": side,
+                "type": "TRAILING_TP_SL",
+                "positionSide": position_side,
+                "priceRate": str(price_rate),
+                "quantity": quantity,
+            }
+
+            response = self._send_request("POST", path, params)
+            logger.debug(f"🟢 Response do trailing stop: {response}")
+
+            if response["code"] == 0:
+                logger.info(f"✅ Trailing stop ativado com sucesso para {symbol} (order_id: {order_id})")
+                return True
+            else:
+                logger.error(f"❌ Erro ao ativar trailing stop para {symbol}: {response}")
+                return False
+
+        except Exception as e:
+            logger.exception(f"❌ Exceção ao ativar trailing stop para {symbol}: {e}")
+            return False
+
+    def get_open_order_info(self, symbol, order_id):
+        try:
+            path = "/openApi/swap/v2/trade/order"
+            body = {
+                "symbol": symbol,
+                "orderId": order_id
+            }
+            response = self._send_request("GET", path, body)
+            logger.debug(f"🧹 Detalhe de ordem: {response}")
+            return response
+        except Exception as e:
+            logger.exception(f"❌ Erro ao boter detalhe de ordem {symbol}: {e}")
