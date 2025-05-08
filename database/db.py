@@ -167,7 +167,6 @@ def inserir_sinal(dados):
             conn.commit()
             return id_gerado
 
-
 def buscar_info_apos_sinal_de_monitoramento(par):
     query = """
         SELECT id, order_id, entry_price FROM sinais
@@ -184,15 +183,14 @@ def ativar_break_even(id_sinal):
     """
     executar_update(query, {"id": id_sinal})
 
-def marcar_ordem_para_be_executado(par, order_id):
+def marcar_ordem_para_be_executado(par):
     sql = """
     UPDATE sinais
     SET ativar_be = false
     WHERE par = %(par)s AND 
-          order_id = %(order_id)s AND 
           flag_ordem_enviada = true
     """
-    executar_update(sql, {"par": par, "order_id": order_id})
+    executar_update(sql, {"par": par})
 
 def atualizar_quantidades(lista_id_quantidade):
     query = """
@@ -210,3 +208,14 @@ def desabilitar_sinal(id_sinal):
         WHERE id = %(id)s
     """
     executar_update(query, {"id": id_sinal})
+
+def somar_quantidade_para_be(par):
+    sql = """
+    SELECT SUM(quantidade) AS total
+    FROM sinais
+    WHERE par = %(par)s AND ativar_be = true
+    """
+    resultado = executar_select(sql, {"par": par})
+    if resultado and resultado[0]["total"] is not None:
+        return resultado[0]["total"]
+    return 0.0

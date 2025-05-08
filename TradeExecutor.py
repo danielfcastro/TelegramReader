@@ -24,7 +24,6 @@ def iniciar_executor(broker):
     while True:
         try:
             sinais = buscar_sinal_execucao()
-            time.sleep(2)
 
             if sinais:
                 saldo = broker.obter_saldo_disponivel()
@@ -77,19 +76,22 @@ def iniciar_executor(broker):
 
             else:
                 sinal_be = buscar_sinal_para_be()
+                _symbol = None
                 for info in sinal_be:
                     if info:
-                        #(self, symbol, position_side, quantity, stop_price)
-                        logger.info("⚙️ - Ajustando BE para {info['par']}")
+                        if _symbol == info["par"].replace("/", "-").upper():
+                            continue
+                        _symbol = info["par"].replace("/", "-").upper()
+                        logger.info(f"⚙️ - Ajustando BE para {_symbol}")
                         sucesso = broker.ajustar_para_break_even(
-                            symbol=info["par"].replace("/", "-").upper(),
+                            symbol=_symbol,
                             position_side="LONG" if info["tipo_ordem"].upper() == "LONG" else "SHORT",
                             quantity=info["quantidade"],
                             stop_price=info["entry_price"],
                             order_id=info["order_id"]
                         )
                         if sucesso:
-                            marcar_ordem_para_be_executado(info["par"], info["order_id"])
+                            marcar_ordem_para_be_executado(info["par"])
                         else:
                             incrementar_retry_be(info["id"])
 

@@ -7,6 +7,7 @@ import logging
 from hashlib import sha256
 from dotenv import load_dotenv
 
+from database.db import somar_quantidade_para_be
 from integration.BrokerInterface import BrokerInterface
 
 load_dotenv()
@@ -122,7 +123,6 @@ class BingXBroker(BrokerInterface):
 
             response = self._send_request("POST", path, body)
             logger.debug(f"response: {response} - body: {body} - path: {path} - POST")
-            time.sleep(2)
             if response["code"] == 0:
                 order_id = response["data"]["order"]["orderId"]
                 logger.info(f"Ordens enviadas com sucesso - order_id: {order_id} - preco_mercado: {preco_mercado}")
@@ -157,6 +157,7 @@ class BingXBroker(BrokerInterface):
             orders = self.get_open_order_info(symbol,order_id)
             side = "SELL" if position_side.upper() == "LONG" else "BUY"
             position_side = position_side.upper()
+            quantidade = somar_quantidade_para_be(symbol.replace("-", "/").upper())
             logger.debug(
                 f"🛡️ Ajustando Stop Loss - symbol: {symbol}, side: {side}, position_side: {position_side}, stop_price: {stop_price}")
 
@@ -165,9 +166,9 @@ class BingXBroker(BrokerInterface):
                 "symbol": symbol,
                 "side": side,
                 "type": "STOP_MARKET",
-                "stopPrice": stop_price,
+                "stopPrice": float(orders['data']['order']['avgPrice']),
                 "positionSide": "BOTH",
-                "quantity": float(orders['data']['order']['executedQty']),
+                "quantity": quantidade,
                 "recvWindow": "10000"
             }
 
