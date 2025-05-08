@@ -89,7 +89,7 @@ def iniciar_executor(broker):
                             order_id=info["order_id"]
                         )
                         if sucesso:
-                            marcar_ordem_para_be_executado(info["par"])
+                            marcar_ordem_para_be_executado(info["par"], info["order_id"])
                         else:
                             incrementar_retry_be(info["id"])
 

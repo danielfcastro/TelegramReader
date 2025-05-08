@@ -167,7 +167,7 @@ class BingXBroker(BrokerInterface):
                 "type": "STOP_MARKET",
                 "stopPrice": stop_price,
                 "positionSide": "BOTH",
-                "quantity": orders['data']['order']['executedQty'],
+                "quantity": float(orders['data']['order']['executedQty']),
                 "recvWindow": "10000"
             }
 

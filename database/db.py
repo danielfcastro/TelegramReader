@@ -74,6 +74,7 @@ def buscar_sinal_para_be():
         SELECT * FROM sinais
         WHERE ativar_be = true AND flag_ordem_enviada = true and tentativas_be <3
         ORDER BY id ASC
+        LIMIT 1
     """
     resultado = executar_select(query)
     return resultado if resultado is not None else []
@@ -183,13 +184,15 @@ def ativar_break_even(id_sinal):
     """
     executar_update(query, {"id": id_sinal})
 
-def marcar_ordem_para_be_executado(par):
+def marcar_ordem_para_be_executado(par, order_id):
     sql = """
     UPDATE sinais
     SET ativar_be = false
-    WHERE par = %(par)s AND flag_ordem_enviada = true
+    WHERE par = %(par)s AND 
+          order_id = %(order_id)s AND 
+          flag_ordem_enviada = true
     """
-    executar_update(sql, {"par": par})
+    executar_update(sql, {"par": par, "order_id": order_id})
 
 def atualizar_quantidades(lista_id_quantidade):
     query = """
