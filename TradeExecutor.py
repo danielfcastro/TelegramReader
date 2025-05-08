@@ -95,7 +95,7 @@ def iniciar_executor(broker):
                         else:
                             incrementar_retry_be(info["id"])
 
-            time.sleep(2)
+            time.sleep(1)
 
         except KeyboardInterrupt:
             logger.info("🛑 - Executor encerrado pelo usuário.")

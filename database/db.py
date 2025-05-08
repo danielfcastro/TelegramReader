@@ -98,7 +98,12 @@ def incrementar_retry_order(id_sinal):
 def incrementar_retry_be(id_sinal):
     query = """
         UPDATE sinais
-        SET tentativas_be = tentativas_be + 1
+        SET 
+            tentativas_be = tentativas_be + 1,
+            ativar_be = CASE 
+                WHEN tentativas_be + 1 >= 3 THEN false 
+                ELSE ativar_be 
+            END
         WHERE id = %(id)s
     """
     executar_update(query, {"id": id_sinal})
