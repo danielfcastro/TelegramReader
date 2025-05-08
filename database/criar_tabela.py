@@ -23,11 +23,12 @@ def criar_banco():
             tentativas smallint DEFAULT 0,
             order_id bigint DEFAULT 0,
             entry_price real DEFAULT 0,
-            quantidade real DEFAULT 0,
             tentativas_be smallint DEFAULT 0,
             ativar_be boolean DEFAULT false,
+            quantidade real DEFAULT 0,
+            proporcao real DEFAULT 0,
             CONSTRAINT sinais_pkey PRIMARY KEY (id)
-        );
+        )
 
         CREATE INDEX IF NOT EXISTS idx_sinais_tentativas_sl
             ON public.sinais USING btree

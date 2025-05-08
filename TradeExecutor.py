@@ -1,6 +1,5 @@
 import time
 import os
-from types import NoneType
 import logging
 from database.db import (
     buscar_sinal_execucao,
@@ -9,14 +8,11 @@ from database.db import (
     marcar_ordem_enviada,
     incrementar_retry_be,
     incrementar_retry_order,
-    atualizar_quantidades,
     desabilitar_sinal
 )
 from utils import ajustar_quantidade
 
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
-
-proporcoes = [0.1, 0.2, 0.5, 0.2]
 
 def iniciar_executor(broker):
     logger.info("✅ - Executor iniciado com 1 thread para trade + break even")
@@ -26,6 +22,7 @@ def iniciar_executor(broker):
             sinais = buscar_sinal_execucao()
 
             if sinais:
+                #sinal já trará a proporção para ser usada no cálculo da quantidade
                 saldo = broker.obter_saldo_disponivel()
                 symbol = sinais[0]["par"].replace("/", "-").upper()
 
@@ -39,25 +36,16 @@ def iniciar_executor(broker):
                                 desabilitar_sinal(sinal["id"])
                     continue
 
-                trade_percentage = float(os.getenv("TRADE_PERCENTAGE", "3"))
-                valor_trade = saldo * (trade_percentage / 100)
-
-                quantidades = [
-                    ajustar_quantidade((valor_trade * p) / preco_mercado, step=0.0001)
-                    for p in proporcoes
-                ]
-
-                lista_id_quantidade = [
-                    (sinal["id"], quantidade)
-                    for sinal, quantidade in zip(sinais, quantidades)
-                ]
-                atualizar_quantidades(lista_id_quantidade)
-
-                for sinal, quantidade in zip(sinais, quantidades):
+                for sinal in sinais:
                     symbol = sinal["par"].replace("/", "-").upper()
                     side = "BUY" if sinal["tipo_ordem"].upper() == "LONG" else "SELL"
                     leverage = int(sinal["alavancagem"].replace("X", ""))
                     side_leverage = "BOTH"
+                    trade_percentage = float(os.getenv("TRADE_PERCENTAGE", "3"))
+                    proporcao = sinal["proporcao"]
+
+                    valor_trade = saldo * (trade_percentage / 100)
+                    quantidade = ajustar_quantidade((valor_trade * proporcao) / preco_mercado, step=0.0001)
 
                     logger.info(f"📦 - Enviando ordem para {sinal['par']}")
 
@@ -68,7 +56,6 @@ def iniciar_executor(broker):
                     if sucesso:
                         marcar_ordem_enviada(sinal["id"], entry_price, order_id, quantidade)
                     else:
-                        logger.warning(f"⚠️ - Falha ao enviar ordem para {sinal['par']} com quantidade {quantidade}. Motivo: {info_extra}")
                         if "symbol not exist" in str(info_extra).lower():
                             desabilitar_sinal(sinal["id"])
                         else:
@@ -91,6 +78,8 @@ def iniciar_executor(broker):
                             order_id=info["order_id"]
                         )
                         if sucesso:
+                            logger.info(
+                                f"✅ - BE executado para {info['par']} - order_id: {info['order_id']} - entry_price: {info['entry_price']}")
                             marcar_ordem_para_be_executado(info["par"])
                         else:
                             incrementar_retry_be(info["id"])

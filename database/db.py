@@ -60,6 +60,7 @@ def conta_sinais_execucao():
     resultado = executar_select(query)
     return resultado[0]["count"] if resultado else 0
 
+#aqui o banco poderia ser atualizado com uma coluna chamada proporção que seria preenchida no momento em que inserir_sinal_com_multiplos_tps for executado.
 def buscar_sinal_execucao():
     query = """
         SELECT * FROM sinais
@@ -116,7 +117,7 @@ def desativar_be(id_sinal):
     """
     executar_update(query, {"id": id_sinal})
 
-def inserir_sinal_com_multiplos_tps(dados):
+def inserir_sinal_com_multiplos_tps(dados, proporcoes):
     agora = datetime.utcnow().isoformat()
     for i in range(1, 5):
         tp_key = f"tp{i}"
@@ -128,39 +129,26 @@ def inserir_sinal_com_multiplos_tps(dados):
                 "margem": dados.get("margin", "Cross"),
                 "alavancagem": dados.get("leverage", "20X"),
                 "tp": dados[tp_key],
-                "sl": dados["stoploss"],
+                "sl": dados["stoploss"]
             }
+
+            if i <= len(proporcoes):  # para evitar IndexError
+                novo_sinal["proporcao"] = proporcoes[i - 1]
+
             logger.info(f"📥 Inserindo sinal com TP{i}: {novo_sinal}")
             id_inserido = inserir_sinal(novo_sinal)
             logger.debug(f"🆔 ID gerado para TP{i}: {id_inserido}")
         else:
             logger.warning(f"⚠️ TP{i} não encontrado ou é None")
 
-    # Calcular e aplicar quantidades
-
-    total = sum([0.1, 0.2, 0.5, 0.2])
-    proporcoes = [0.1, 0.2, 0.5, 0.2]
-    valor_total = 1  # mock inicial, o valor real será calculado no executor
-    precos = tps
-    soma_precos = sum(precos)
-    lista_id_quantidade = []
-
-    for i, id_sinal in enumerate(ids_inseridos):
-        proporcao = proporcoes[i]
-        preco_tp = precos[i]
-        quantidade = ajustar_quantidade(valor_total * proporcao / preco_tp, step=0.0001)
-        lista_id_quantidade.append((id_sinal, quantidade))
-
-    atualizar_quantidades(lista_id_quantidade)
-
 def inserir_sinal(dados):
     query = """
         INSERT INTO sinais (
             data_hora, par, tipo_ordem, margem, alavancagem,
-            tp, sl
+            tp, sl, proporcao
         ) VALUES (
             %(data_hora)s, %(par)s, %(tipo_ordem)s, %(margem)s, %(alavancagem)s,
-            %(tp)s, %(sl)s
+            %(tp)s, %(sl)s, %(proporcao)s
         ) RETURNING id
     """
     with conectar_db() as conn:

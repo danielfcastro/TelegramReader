@@ -38,11 +38,11 @@ conn = psycopg2.connect(**db_params)
 cur = conn.cursor()
 
 client = TelegramClient(session_name, api_id, api_hash)
+proporcoes = [0.1, 0.2, 0.5, 0.1, 0.1]
 
 async def main():
     grupo_entidade = await utils.obter_entidade(client, group_id)
     grupo_nome = getattr(grupo_entidade, 'title', f"grupo_{group_id}")
-    #nome_grupo_limpo = utils.limpar_nome(grupo_nome)
     grupo_id = grupo_entidade.id
     logger.info(f"✅ - Telegram Reader iniciado a escuta de mensagens em grupo: {grupo_nome} e id: {grupo_id}")
 
@@ -55,7 +55,8 @@ async def main():
         dados = resultado["dados"]
 
         if tipo == "trade":
-            inserir_sinal_com_multiplos_tps(dados)
+            #com base no sinal do Telegram que vem com 4 TPs eu insiro isso na tabela public.sinais
+            inserir_sinal_com_multiplos_tps(dados, proporcoes)
             logger.info(f"✅ - Sinal inserido para {dados['pair']}")
             return
         elif tipo == "monitoramento":
