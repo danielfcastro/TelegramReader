@@ -297,10 +297,6 @@ sequenceDiagram
     end
 
 ```
-
-## Diagrama UML
-![UML Diagram](./documentation/img/system-uml.png)
-
 ## 📚 Sequência de Chamadas Explicada
 
 ### 📥 Parte 1: Recebimento e Processamento da Mensagem (TelegramReader)
