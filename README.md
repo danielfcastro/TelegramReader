@@ -190,7 +190,7 @@ docker-compose up -d
 ## 📈 Melhorias Futuras
 
 - dividir em 5 ordens [0.1, 0.2, 0.5, 0.1, 0.1]
-- Adicionar suporte a stop móvel (trailing stop) para o último lote de 10% 
+- Adicionar suporte a stop móvel (trailing stop) para o último lote de 10% de forma manual, por isso eu coloco o stop loss automático em break even para assim dar tempo de manualmente criar o stop loss sem medo de perder dinheiro 
 - Interface web para monitorar sinais em tempo real.
 
 ---
@@ -252,7 +252,7 @@ Este projeto integra sinais de trade recebidos via Telegram com execução autom
 
 ### 1. Leitura de Sinais do Telegram
 - Monitoramento de mensagens com sinais de trade (entrada, TPs e SL).
-- Extração dos dados relevantes (par, tipo, entrada, TPs, stoploss).
+- Extração dos dados relevantes (par, tipo, entrada, take profits, stop loss).
 - Armazenamento estruturado no banco e em JSON.
 
 ### 2. Controle de Configuração
@@ -260,29 +260,9 @@ Este projeto integra sinais de trade recebidos via Telegram com execução autom
 - Geração automática do arquivo `.env` com base nas escolhas feitas ao iniciar o bot.
 - Suporte a testnet e mainnet.
 
-### 3. Execução de Ordens na Bybit
-- Consulta do saldo disponível em USDT.
-- Cálculo da quantidade com base em `trade_percentage` configurado.
-- Arredondamento com base no `qtyStep` recuperado dinamicamente da API `get_instruments_info`.
-- Consulta ao preço de mercado via `get_tickers`.
-- Criação de ordem de entrada `Market`.
-- Criação de 4 TPs parciais via `set_trading_stop`, modo `Partial`, cada TP com `tpSize` calculado.
-- Correção automática de envio de `tpLimitPrice`/`slLimitPrice` com base no tipo da ordem (`Market` ou `Limit`).
-
-### 4. Logs e Erros
+### 3. Logs e Erros
 - Logs detalhados das chamadas à API.
 - Tratamento de erros de envio de ordens e TP.
-
-## 📌 Considerações Técnicas
-- A API da Bybit requer que `tpLimitPrice` **não seja enviado** quando `tpOrderType="Market"`.
-- Os parâmetros `qty`, `tpSize` e `slSize` devem respeitar `qtyStep` e `minNotionalValue`, consultados via `get_instruments_info`.
-
-## 🛠 Próximos Passos
-- Adicionar suporte à corretora BingX.
-- Adicionar tratamento automático de monitoramentos para ajuste de SL ou fechamento parcial.
-- Implementar painel web com Flask para visualizar ordens, TPs e desempenho da conta.
-- Integração com sistema de relatórios mensais.
-=======
 
 ## Diagrama de Sequência
 
@@ -298,10 +278,17 @@ sequenceDiagram
     rect rgba(220, 248, 255, 0.4)
         Telegram->>TelegramReader: 📩 Mensagem recebida
         TelegramReader->>TelegramReader: classificar_mensagem
-    end
-
-    rect rgba(255, 250, 205, 0.4)
-        TelegramReader->>DB: inserir_sinal_com_multiplos_tps
+        alt tipo = trade
+            TelegramReader->>DB: inserir_sinal_com_multiplos_tps
+        else tipo = monitoramento
+            TelegramReader->>DB: buscar_info_apos_sinal_de_monitoramento
+            alt TP2 ou TP4
+                DB-->>TelegramReader: info encontrado
+                TelegramReader->>DB: ativar_break_even
+            else outro TP
+                TelegramReader-->>TelegramReader: ignorar
+            end
+        end
     end
 
     rect rgba(220, 255, 220, 0.4)
@@ -311,28 +298,17 @@ sequenceDiagram
         TradeExecutor->>DB: marcar_ordem_enviada / incrementar_retry
     end
 
-    rect rgba(255, 230, 230, 0.4)
-        Telegram->>TelegramReader: Mensagem de monitoramento
-        TelegramReader->>DB: buscar_info_apos_sinal_de_monitoramento
-        alt TP2
-            DB-->>TelegramReader: info encontrado
-            TelegramReader->>DB: ativar_break_even
-        else TP4
-            TelegramReader->>BingX: cancelar_sl_iniciar_trailing_stop
-        end
-    end
-
     rect rgba(240, 240, 255, 0.4)
-        TradeExecutor->>DB: buscar_sinal_para_be
-        TradeExecutor->>BingX: cancelar SL + ajustar BE / ativar trailing stop
+        TradeExecutor->>DB: buscar_sinal_para_break_even
+        TradeExecutor->>BingX: cancelar SL + ajustar BE
         BingX-->>TradeExecutor: sucesso/falha
         TradeExecutor->>DB: marcar_ordem_para_be_executado / retry
     end
+
 ```
 
-
 ## Diagrama UML
-![UML Diagram](./documentation/img/system-uml.png)
+![UML Diagram](./documentation/img/system-uml.svg)
 
 
 
@@ -344,48 +320,45 @@ sequenceDiagram
    O `TelegramReader` escuta mensagens no grupo configurado via Telethon.
 
 2. **`classificar_mensagem(mensagem)`**  
-   Determina se a mensagem recebida é:  
-   - um **sinal de trade** (entrada nova), ou  
-   - uma **mensagem de monitoramento** (ex: TARGET #2 DONE).
+   Determina se a mensagem recebida é:
+   - um **sinal de trade** (entrada nova), ou
+   - uma **mensagem de monitoramento** (ex: TARGET #2 DONE ou #4 DONE).
 
 3. **Se for sinal de trade → `inserir_sinal_com_multiplos_tps(dados)`**  
-   - Extrai os TPs (`tp1` a `tp5`) e o SL.
-   - Insere uma linha por TP na tabela `sinais` com as proporções
+   - Extrai os TPs (`tp1` a `tp4`) e o SL.
+   - Divide o trade em 5 ordens com proporções: 10%, 20%, 50%, 10%, 10%.
+   - Insere cada ordem na tabela `sinais`. A última não possui TP.
 
 4. **Se for mensagem de monitoramento:**
-   - Se for **TP2**:
+   - Se for **TP2 ou TP4**:
      - `buscar_info_apos_sinal_de_monitoramento(par)`  
-     - Se encontrar ordem, chama `ativar_break_even(id)`.
-   - Se for **TP4**:
-     - `cancelar_sl_iniciar_trailing_stop(par)`  
-     - Este método executa `cancela_stop_loss()` e prepara o uso de `ativar_trailing_stop()` no executor.
+     - Se encontrar ordem, chama `ativar_break_even(id)` para sinalizar que o SL pode ser movido.
+   - Outros TPs são atualmente ignorados.
+
 
 ### 🧠 Parte 2: Executor (TradeExecutor)
 
 5. **Loop contínuo → `buscar_sinal_execucao()`**  
-   - Busca ordens ainda não enviadas e com menos de 3 tentativas.
+   - Busca ordens com `ordem_status_id = 0` e `tentativas < 3`.
 
 6. **Para cada sinal encontrado:**
    - Obtém saldo → `broker.obter_saldo_disponivel()`
    - Obtém preço de mercado → `broker.obter_preco_mercado(symbol)`
-   - Calcula quantidade com base na proporção armazenada (ex: 10%, 20%, etc).
-   - Envia ordem → `broker.enviar_ordem_tp_sl(...)`
-   - Sucesso? Chama:
+   - Calcula a quantidade com base na proporção (ex: 0.2 para 20%).
+   - Envia ordem de entrada com SL e TP → `broker.enviar_ordem_tp_sl(...)`
+   - Se sucesso:
      - `marcar_ordem_enviada(...)`
-   - Falha? Chama:
-     - `incrementar_retry_order(...)`  
-     - Ou `desabilitar_sinal(...)` se for erro "symbol not exist".
+   - Se falha:
+     - `incrementar_retry_order(...)` ou `desabilitar_sinal(...)` se erro de símbolo.
+
 
 ### 🔁 Parte 3: Monitoramento de Break Even
 
-7. **Se não há sinais novos, busca → `buscar_sinal_para_be()`**
-   - Itera sobre sinais com `ativar_be = true`.
+7. **Se não há sinais novos, busca → `buscar_sinal_para_break_even()`**
+   - Encontra sinais que já atingiram TP2 ou TP4 e estão prontos para mover o SL.
 
-8. **Se TP for TP4 → inicia trailing stop:**
-   - Chama `broker.cancela_stop_loss(symbol)`
-   - Marca no banco via `marca_trailing_stop_iniciado(id)`
-
-9. **Envia nova ordem STOP_MARKET como Break Even:**
-   - `broker.ajustar_para_break_even(...)`
+8. **Executa ajuste de SL para preço de entrada:**
+   - Chama `broker.ajustar_para_break_even(...)` (cancela SL antigo e envia novo SL)
    - Se sucesso → `marcar_ordem_para_be_executado(par)`
    - Se falha → `incrementar_retry_be(id)`
+

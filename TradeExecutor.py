@@ -3,13 +3,12 @@ import os
 import logging
 from database.db import (
     buscar_sinal_execucao,
-    buscar_sinal_para_be,
     marcar_ordem_para_be_executado,
     marcar_ordem_enviada,
     incrementar_retry_be,
     incrementar_retry_order,
     desabilitar_sinal,
-    marca_trailing_stop_iniciado
+    buscar_sinal_para_break_even
 )
 from utils import ajustar_quantidade
 
@@ -62,30 +61,23 @@ def iniciar_executor(broker):
                             desabilitar_sinal(sinal["id"])
                         else:
                             incrementar_retry_order(sinal["id"])
-
             else:
-                sinal_be = buscar_sinal_para_be()
+                sinal_be = buscar_sinal_para_break_even()
                 _symbol = None
                 for info in sinal_be:
                     if info:
                         if _symbol == info["par"].replace("/", "-").upper():
                             continue
                         _symbol = info["par"].replace("/", "-").upper()
-                        tp = info["tp"]
-                        logger.debug(f"TP: {tp}")
                         logger.info(f"⚙️ - Ajustando BE para {_symbol}")
-                        tipo_ordem_be = str(info["tipo_ordem"]).upper()
-
                         sucesso = broker.ajustar_para_break_even(
                             symbol=_symbol,
-                            position_side = "LONG" if tipo_ordem_be == "LONG" else "SHORT",
+                            position_side="LONG" if info["tipo_ordem"].upper() == "LONG" else "SHORT",
                             quantity=info["quantidade"],
                             stop_price=info["entry_price"],
                             order_id=info["order_id"]
                         )
                         if sucesso:
-                            logger.info(
-                                f"✅ - BE executado para {info['par']} - order_id: {info['order_id']} - entry_price: {info['entry_price']}")
                             marcar_ordem_para_be_executado(info["par"])
                         else:
                             incrementar_retry_be(info["id"])

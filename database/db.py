@@ -52,42 +52,44 @@ def executar_insert(query, params=None):
             cur.execute(query, params)
             conn.commit()
 
-def conta_sinais_execucao():
-    query = """
-        SELECT count(*) FROM sinais
-        WHERE flag_ordem_enviada = false
-    """
-    resultado = executar_select(query)
-    return resultado[0]["count"] if resultado else 0
-
 #aqui o banco poderia ser atualizado com uma coluna chamada proporção que seria preenchida no momento em que inserir_sinal_com_multiplos_tps for executado.
+# Busca de sinais registrados no banco a partir da recepção das mensagens de Telegram
+# chamados de TradeExecutor
 def buscar_sinal_execucao():
     query = """
         SELECT * FROM sinais
-        WHERE flag_ordem_enviada = false and tentativas < 3
+        WHERE ordem_status_id = 0 AND 
+              tentativas < 3
         ORDER BY id ASC
     """
     resultado = executar_select(query)
     return resultado if resultado is not None else []
 
-def buscar_sinal_para_be():
+#Usado em TradeExecutor para listar todos os sinais que foram ativados em TelegramReader por ativar_break_even
+def buscar_sinal_para_break_even():
     query = """
         SELECT * FROM sinais
-        WHERE ativar_be = true AND flag_ordem_enviada = true and tentativas_be <3
+        WHERE break_even_status_id = 1 AND 
+              ordem_status_id = 1 AND 
+              tentativas_be <3
         ORDER BY id ASC
         LIMIT 1
     """
     resultado = executar_select(query)
     return resultado if resultado is not None else []
 
+#Fim da busca de sinais
+
+#Queries de alteração de status
 def marcar_ordem_enviada(id_sinal, entry_price, order_id, quantidade):
     query = """
         UPDATE sinais
-        SET flag_ordem_enviada = true, entry_price = %(entry_price)s, order_id = %(order_id)s, quantidade = %(quantidade)s
+        SET ordem_status_id = 1, entry_price = %(entry_price)s, order_id = %(order_id)s, quantidade = %(quantidade)s
         WHERE id = %(id)s
     """
     executar_update(query, {"id": id_sinal, "entry_price": entry_price, "order_id": order_id, "quantidade": quantidade})
 
+#chamado dentro de TradeExecutor para incrementar o retry de envio de ordem
 def incrementar_retry_order(id_sinal):
     query = """
         UPDATE sinais
@@ -96,52 +98,16 @@ def incrementar_retry_order(id_sinal):
     """
     executar_update(query, {"id": id_sinal})
 
+#chamado dentro de TradeExecutor para incrementar o retry de envio de ordem pra mover SL para Break Even
 def incrementar_retry_be(id_sinal):
     query = """
         UPDATE sinais
-        SET 
-            tentativas_be = tentativas_be + 1,
-            ativar_be = CASE 
-                WHEN tentativas_be + 1 >= 3 THEN false 
-                ELSE ativar_be 
-            END
+        SET tentativas_be = tentativas_be + 1
         WHERE id = %(id)s
     """
     executar_update(query, {"id": id_sinal})
 
-def desativar_be(id_sinal):
-    query = """
-        UPDATE sinais
-        SET ativar_be = false
-        WHERE id = %(id)s
-    """
-    executar_update(query, {"id": id_sinal})
-
-def inserir_sinal_com_multiplos_tps(dados, proporcoes):
-    agora = datetime.utcnow().isoformat()
-
-    for i, proporcao in enumerate(proporcoes, start=1):
-        novo_sinal = {
-            "data_hora": agora,
-            "par": dados["pair"],
-            "tipo_ordem": dados["type"],
-            "margem": dados.get("margin", "Cross"),
-            "alavancagem": dados.get("leverage", "20X"),
-            "proporcao": proporcao,
-            "sl": dados["stoploss"]
-        }
-
-        if i <= len(proporcoes) - 1:  # Os 4 primeiros têm TP
-            tp_key = f"tp{i}"
-            novo_sinal["tp"] = dados[tp_key]
-            logger.info(f"📥 Inserindo sinal com TP{i}: {novo_sinal}")
-        else:
-            logger.info(f"📥 Inserindo ordem sem TP (lote livre): {novo_sinal}")
-
-        id_inserido = inserir_sinal(novo_sinal)
-        logger.debug(f"🆔 ID gerado para ordem {i}: {id_inserido}")
-
-
+#Insere sinal recebido pelo TelegramReader no banco
 def inserir_sinal(dados):
     query = """
         INSERT INTO sinais (
@@ -163,33 +129,41 @@ def inserir_sinal(dados):
 
 def buscar_info_apos_sinal_de_monitoramento(par):
     query = """
-        SELECT id, order_id, entry_price FROM sinais
-        WHERE par = %(par)s AND flag_ordem_enviada = true AND order_id != 0 AND ativar_be = false
+        SELECT * FROM sinais
+        WHERE par = %(par)s AND 
+              ordem_status_id = 1 AND 
+              order_id != 0 AND 
+              break_even_status_id = 1
         ORDER BY id DESC
         LIMIT 1
     """
     resultado = executar_select(query, {"par": par})
     return resultado[0] if resultado else None
 
+#Chamado por TelegramReader para marcar o sinal que atingiu TP2 e então ser atualizado por TradeExecutor.py
 def ativar_break_even(id_sinal):
     query = """
-        UPDATE sinais SET ativar_be = true WHERE id = %(id)s
+        UPDATE sinais 
+        SET break_even_status_id = 1
+        WHERE id = %(id)s
     """
     executar_update(query, {"id": id_sinal})
 
+#Chamado por TradeExecutor após uma execução bem sucedida de broker.ajustar_para_break_even
 def marcar_ordem_para_be_executado(par):
     sql = """
     UPDATE sinais
-    SET ativar_be = false
+    SET break_even_status_id = 2
     WHERE par = %(par)s AND 
-          flag_ordem_enviada = true
+          ordem_status_id = 1
     """
     executar_update(sql, {"par": par})
 
+#chamado quando não encontra o símbolo ao buscar pelo preço
 def desabilitar_sinal(id_sinal):
     query = """
         UPDATE sinais
-        SET tentativas = 3
+        SET ordem_status_id = 2
         WHERE id = %(id)s
     """
     executar_update(query, {"id": id_sinal})
@@ -198,25 +172,10 @@ def somar_quantidade_para_be(par):
     sql = """
     SELECT SUM(quantidade) AS total
     FROM sinais
-    WHERE par = %(par)s AND ativar_be = true
+    WHERE par = %(par)s AND 
+          break_even_status_id = 1
     """
     resultado = executar_select(sql, {"par": par})
     if resultado and resultado[0]["total"] is not None:
         return resultado[0]["total"]
     return 0.0
-
-def cancelar_sl_iniciar_trailing_stop(par):
-    query = """
-        UPDATE sinais
-        SET flag_trailing_stop = True
-        WHERE par = %(par)s
-    """
-    executar_update(query, {"par": par})
-
-def marca_trailing_stop_iniciado(id_sinal):
-    query = """
-        UPDATE sinais
-        SET flag_trailing_stop = False
-        WHERE id = %(id)s
-    """
-    executar_update(query, {"id": id_sinal})

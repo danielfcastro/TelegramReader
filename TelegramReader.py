@@ -2,6 +2,7 @@ import os
 import logging
 import utils
 import psycopg2
+from datetime import datetime
 
 from dotenv import load_dotenv
 from log.logger_config import configurar_logging
@@ -27,8 +28,7 @@ db_params = {
 from database.db import (
     buscar_info_apos_sinal_de_monitoramento,
     ativar_break_even,
-    inserir_sinal_com_multiplos_tps,
-    cancelar_sl_iniciar_trailing_stop
+    inserir_sinal
 )
 
 from utils import (
@@ -40,6 +40,31 @@ cur = conn.cursor()
 
 client = TelegramClient(session_name, api_id, api_hash)
 proporcoes = [0.1, 0.2, 0.5, 0.1, 0.1]
+
+def inserir_sinal_com_multiplos_tps(dados):
+    agora = datetime.utcnow().isoformat()
+
+    for i, proporcao in enumerate(proporcoes, start=1):
+        novo_sinal = {
+            "data_hora": agora,
+            "par": dados["pair"],
+            "tipo_ordem": dados["type"],
+            "margem": dados.get("margin", "Cross"),
+            "alavancagem": dados.get("leverage", "20X"),
+            "proporcao": proporcao,
+            "sl": dados["stoploss"]
+        }
+
+        if i <= len(proporcoes) - 1:  # Os 4 primeiros têm TP
+            tp_key = f"tp{i}"
+            novo_sinal["tp"] = dados[tp_key]
+            logger.info(f"📥 Inserindo sinal com TP{i}: {novo_sinal}")
+        else:
+            logger.info(f"📥 Inserindo ordem sem TP (lote livre): {novo_sinal}")
+
+        id_inserido = inserir_sinal(novo_sinal)
+        logger.debug(f"🆔 ID gerado para ordem {i}: {id_inserido}")
+
 
 async def main():
     grupo_entidade = await utils.obter_entidade(client, group_id)
@@ -61,7 +86,7 @@ async def main():
             logger.info(f"✅ - Sinal inserido para {dados['pair']}")
             return
         elif tipo == "monitoramento":
-            if dados["tp"] == "TP2":
+            if dados["tp"] in ["TP2", "TP4"]:
                 info = buscar_info_apos_sinal_de_monitoramento(dados["pair"])
                 if info:
                     ativar_break_even(info["id"])
@@ -69,8 +94,6 @@ async def main():
                 else:
                     logger.warning(f"⚠️ - Nenhuma ordem encontrada para {dados['pair']} ao tentar ativar BE.")
                 return
-            if dados["tp"] == "TP4":
-                cancelar_sl_iniciar_trailing_stop(dados["pair"])
         else:
             logger.warning("❌ - Não foi possível extrair sinal ou monitoramento da mensagem.")
         logger.info("✅ - Mensagem recebida e classificada.")
