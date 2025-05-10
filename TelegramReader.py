@@ -27,7 +27,8 @@ db_params = {
 from database.db import (
     buscar_info_apos_sinal_de_monitoramento,
     ativar_break_even,
-    inserir_sinal_com_multiplos_tps
+    inserir_sinal_com_multiplos_tps,
+    cancelar_sl_iniciar_trailing_stop
 )
 
 from utils import (
@@ -69,7 +70,7 @@ async def main():
                     logger.warning(f"⚠️ - Nenhuma ordem encontrada para {dados['pair']} ao tentar ativar BE.")
                 return
             if dados["tp"] == "TP4":
-                logger.info("⚠️ - Ainda a ser implementado - enviar trailing stop para último lote 5")
+                cancelar_sl_iniciar_trailing_stop(dados["pair"])
         else:
             logger.warning("❌ - Não foi possível extrair sinal ou monitoramento da mensagem.")
         logger.info("✅ - Mensagem recebida e classificada.")

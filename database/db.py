@@ -119,27 +119,28 @@ def desativar_be(id_sinal):
 
 def inserir_sinal_com_multiplos_tps(dados, proporcoes):
     agora = datetime.utcnow().isoformat()
-    for i in range(1, 5):
-        tp_key = f"tp{i}"
-        if tp_key in dados and dados[tp_key] is not None:
-            novo_sinal = {
-                "data_hora": agora,
-                "par": dados["pair"],
-                "tipo_ordem": dados["type"],
-                "margem": dados.get("margin", "Cross"),
-                "alavancagem": dados.get("leverage", "20X"),
-                "tp": dados[tp_key],
-                "sl": dados["stoploss"]
-            }
 
-            if i <= len(proporcoes):  # para evitar IndexError
-                novo_sinal["proporcao"] = proporcoes[i - 1]
+    for i, proporcao in enumerate(proporcoes, start=1):
+        novo_sinal = {
+            "data_hora": agora,
+            "par": dados["pair"],
+            "tipo_ordem": dados["type"],
+            "margem": dados.get("margin", "Cross"),
+            "alavancagem": dados.get("leverage", "20X"),
+            "proporcao": proporcao,
+            "sl": dados["stoploss"]
+        }
 
+        if i <= len(proporcoes) - 1:  # Os 4 primeiros têm TP
+            tp_key = f"tp{i}"
+            novo_sinal["tp"] = dados[tp_key]
             logger.info(f"📥 Inserindo sinal com TP{i}: {novo_sinal}")
-            id_inserido = inserir_sinal(novo_sinal)
-            logger.debug(f"🆔 ID gerado para TP{i}: {id_inserido}")
         else:
-            logger.warning(f"⚠️ TP{i} não encontrado ou é None")
+            logger.info(f"📥 Inserindo ordem sem TP (lote livre): {novo_sinal}")
+
+        id_inserido = inserir_sinal(novo_sinal)
+        logger.debug(f"🆔 ID gerado para ordem {i}: {id_inserido}")
+
 
 def inserir_sinal(dados):
     query = """
@@ -185,15 +186,6 @@ def marcar_ordem_para_be_executado(par):
     """
     executar_update(sql, {"par": par})
 
-def atualizar_quantidades(lista_id_quantidade):
-    query = """
-        UPDATE sinais
-        SET quantidade = %(quantidade)s
-        WHERE id = %(id)s
-    """
-    for id_sinal, quantidade in lista_id_quantidade:
-        executar_update(query, {"id": id_sinal, "quantidade": quantidade})
-
 def desabilitar_sinal(id_sinal):
     query = """
         UPDATE sinais
@@ -212,3 +204,19 @@ def somar_quantidade_para_be(par):
     if resultado and resultado[0]["total"] is not None:
         return resultado[0]["total"]
     return 0.0
+
+def cancelar_sl_iniciar_trailing_stop(par):
+    query = """
+        UPDATE sinais
+        SET flag_trailing_stop = True
+        WHERE par = %(par)s
+    """
+    executar_update(query, {"par": par})
+
+def marca_trailing_stop_iniciado(id_sinal):
+    query = """
+        UPDATE sinais
+        SET flag_trailing_stop = False
+        WHERE id = %(id)s
+    """
+    executar_update(query, {"id": id_sinal})

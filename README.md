@@ -283,3 +283,109 @@ Este projeto integra sinais de trade recebidos via Telegram com execução autom
 - Implementar painel web com Flask para visualizar ordens, TPs e desempenho da conta.
 - Integração com sistema de relatórios mensais.
 =======
+
+## Diagrama de Sequência
+
+```mermaid
+%%{ init : { "theme" : "neutral" } }%%
+sequenceDiagram
+    participant Telegram
+    participant TelegramReader
+    participant DB
+    participant TradeExecutor
+    participant BingX
+
+    rect rgba(220, 248, 255, 0.4)
+        Telegram->>TelegramReader: 📩 Mensagem recebida
+        TelegramReader->>TelegramReader: classificar_mensagem
+    end
+
+    rect rgba(255, 250, 205, 0.4)
+        TelegramReader->>DB: inserir_sinal_com_multiplos_tps
+    end
+
+    rect rgba(220, 255, 220, 0.4)
+        TradeExecutor->>DB: buscar_sinal_execucao
+        TradeExecutor->>BingX: enviar_ordem_tp_sl
+        BingX-->>TradeExecutor: sucesso/falha
+        TradeExecutor->>DB: marcar_ordem_enviada / incrementar_retry
+    end
+
+    rect rgba(255, 230, 230, 0.4)
+        Telegram->>TelegramReader: Mensagem de monitoramento
+        TelegramReader->>DB: buscar_info_apos_sinal_de_monitoramento
+        alt TP2
+            DB-->>TelegramReader: info encontrado
+            TelegramReader->>DB: ativar_break_even
+        else TP4
+            TelegramReader->>BingX: cancelar_sl_iniciar_trailing_stop
+        end
+    end
+
+    rect rgba(240, 240, 255, 0.4)
+        TradeExecutor->>DB: buscar_sinal_para_be
+        TradeExecutor->>BingX: cancelar SL + ajustar BE / ativar trailing stop
+        BingX-->>TradeExecutor: sucesso/falha
+        TradeExecutor->>DB: marcar_ordem_para_be_executado / retry
+    end
+```
+
+
+## Diagrama UML
+![UML Diagram](./documentation/img/system-uml.png)
+
+
+
+## 📚 Sequência de Chamadas Explicada
+
+### 📥 Parte 1: Recebimento e Processamento da Mensagem (TelegramReader)
+
+1. **Mensagem recebida do Telegram**  
+   O `TelegramReader` escuta mensagens no grupo configurado via Telethon.
+
+2. **`classificar_mensagem(mensagem)`**  
+   Determina se a mensagem recebida é:  
+   - um **sinal de trade** (entrada nova), ou  
+   - uma **mensagem de monitoramento** (ex: TARGET #2 DONE).
+
+3. **Se for sinal de trade → `inserir_sinal_com_multiplos_tps(dados)`**  
+   - Extrai os TPs (`tp1` a `tp5`) e o SL.
+   - Insere uma linha por TP na tabela `sinais` com as proporções
+
+4. **Se for mensagem de monitoramento:**
+   - Se for **TP2**:
+     - `buscar_info_apos_sinal_de_monitoramento(par)`  
+     - Se encontrar ordem, chama `ativar_break_even(id)`.
+   - Se for **TP4**:
+     - `cancelar_sl_iniciar_trailing_stop(par)`  
+     - Este método executa `cancela_stop_loss()` e prepara o uso de `ativar_trailing_stop()` no executor.
+
+### 🧠 Parte 2: Executor (TradeExecutor)
+
+5. **Loop contínuo → `buscar_sinal_execucao()`**  
+   - Busca ordens ainda não enviadas e com menos de 3 tentativas.
+
+6. **Para cada sinal encontrado:**
+   - Obtém saldo → `broker.obter_saldo_disponivel()`
+   - Obtém preço de mercado → `broker.obter_preco_mercado(symbol)`
+   - Calcula quantidade com base na proporção armazenada (ex: 10%, 20%, etc).
+   - Envia ordem → `broker.enviar_ordem_tp_sl(...)`
+   - Sucesso? Chama:
+     - `marcar_ordem_enviada(...)`
+   - Falha? Chama:
+     - `incrementar_retry_order(...)`  
+     - Ou `desabilitar_sinal(...)` se for erro "symbol not exist".
+
+### 🔁 Parte 3: Monitoramento de Break Even
+
+7. **Se não há sinais novos, busca → `buscar_sinal_para_be()`**
+   - Itera sobre sinais com `ativar_be = true`.
+
+8. **Se TP for TP4 → inicia trailing stop:**
+   - Chama `broker.cancela_stop_loss(symbol)`
+   - Marca no banco via `marca_trailing_stop_iniciado(id)`
+
+9. **Envia nova ordem STOP_MARKET como Break Even:**
+   - `broker.ajustar_para_break_even(...)`
+   - Se sucesso → `marcar_ordem_para_be_executado(par)`
+   - Se falha → `incrementar_retry_be(id)`
