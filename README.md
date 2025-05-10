@@ -5,7 +5,7 @@
 Este projeto é dividido em **dois serviços independentes**:
 
 - **TelegramSignalReader**: Monitora mensagens de sinais de trading em grupos ou canais do Telegram e grava em um banco de dados.
-- **TradeExecutor**: Monitora o banco de dados, identifica sinais pendentes e envia ordens automáticas para a ByBIT Testnet.
+- **TradeExecutor**: Monitora o banco de dados, identifica sinais pendentes e envia ordens automáticas para a BingX Testnet.
 
 ✅ Arquitetura desacoplada, modular e escalável.  
 ✅ Configuração fácil para ambiente de testes e produção.  
@@ -83,29 +83,28 @@ pip install -r requirements.txt
 Edite o arquivo `config.properties`:
 
 ```ini
-# Telegram Config
-api_id=SEU_API_ID_DO_TELEGRAM
-api_hash=SEU_API_HASH_DO_TELEGRAM
-grupo_id=ID_DO_GRUPO_OU_CANAL
+# Telegram API
+api_id=API ID
+api_hash=API HASH
+group_id=ID DO GRUPO QUE SE DESEJA MONITORAR MENSAGENS
+session_name=NOME DO ARQUIVO DE SESSÃO CRIADO AO LOGAR NO TELEGRAM
 
-# ByBIT Testnet Config
-bybit_api_key=SUA_API_KEY
-bybit_api_secret=SEU_API_SECRET
+#BingX API
+bingx_apy_key=BING X API KEY
+bingx_secret_key=BING X SECRET
+
+bingx_api_url_testnet=https://open-api-vst.bingx.com
+bingx_api_url=#https://open-api.bingx.com
 
 # Trading Strategy
-trade_percentage=3  # Percentual do saldo disponível para usar em cada trade
+trade_percentage=3
 
-# Database Config (modo atual: SQLite)
-database_mode=sqlite
-sqlite_db_path=database/sinais.db
-
-
-database_mode=postgresql
-postgres_host=localhost
-postgres_port=5432
-postgres_user=usuario
-postgres_password=senha
-postgres_db=sinais
+db_type=postgres
+db_host=IP ONDE O POSTGRES ESTÁ
+db_port=5432
+db_name=tradebotdb
+db_user=tradebot
+db_password=tradebot
 ```
 
 ---
@@ -181,8 +180,9 @@ docker-compose up -d
 
 ## 🧠 Observações
 
-- Este projeto usa **ByBIT Testnet** — perfeito para treinar sem risco financeiro.
-- Posteriormente, será possível migrar para **produção real** na ByBIT com poucas alterações no endpoint e nas chaves.
+- Este projeto usa **BingX Testnet** — perfeito para treinar sem risco financeiro para testar.
+- Este projeto usa **BingX** para trades reasis.
+- A escolha se dá por meio de parâmetro fornecido ao start_all.py
 - O projeto já está preparado para usar **PostgreSQL**
 
 ---
@@ -234,19 +234,10 @@ O painel mostrará os sinais captados e seu status!
 
 ---
 
-TODO
-
-To use Demo Trading API, you need to:
-1) switch over to Demo on Mainnet (bybit.com)
-2) head over to https://www.bybit.com/app/user/api-management
-3) create an API key while in Demo Trading mode
-
-You can now use this API for Demo Trading. Assuming you use pybit, it's done by setting testnet=False and demo=True
-
 5. Resumo Técnico
-# 📊 Resumo Técnico - Projeto Telegram Trade Bot (Bybit Testnet)
+# 📊 Resumo Técnico - Projeto Telegram Trade Bot (BingX Testnet)
 
-Este projeto integra sinais de trade recebidos via Telegram com execução automática de ordens na corretora Bybit, utilizando a API v5 e operando inicialmente na **testnet**. 
+Este projeto integra sinais de trade recebidos via Telegram com execução automática de ordens na corretora BingX podendo ser configurado para a rede teste ou produção. 
 
 ## ✅ Funcionalidades Implementadas
 
@@ -256,7 +247,7 @@ Este projeto integra sinais de trade recebidos via Telegram com execução autom
 - Armazenamento estruturado no banco e em JSON.
 
 ### 2. Controle de Configuração
-- Arquivo `config.properties` centraliza todas as chaves da Bybit, BingX, e parâmetros de trade.
+- Arquivo `config.properties` centraliza todas as chaves da BingX, e parâmetros de trade.
 - Geração automática do arquivo `.env` com base nas escolhas feitas ao iniciar o bot.
 - Suporte a testnet e mainnet.
 
@@ -308,9 +299,7 @@ sequenceDiagram
 ```
 
 ## Diagrama UML
-![UML Diagram](./documentation/img/system-uml.svg)
-
-
+![UML Diagram](./documentation/img/system-uml.png)
 
 ## 📚 Sequência de Chamadas Explicada
 
