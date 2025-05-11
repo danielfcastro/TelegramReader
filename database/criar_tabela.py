@@ -9,100 +9,103 @@ def criar_banco():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('''
+        CREATE TABLE IF NOT EXISTS public.break_even_status
+        (
+            id integer NOT NULL,
+            descricao text COLLATE pg_catalog."default" NOT NULL,
+            CONSTRAINT break_even_status_pkey PRIMARY KEY (id)
+        )
+        
+        TABLESPACE pg_default;
+        
+        ALTER TABLE IF EXISTS public.break_even_status
+            OWNER to tradebot;
+        
+        CREATE TABLE IF NOT EXISTS public.ordem_status
+        (
+            id integer NOT NULL,
+            descricao text COLLATE pg_catalog."default" NOT NULL,
+            CONSTRAINT trailing_stop_status_pkey PRIMARY KEY (id)
+        )
+        
+        TABLESPACE pg_default;
+        
+        ALTER TABLE IF EXISTS public.ordem_status
+            OWNER to tradebot;
+        
         CREATE TABLE IF NOT EXISTS public.sinais
         (
             id integer NOT NULL DEFAULT nextval('sinais_id_seq'::regclass),
-            data_hora text COLLATE pg_catalog."default",
-            par text COLLATE pg_catalog."default",
-            tipo_ordem text COLLATE pg_catalog."default",
-            margem text COLLATE pg_catalog."default",
-            alavancagem text COLLATE pg_catalog."default",
-            entrada_inferior real,
-            entrada_superior real,
-            tp1 real,
-            tp2 real,
-            tp3 real,
-            tp4 real,
-            stoploss real,
-            flag_ordem_enviada smallint DEFAULT 0,
-            flag_tp_configurado boolean DEFAULT false,
-            flag_sl_configurado boolean DEFAULT false,
-            tentativas_tp smallint DEFAULT 0,
-            tentativas_sl smallint DEFAULT 0,
-            CONSTRAINT sinais_pkey PRIMARY KEY (id)
-        );
-                   
-        CREATE TABLE IF NOT EXISTS monitoramentos (
-            id SERIAL PRIMARY KEY,
-            data_hora TIMESTAMP,
-            par TEXT,
-            price DOUBLE PRECISION,
-            profit INTEGER,
-            spent TEXT,
-            instruction TEXT,
-            target_done TEXT
-        );
-
-        CREATE TABLE IF NOT EXISTS public.break_even (
-            id SERIAL PRIMARY KEY,
-            data_hora TEXT,
-            par TEXT,
-            flag_executado INTEGER DEFAULT 0
-        );
-
-        CREATE INDEX IF NOT EXISTS idx_brkeven_flag_executado
-            ON public.break_even USING btree
-            (flag_executado ASC NULLS LAST)
-            WITH (deduplicate_items=True)
+            data_hora text COLLATE pg_catalog."default" NOT NULL,
+            par text COLLATE pg_catalog."default" NOT NULL,
+            tipo_ordem text COLLATE pg_catalog."default" NOT NULL,
+            margem text COLLATE pg_catalog."default" NOT NULL,
+            alavancagem text COLLATE pg_catalog."default" NOT NULL,
+            tp real NOT NULL,
+            sl real NOT NULL,
+            tentativas smallint NOT NULL DEFAULT 0,
+            order_id bigint DEFAULT 0,
+            entry_price real DEFAULT 0,
+            tentativas_be smallint DEFAULT 0,
+            quantidade real DEFAULT 0,
+            proporcao real NOT NULL DEFAULT 0,
+            ordem_status_id smallint NOT NULL DEFAULT 0,
+            break_even_status_id smallint NOT NULL DEFAULT 0,
+            CONSTRAINT sinais_pkey PRIMARY KEY (id),
+            CONSTRAINT fk_break_even_status FOREIGN KEY (break_even_status_id)
+                REFERENCES public.break_even_status (id) MATCH SIMPLE
+                ON UPDATE NO ACTION
+                ON DELETE NO ACTION
+                NOT VALID,
+            CONSTRAINT fk_trailing_stop_status FOREIGN KEY (ordem_status_id)
+                REFERENCES public.ordem_status (id) MATCH SIMPLE
+                ON UPDATE NO ACTION
+                ON DELETE NO ACTION
+                NOT VALID
+        )
+        
+        TABLESPACE pg_default;
+        
+        ALTER TABLE IF EXISTS public.sinais
+            OWNER to tradebot;
+        
+        CREATE INDEX IF NOT EXISTS fki_fk_break_even_status
+            ON public.sinais USING btree
+            (break_even_status_id ASC NULLS LAST)
             TABLESPACE pg_default;
-
-        CREATE INDEX IF NOT EXISTS idx_id
-            ON public.break_even USING btree
-            (id ASC NULLS LAST)
-            WITH (deduplicate_items=True)
-            TABLESPACE pg_default;                                            
-
-        CREATE INDEX IF NOT EXISTS idx_sinais_flag_ordem_enviada
+        
+        CREATE INDEX IF NOT EXISTS fki_fk_trailing_stop_status
             ON public.sinais USING btree
-            (flag_ordem_enviada ASC NULLS LAST)
-            WITH (deduplicate_items=True)
+            (ordem_status_id ASC NULLS LAST)
             TABLESPACE pg_default;
-
-        CREATE INDEX IF NOT EXISTS idx_sinais_flag_tp_configurado
+        
+        CREATE INDEX IF NOT EXISTS idx_be_ordem_status_tentativasbe
             ON public.sinais USING btree
-            (flag_tp_configurado ASC NULLS LAST)
-            WITH (deduplicate_items=True)
+            (break_even_status_id ASC NULLS LAST, ordem_status_id ASC NULLS LAST, tentativas_be ASC NULLS LAST)
             TABLESPACE pg_default;
-
-        CREATE INDEX IF NOT EXISTS idx_sinais_flag_sl_configuradoo
+        
+        CREATE INDEX IF NOT EXISTS idx_ordem_status_tentativas
             ON public.sinais USING btree
-            (flag_sl_configurado ASC NULLS LAST)
-            WITH (deduplicate_items=True)
+            (ordem_status_id ASC NULLS LAST, tentativas ASC NULLS LAST)
             TABLESPACE pg_default;
-
-        CREATE INDEX IF NOT EXISTS idx_sinais_flag_tp_configurado
+        
+        CREATE INDEX IF NOT EXISTS idx_par_be
             ON public.sinais USING btree
-            (flag_tp_configurado ASC NULLS LAST)
-            WITH (deduplicate_items=True)
+            (par COLLATE pg_catalog."default" ASC NULLS LAST, break_even_status_id ASC NULLS LAST)
             TABLESPACE pg_default;
-
-        CREATE INDEX IF NOT EXISTS idx_sinais_flag_sl_configurado
+        
+        CREATE INDEX IF NOT EXISTS idx_par_ordem_orderid_be
             ON public.sinais USING btree
-            (flag_sl_configurado ASC NULLS LAST)
-            WITH (deduplicate_items=True)
-            TABLESPACE pg_default; 
-        CREATE INDEX IF NOT EXISTS idx_sinais_tentativas_tp
-            ON public.sinais USING btree
-            (tentativas_tp ASC NULLS LAST)
-            WITH (deduplicate_items=True)
+            (par COLLATE pg_catalog."default" ASC NULLS LAST, ordem_status_id ASC NULLS LAST, order_id ASC NULLS LAST, break_even_status_id ASC NULLS LAST)
             TABLESPACE pg_default;
-
-        CREATE INDEX IF NOT EXISTS idx_sinais_tentativas_sl
+        
+        CREATE INDEX IF NOT EXISTS idx_par_ordem_status
             ON public.sinais USING btree
-            (tentativas_sl ASC NULLS LAST)
-            WITH (deduplicate_items=True)
-            TABLESPACE pg_default;                                                          
+            (par COLLATE pg_catalog."default" ASC NULLS LAST, ordem_status_id ASC NULLS LAST)
+            TABLESPACE pg_default;
+            
     ''')
+
     conn.commit()
     conn.close()
     print("Banco de dados criado ou já existente.")

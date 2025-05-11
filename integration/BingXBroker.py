@@ -190,6 +190,11 @@ class BingXBroker(BrokerInterface):
 
     def ativar_trailing_stop(self, symbol, order_id, side, quantity, price_rate, position_side):
         try:
+            # Cancelar qualquer STOP_MARKET ativo antes de configurar trailing
+            logger.debug(f"🧹 Cancelando SL ativo para {symbol} antes do trailing stop")
+            self.cancela_stop_loss(symbol)
+
+            # Construção da ordem de trailing stop
             path = "/openApi/swap/v2/trade/order"
             logger.debug(f"🚦 Ativando trailing stop para {symbol} com ordem {order_id}")
 
@@ -202,7 +207,7 @@ class BingXBroker(BrokerInterface):
                 "type": "TRAILING_TP_SL",
                 "positionSide": position_side,
                 "priceRate": str(price_rate),
-                "quantity": quantity,
+                "quantity": quantity
             }
 
             response = self._send_request("POST", path, params)
