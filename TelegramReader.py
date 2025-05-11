@@ -41,7 +41,7 @@ cur = conn.cursor()
 client = TelegramClient(session_name, api_id, api_hash)
 proporcoes = [0.1, 0.2, 0.5, 0.1, 0.1]
 
-def inserir_sinal_com_multiplos_tps(dados):
+def inserir_sinal_com_multiplos_tps(dados, proporcoes):
     agora = datetime.utcnow().isoformat()
 
     for i, proporcao in enumerate(proporcoes, start=1):
