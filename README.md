@@ -34,11 +34,12 @@ ProjetoTelegramTradeBot/
 ├── .env
 ├── .gitignore
 ├── config.properties
-├── docker-compose.yml
 ├── minha_sessao.session
 ├── README.md
 ├── requirements.txt
 ├── start_all.py
+├── start_bot.bat
+├── start_bot.sh
 ├── TelegramReader.py
 ├── TradeExecutor.py
 └── utils.py
