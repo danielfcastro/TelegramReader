@@ -41,7 +41,7 @@ cur = conn.cursor()
 client = TelegramClient(session_name, api_id, api_hash)
 proporcoes = [0.1, 0.2, 0.5, 0.1, 0.1]
 
-def inserir_sinal_com_multiplos_tps(dados, proporcoes):
+def inserir_sinal_com_multiplos_tps(dados):
     agora = datetime.utcnow().isoformat()
 
     for i, proporcao in enumerate(proporcoes, start=1):
@@ -82,7 +82,7 @@ async def main():
 
         if tipo == "trade":
             #com base no sinal do Telegram que vem com 4 TPs eu insiro isso na tabela public.sinais
-            inserir_sinal_com_multiplos_tps(dados, proporcoes)
+            inserir_sinal_com_multiplos_tps(dados)
             logger.info(f"✅ - Sinal inserido para {dados['pair']}")
             return
         elif tipo == "monitoramento":
