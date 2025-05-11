@@ -1,0 +1,480 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Configuração para Linux Alpine" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FlaskConsoleOptions" custom-start-script="import sys; print('Python %s on %s' % (sys.version, sys.platform)); sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;from flask.cli import ScriptInfo, NoAppException&#10;for module in [&quot;main.py&quot;, &quot;wsgi.py&quot;, &quot;app.py&quot;]:&#10;    try: locals().update(ScriptInfo(app_import_path=module, create_app=None).load_app().make_shell_context()); print(&quot;\nFlask App: %s&quot; % app.import_name); break&#10;    except NoAppException: pass">
+    <envs>
+      <env key="FLASK_APP" value="app" />
+    </envs>
+    <option name="myCustomStartScript" value="import sys; print('Python %s on %s' % (sys.version, sys.platform)); sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;from flask.cli import ScriptInfo, NoAppException&#10;for module in [&quot;main.py&quot;, &quot;wsgi.py&quot;, &quot;app.py&quot;]:&#10;    try: locals().update(ScriptInfo(app_import_path=module, create_app=None).load_app().make_shell_context()); print(&quot;\nFlask App: %s&quot; % app.import_name); break&#10;    except NoAppException: pass" />
+    <option name="myEnvs">
+      <map>
+        <entry key="FLASK_APP" value="app" />
+      </map>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="feature/oo" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;danielfcastro&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "git@github.com:danielfcastro/TelegramReader.git",
+    "accountId": "3c41e348-8633-4c81-8b59-457772a987ba"
+  },
+  "recentNewPullRequestHead": {
+    "server": {
+      "useHttp": false,
+      "host": "github.com",
+      "port": null,
+      "suffix": null
+    },
+    "owner": "danielfcastro",
+    "repository": "TelegramReader"
+  }
+}]]></component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 4
+}</component>
+  <component name="ProjectId" id="2wbUDSc6yB5DnwfQHNu3u0OCxP8" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.TradeExecutor.executor": "Run",
+    "Python.start_all.executor": "Run",
+    "Python.testar_insercao_sinal.executor": "Run",
+    "Python.testar_monitoramento_be.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "ignore.virus.scanning.warn.message": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "vue.rearranger.settings.migration": "true"
+  },
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "postgresql"
+    ]
+  }
+}]]></component>
+  <component name="RunManager" selected="Python.start_all">
+    <configuration name="TradeExecutor" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="ProjetoTelegram" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/TradeExecutor.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="start_all" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="ProjetoTelegram" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/start_all.py" />
+      <option name="PARAMETERS" value="--testnet" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="testar_insercao_sinal" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="ProjetoTelegram" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tools" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tools/testar_insercao_sinal.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="testar_monitoramento_be" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="ProjetoTelegram" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tools" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tools/testar_monitoramento_be.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.TradeExecutor" />
+        <item itemvalue="Python.testar_monitoramento_be" />
+        <item itemvalue="Python.testar_insercao_sinal" />
+        <item itemvalue="Python.start_all" />
+        <item itemvalue="Python.start_all" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-f27c65a3e318-JavaScript-PY-251.23774.444" />
+        <option value="bundled-python-sdk-890ed5b35930-d9c5bdb153f4-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-251.23774.444" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="" />
+      <created>1746309647629</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1746309647629</updated>
+      <workItem from="1746309649758" duration="98819000" />
+      <workItem from="1746492082110" duration="50414000" />
+      <workItem from="1746665220865" duration="362000" />
+      <workItem from="1746665594501" duration="65981000" />
+    </task>
+    <task id="LOCAL-00001" summary="Fix para insert de sinais e monitoramento em banco">
+      <option name="closed" value="true" />
+      <created>1746356607959</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1746356607960</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Melhoria de logs">
+      <option name="closed" value="true" />
+      <created>1746367501786</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1746367501786</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Melhoria de logs - &quot;%(asctime)s -  %(levelname)s - %(name)s - %(funcName)s - %(message)s&quot;">
+      <option name="closed" value="true" />
+      <created>1746367946789</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1746367946789</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Fix para alguns métodos e melhoria em log de db.py">
+      <option name="closed" value="true" />
+      <created>1746391647302</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1746391647302</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Fix para método de retorno de sinal pra break even">
+      <option name="closed" value="true" />
+      <created>1746391974829</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1746391974829</updated>
+    </task>
+    <task id="LOCAL-00006" summary="Fix para retornar com sucesso o envio de ordem">
+      <option name="closed" value="true" />
+      <created>1746447701460</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1746447701460</updated>
+    </task>
+    <task id="LOCAL-00007" summary="- startup por argumento de logger_config.py">
+      <option name="closed" value="true" />
+      <created>1746488044532</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1746488044532</updated>
+    </task>
+    <task id="LOCAL-00008" summary="- startup por argumento de logger_config.py">
+      <option name="closed" value="true" />
+      <created>1746488057533</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1746488057533</updated>
+    </task>
+    <task id="LOCAL-00009" summary="- startup por argumento de logger_config.py">
+      <option name="closed" value="true" />
+      <created>1746488064134</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1746488064134</updated>
+    </task>
+    <task id="LOCAL-00010" summary="Fix com ordens gravadas com quantidade">
+      <option name="closed" value="true" />
+      <created>1746531559066</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1746531559066</updated>
+    </task>
+    <task id="LOCAL-00011" summary="Coluna tentativas_be escrita errada e fix da query que pega sinais para break even">
+      <option name="closed" value="true" />
+      <created>1746532628907</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1746532628907</updated>
+    </task>
+    <task id="LOCAL-00012" summary="Coluna tentativas_be escrita errada e fix da query que pega sinais para break even">
+      <option name="closed" value="true" />
+      <created>1746553822836</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1746553822836</updated>
+    </task>
+    <task id="LOCAL-00013" summary="Ajuste de método de Break Even adicionando o cancelamento do Stop Loss anterior e a adição de um novo SL no preço de entrada">
+      <option name="closed" value="true" />
+      <created>1746660800149</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1746660800149</updated>
+    </task>
+    <task id="LOCAL-00014" summary="Ajuste de método de Break Even adicionando o cancelamento do Stop Loss anterior e a adição de um novo SL no preço de entrada">
+      <option name="closed" value="true" />
+      <created>1746662904627</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1746662904627</updated>
+    </task>
+    <task id="LOCAL-00015" summary="Ajuste de método de Break Even adicionando o cancelamento do Stop Loss anterior e a adição de um novo SL no preço de entrada">
+      <option name="closed" value="true" />
+      <created>1746664890031</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1746664890031</updated>
+    </task>
+    <task id="LOCAL-00016" summary="Padronização de log">
+      <option name="closed" value="true" />
+      <created>1746667002705</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1746667002705</updated>
+    </task>
+    <task id="LOCAL-00017" summary="- Adicionei condição para marcar como true ativar_be se contador chegar a 3&#10;- mudei o sleep para 1">
+      <option name="closed" value="true" />
+      <created>1746695112621</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1746695112621</updated>
+    </task>
+    <task id="LOCAL-00018" summary="- introdução da coluna proporcao no Banco pra simplificar a operação e tentar resolver um bug intermitente">
+      <option name="closed" value="true" />
+      <created>1746717830555</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1746717830555</updated>
+    </task>
+    <task id="LOCAL-00019" summary="- introdução da divisão do trade em 5 proporções">
+      <option name="closed" value="true" />
+      <created>1746835397891</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1746835397891</updated>
+    </task>
+    <task id="LOCAL-00020" summary="- introdução da divisão do trade em 5 proporções&#10;- break even para TP2 e TP4&#10;- ajuste no modelo de dados para mais clareza&#10;- correção das queries&#10;novo conteúdo do README.md">
+      <option name="closed" value="true" />
+      <created>1746918865816</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1746918865816</updated>
+    </task>
+    <task id="LOCAL-00021" summary="- Correção do README.md e remoção de parâmetros não usados mais">
+      <option name="closed" value="true" />
+      <created>1746919394117</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1746919394117</updated>
+    </task>
+    <task id="LOCAL-00022" summary="- Correção do README.md e remoção de parâmetros não usados mais">
+      <option name="closed" value="true" />
+      <created>1746919479558</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1746919479558</updated>
+    </task>
+    <task id="LOCAL-00023" summary="- Configuração para Linux Alpine">
+      <option name="closed" value="true" />
+      <created>1746923051433</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1746923051433</updated>
+    </task>
+    <task id="LOCAL-00024" summary="- Configuração para Linux Alpine">
+      <option name="closed" value="true" />
+      <created>1746923167305</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1746923167305</updated>
+    </task>
+    <option name="localTasksCounter" value="25" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="feature/oo" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
+    <MESSAGE value="Fix para insert de sinais e monitoramento em banco" />
+    <MESSAGE value="Melhoria de logs" />
+    <MESSAGE value="Melhoria de logs - &quot;%(asctime)s -  %(levelname)s - %(name)s - %(funcName)s - %(message)s&quot;" />
+    <MESSAGE value="Fix para alguns métodos e melhoria em log de db.py" />
+    <MESSAGE value="Fix para método de retorno de sinal pra break even" />
+    <MESSAGE value="Fix para retornar com sucesso o envio de ordem" />
+    <MESSAGE value="- startup por argumento de logger_config.py" />
+    <MESSAGE value="Fix com ordens gravadas com quantidade" />
+    <MESSAGE value="Coluna tentativas_be escrita errada e fix da query que pega sinais para break even" />
+    <MESSAGE value="Ajuste de método de Break Even adicionando o cancelamento do Stop Loss anterior e a adição de um novo SL no preço de entrada" />
+    <MESSAGE value="Padronização de log" />
+    <MESSAGE value="- Adicionei condição para marcar como true ativar_be se contador chegar a 3&#10;- mudei o sleep para 1" />
+    <MESSAGE value="- introdução da coluna proporcao no Banco pra simplificar a operação e tentar resolver um bug intermitente" />
+    <MESSAGE value="- introdução da divisão do trade em 5 proporções" />
+    <MESSAGE value="- introdução da divisão do trade em 5 proporções&#10;- break even para TP2 e TP4&#10;- ajuste no modelo de dados para mais clareza&#10;- correção das queries&#10;novo conteúdo do README.md" />
+    <MESSAGE value="- Correção do README.md e remoção de parâmetros não usados mais" />
+    <MESSAGE value="- Configuração para Linux Alpine" />
+    <option name="LAST_COMMIT_MESSAGE" value="- Configuração para Linux Alpine" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <default-breakpoints>
+        <breakpoint type="python-exception">
+          <properties notifyOnTerminate="true" exception="BaseException">
+            <option name="notifyOnTerminate" value="true" />
+          </properties>
+        </breakpoint>
+      </default-breakpoints>
+    </breakpoint-manager>
+    <watches-manager>
+      <configuration name="PythonConfigurationType">
+        <watch expression="response" />
+      </configuration>
+    </watches-manager>
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/ProjetoTelegram$testar_monitoramento_be.coverage" NAME="testar_monitoramento_be Coverage Results" MODIFIED="1746316630390" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tools" />
+    <SUITE FILE_PATH="coverage/ProjetoTelegram$testar_insercao_sinal.coverage" NAME="testar_insercao_sinal Coverage Results" MODIFIED="1746316087789" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tools" />
+    <SUITE FILE_PATH="coverage/ProjetoTelegram$start_all.coverage" NAME="start_all Coverage Results" MODIFIED="1746918623277" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/ProjetoTelegram$TradeExecutor.coverage" NAME="TradeExecutor Coverage Results" MODIFIED="1746666069586" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+  </component>
+</project>
