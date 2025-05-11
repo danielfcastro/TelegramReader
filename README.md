@@ -135,40 +135,58 @@ cd /d %~dp0
 python start_all.py --testnet
 pause
 ```
+### Forma 2: Executar `start_bot.sh` (Linux Alpine)
+
+> Crie um arquivo `start_bot.sh` com o seguinte conteúdo:
+> 
+```shell
+#!/bin/sh
+cd /root/TelegramReader
+. venv/bin/activate
+python3 start_all.py --mainnet >> /var/log/tradebot.log 2>&1
+```
+> Dê Permissão de execução
+```shell
+chmod +x /root/TelegramReader/start_bot.sh
+```
+
+### Crie um script para inicialização automática
+> Crie um arquivo `/etc/init.d/tradebot` com o seguinte conteúdo:
+```
+#!/sbin/openrc-run
+
+name="tradebot"
+description="Bot de sinais para BingX executando no TelegramReader"
+
+command="/root/TelegramReader/start_bot.sh"
+command_background=true
+pidfile="/run/tradebot.pid"
+
+depend() {
+    need net
+}
+```
+#### Configure o serviço
+```
+rc-update add tradebot default
+```
+
+#### Comandos disponíveis
+```
+rc-service tradebot start
+rc-service tradebot stop
+rc-service tradebot restart
+rc-service tradebot status
+```
+
+#### Acompanhar log
+```
+tail -f /var/log/tradebot.log
+```
 
 ---
 
-## 📦 Rodar com Docker
 
-Se preferir rodar tudo isolado em containers:
-
-1. Crie um `docker-compose.yml` com o seguinte conteúdo:
-
-```yaml
-version: '3'
-services:
-  telegram_bot:
-    build: .
-    container_name: telegram_signal_reader
-    command: python TelegramSignalReader.py
-    volumes:
-      - .:/app
-    restart: unless-stopped
-
-  trade_executor:
-    build: .
-    container_name: trade_executor
-    command: python TradeExecutor.py
-    volumes:
-      - .:/app
-    restart: unless-stopped
-```
-
-2. Rode:
-
-```bash
-docker-compose up -d
-```
 
 ---
 
@@ -187,54 +205,7 @@ docker-compose up -d
 
 ---
 
-## 📈 Melhorias Futuras
-
-- dividir em 5 ordens [0.1, 0.2, 0.5, 0.1, 0.1]
-- Adicionar suporte a stop móvel (trailing stop) para o último lote de 10% de forma manual, por isso eu coloco o stop loss automático em break even para assim dar tempo de manualmente criar o stop loss sem medo de perder dinheiro 
-- Interface web para monitorar sinais em tempo real.
-
----
-
-# 🚀 Bora automatizar!
----
-
-## 🌐 Rodar o Painel Web
-
-O Painel Web permite visualizar em tempo real:
-
-- Sinais captados
-- Status de execução
-- Ordens pendentes ou executadas
-
-### Como rodar o painel:
-
-1. Instale o Flask, se ainda não tiver:
-
-```bash
-pip install flask
-```
-
-2. Vá até a pasta do painel:
-
-```bash
-cd web_dashboard
-```
-
-3. Inicie o servidor:
-
-```bash
-python app.py
-```
-
-4. Acesse no navegador:
-
-> http://localhost:5000/
-
-O painel mostrará os sinais captados e seu status!
-
----
-
-5. Resumo Técnico
+3. Resumo Técnico
 # 📊 Resumo Técnico - Projeto Telegram Trade Bot (BingX Testnet)
 
 Este projeto integra sinais de trade recebidos via Telegram com execução automática de ordens na corretora BingX podendo ser configurado para a rede teste ou produção. 
