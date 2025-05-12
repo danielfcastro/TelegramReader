@@ -87,7 +87,7 @@ def executar_insert(query, params=None):
 def buscar_sinal_execucao():
     """
     Busca sinais pendentes de execução com menos de 3 tentativas.
-
+    ordem_status_id = 0 - RECEBIDA
     Returns:
         list[dict]: Lista de sinais prontos para envio de ordem.
     """
@@ -104,7 +104,8 @@ def buscar_sinal_execucao():
 def buscar_sinal_para_break_even():
     """
     Busca o próximo sinal apto a ter break-even ativado.
-
+    break_even_status_id = 1 - ATIVAR
+    ordem_status_id = 1 - ENVIADA
     Returns:
         list[dict]: Lista com no máximo 1 sinal pronto para ajuste de BE.
     """
@@ -125,7 +126,7 @@ def buscar_sinal_para_break_even():
 def marcar_ordem_enviada(id_sinal, entry_price, order_id, quantidade):
     """
     Marca um sinal como executado com ordem enviada com sucesso.
-
+    ordem_status_id = 1 - ENVIADA
     Args:
         id_sinal (int): ID do sinal.
         entry_price (float): Preço de entrada.
@@ -134,7 +135,10 @@ def marcar_ordem_enviada(id_sinal, entry_price, order_id, quantidade):
     """
     query = """
         UPDATE sinais
-        SET ordem_status_id = 1, entry_price = %(entry_price)s, order_id = %(order_id)s, quantidade = %(quantidade)s
+        SET ordem_status_id = 1, 
+            entry_price = %(entry_price)s, 
+            order_id = %(order_id)s, 
+            quantidade = %(quantidade)s
         WHERE id = %(id)s
     """
     executar_update(query, {"id": id_sinal, "entry_price": entry_price, "order_id": order_id, "quantidade": quantidade})
@@ -173,7 +177,8 @@ def incrementar_retry_be(id_sinal):
 def inserir_sinal(dados):
     """
     Insere um novo sinal na tabela `sinais`.
-
+    ordem_status_id = 0 - RECEBIDA - DEFAULT
+    break_even_status_id = 0 - INATIVO - DEFAULT
     Args:
         dados (dict): Campos obrigatórios como par, tipo_ordem, margem, alavancagem, etc.
 
@@ -201,7 +206,8 @@ def inserir_sinal(dados):
 def buscar_info_apos_sinal_de_monitoramento(par):
     """
     Busca o último sinal válido para break-even de um determinado par.
-
+    ordem_status_id = 1 - ENVIADA
+    break_even_status_id = 0 - INATIVO
     Args:
         par (str): Par de negociação, ex: 'BTC/USDT'.
 
@@ -213,7 +219,7 @@ def buscar_info_apos_sinal_de_monitoramento(par):
         WHERE par = %(par)s AND 
               ordem_status_id = 1 AND 
               order_id != 0 AND 
-              break_even_status_id = 1
+              break_even_status_id = 0
         ORDER BY id DESC
         LIMIT 1
     """
@@ -224,7 +230,7 @@ def buscar_info_apos_sinal_de_monitoramento(par):
 def ativar_break_even(id_sinal):
     """
     Ativa o status de break-even para o sinal informado.
-
+    break_even_status_id = 1 - ATIVAR
     Args:
         id_sinal (int): ID do sinal.
     """
@@ -239,7 +245,8 @@ def ativar_break_even(id_sinal):
 def marcar_ordem_para_be_executado(par):
     """
     Marca o sinal como tendo o break-even executado com sucesso.
-
+    ordem_status_id = 1 - ENVIADA
+    break_even_status_id = 2 - CONFIGURADO
     Args:
         par (str): Par da ordem.
     """
@@ -255,7 +262,7 @@ def marcar_ordem_para_be_executado(par):
 def desabilitar_sinal(id_sinal):
     """
     Desabilita um sinal definindo status como falha (ordem_status_id = 2).
-
+    ordem_status_id = 2 - DESABILITADA
     Args:
         id_sinal (int): ID do sinal a ser desabilitado.
     """
