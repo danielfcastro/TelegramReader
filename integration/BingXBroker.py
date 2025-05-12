@@ -6,7 +6,7 @@ import requests
 import logging
 from hashlib import sha256
 from dotenv import load_dotenv
-
+from utils import extrair_limite_usdt
 from database.db import somar_quantidade_para_be
 from integration.BrokerInterface import BrokerInterface
 
@@ -16,11 +16,23 @@ logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 
 class BingXBroker(BrokerInterface):
     def __init__(self):
+        """
+        Inicializa o broker da BingX carregando as credenciais da API do ambiente.
+        """
         self.API_URL = os.getenv("broker_api_url")
         self.API_KEY = os.getenv("broker_api_key")
         self.SECRET_KEY = os.getenv("broker_api_secret")
 
     def _get_sign(self, payload):
+        """
+        Gera a assinatura HMAC SHA256 para autenticar requisições.
+
+        Args:
+            payload (str): String de consulta formatada com parâmetros ordenados.
+
+        Returns:
+            str: Assinatura em hexadecimal.
+        """
         signature = hmac.new(
             self.SECRET_KEY.encode("utf-8"),
             payload.encode("utf-8"),
@@ -29,6 +41,17 @@ class BingXBroker(BrokerInterface):
         return signature
 
     def _send_request(self, method, path, params):
+        """
+        Envia uma requisição autenticada para a API da BingX.
+
+        Args:
+            method (str): Método HTTP (ex: 'GET', 'POST').
+            path (str): Caminho do endpoint da API.
+            params (dict): Parâmetros da requisição.
+
+        Returns:
+            dict: Resposta da API em formato JSON.
+        """
         query = self._build_query(params)
         sign = self._get_sign(query)
         url = f"{self.API_URL}{path}?{query}&signature={sign}"
@@ -40,6 +63,15 @@ class BingXBroker(BrokerInterface):
 
     @staticmethod
     def _build_query(params):
+        """
+        Constrói a string de query com os parâmetros ordenados e adiciona timestamp.
+
+        Args:
+            params (dict): Dicionário com os parâmetros da requisição.
+
+        Returns:
+            str: String de query formatada para autenticação.
+        """
         # Sempre adiciona timestamp, mesmo que params esteja vazio
         all_params = dict(params) if params else {}
         all_params["timestamp"] = str(int(time.time() * 1000))
@@ -50,6 +82,18 @@ class BingXBroker(BrokerInterface):
         return query
 
     def obter_preco_mercado(self, symbol):
+        """
+        Obtém o preço de marcação (mark price) do ativo fornecido.
+
+        Args:
+            symbol (str): Par de negociação (ex: "BTC-USDT").
+
+        Returns:
+            float: Preço atual de marcação.
+
+        Raises:
+            Exception: Se a API falhar ou não retornar dados.
+        """
         path = "/openApi/swap/v2/quote/premiumIndex"
         response = self._send_request("GET", path, {"symbol": symbol})
         if response["code"] == 0 and response.get("data"):
@@ -58,6 +102,15 @@ class BingXBroker(BrokerInterface):
         raise Exception(f"❌ - Erro ao obter preço de mercado de {symbol}")
 
     def obter_saldo_disponivel(self):
+        """
+        Consulta o saldo disponível em USDT ou VST na conta do usuário.
+
+        Returns:
+            float: Valor de saldo disponível.
+
+        Raises:
+            Exception: Se a API falhar ou não houver saldo elegível.
+        """
         try:
             path = "/openApi/swap/v3/user/balance"
             params = {}
@@ -74,6 +127,14 @@ class BingXBroker(BrokerInterface):
         raise Exception("Não foi possível obter saldo disponível em USDT.")
 
     def set_leverage(self, symbol, side, leverage):
+        """
+        Configura a alavancagem para um determinado par de ativos.
+
+        Args:
+            symbol (str): Símbolo do par.
+            side (str): Direção da posição ('LONG', 'SHORT', 'BOTH').
+            l
+        """
         path = "/openApi/swap/v2/trade/leverage"
         params = {
             "symbol": symbol,
@@ -91,6 +152,22 @@ class BingXBroker(BrokerInterface):
             logger.exception(f"❌ - Exceção ao ajustar leverage para {symbol}: {e}")
 
     def enviar_ordem_tp_sl(self, symbol, side, leverage, side_leverage, tp, sl, quantidade, preco_mercado):
+        """
+        Envia uma ordem de mercado com Take Profit e Stop Loss. Se o limite de posição for excedido, tenta ajustar e reenviar.
+
+        Args:
+            symbol (str): Par de trading.
+            side (str): Direção da ordem ("BUY" ou "SELL").
+            leverage (int): Alavancagem utilizada.
+            side_leverage (str): Lado da posição ("BOTH").
+            tp (float): Preço de Take Profit.
+            sl (float): Preço de Stop Loss.
+            quantidade (float): Quantidade do ativo.
+            preco_mercado (float): Preço de referência no momento da execução.
+
+        Returns:
+            tuple: (sucesso, preco_mercado, order_id, quantidade ou motivo)
+        """
         side_leverage = "BOTH"
         logger.debug(f"symbol: {symbol} - side: {side} - leverage: {leverage} - side_leverage: {side_leverage} - tp: {tp} - sl: {sl} - quantidade: {quantidade} - preco_mercado: {preco_mercado}")
         try:
@@ -129,14 +206,45 @@ class BingXBroker(BrokerInterface):
                 codigo = response.get("code", "sem_codigo")
                 mensagem = response.get("msg", "Erro desconhecido")
                 motivo = f"[{codigo}] {mensagem}"
+                limite_usdt = extrair_limite_usdt(motivo)
                 logger.error(f"❌ - Falha ao enviar ordens: {motivo} - Dados: {response}")
-                return False, None, None, motivo
-
+                if limite_usdt:
+                    logger.warning(f"⚠️ Ordem excede limite de posição. Recalculando com limite de {limite_usdt} USDT.")
+                    response = self.send_order_with_constraints_adjusted(
+                        symbol=symbol,
+                        side=side,
+                        leverage=leverage,
+                        side_leverage="BOTH",
+                        tp=tp,
+                        sl=sl,
+                        preco_mercado=preco_mercado,
+                        limite_usdt=limite_usdt
+                    )
+                if response["code"] == 0:
+                    order_id = response["data"]["order"]["orderId"]
+                    logger.info(
+                        f"✅ - Ordens enviadas com sucesso - order_id: {order_id} - preco_mercado: {preco_mercado}")
+                    return True, preco_mercado, order_id, quantidade
+                else:
+                    codigo = response.get("code", "sem_codigo")
+                    mensagem = response.get("msg", "Erro desconhecido")
+                    motivo = f"[{codigo}] {mensagem}"
+                    logger.error(f"❌ - Falha ao enviar ordens: {motivo} - Dados: {response}")
+                    return False, None, None, motivo
         except Exception as e:
             print("❌ - Erro ao enviar ordens BingX:", e)
             return False, 0.0, 0
 
     def cancela_stop_loss(self, symbol):
+        """
+        Cancela todas as ordens do tipo STOP_MARKET abertas para um ativo.
+
+        Args:
+            symbol (str): Símbolo do par de ativos.
+
+        Returns:
+            dict: Resposta da API.
+        """
         try:
             path = "/openApi/swap/v2/trade/allOpenOrders"
             body = {
@@ -150,6 +258,19 @@ class BingXBroker(BrokerInterface):
             logger.exception(f"❌ - Erro ao cancelar SL para {symbol}: {e}")
 
     def ajustar_para_break_even(self, symbol, position_side, quantity, stop_price, order_id):
+        """
+        Ajusta o Stop Loss de uma posição para o ponto de Break Even (sem lucro ou prejuízo).
+
+        Args:
+            symbol (str): Símbolo do par.
+            position_side (str): Direção da posição ('LONG' ou 'SHORT').
+            quantity (float): Quantidade da posição.
+            stop_price (float): Preço alvo para Stop Loss.
+            order_id (str): ID da ordem original.
+
+        Returns:
+            bool: True se o SL foi ajustado com sucesso.
+        """
         try:
             cancel = self.cancela_stop_loss(symbol)
             orders = self.get_open_order_info(symbol,order_id)
@@ -188,43 +309,17 @@ class BingXBroker(BrokerInterface):
             logger.exception(f"❌ - Exceção ao ajustar SL para {symbol}: {e}")
             return False
 
-    def ativar_trailing_stop(self, symbol, order_id, side, quantity, price_rate, position_side):
-        try:
-            # Cancelar qualquer STOP_MARKET ativo antes de configurar trailing
-            logger.debug(f"🧹 Cancelando SL ativo para {symbol} antes do trailing stop")
-            self.cancela_stop_loss(symbol)
-
-            # Construção da ordem de trailing stop
-            path = "/openApi/swap/v2/trade/order"
-            logger.debug(f"🚦 Ativando trailing stop para {symbol} com ordem {order_id}")
-
-            params = {
-                "cancelReplaceMode": "ALLOW_FAILURE",
-                "cancelOrderId": order_id,
-                "cancelRestrictions": "ONLY_NEWS",
-                "symbol": symbol,
-                "side": side,
-                "type": "TRAILING_TP_SL",
-                "positionSide": position_side,
-                "priceRate": str(price_rate),
-                "quantity": quantity
-            }
-
-            response = self._send_request("POST", path, params)
-            logger.debug(f"✅ - Response do trailing stop: {response}")
-
-            if response["code"] == 0:
-                logger.info(f"✅ - Trailing stop ativado com sucesso para {symbol} (order_id: {order_id})")
-                return True
-            else:
-                logger.error(f"❌ - Erro ao ativar trailing stop para {symbol}: {response}")
-                return False
-
-        except Exception as e:
-            logger.exception(f"❌ - Exceção ao ativar trailing stop para {symbol}: {e}")
-            return False
-
     def get_open_order_info(self, symbol, order_id):
+        """
+        Obtém informações de uma ordem aberta.
+
+        Args:
+            symbol (str): Símbolo do par de ativos.
+            order_id (str): ID da ordem.
+
+        Returns:
+            dict: Dados detalhados da ordem retornados pela API.
+        """
         try:
             path = "/openApi/swap/v2/trade/order"
             body = {
@@ -236,3 +331,50 @@ class BingXBroker(BrokerInterface):
             return response
         except Exception as e:
             logger.exception(f"❌ - Erro ao boter detalhe de ordem {symbol}: {e}")
+
+    def send_order_with_constraints_adjusted(
+            self, symbol, side, leverage, side_leverage,
+            tp, sl, preco_mercado, limite_usdt
+    ):
+        """
+        Recalcula e envia uma ordem com quantidade ajustada com base em limite de exposição da corretora.
+
+        Args:
+            symbol (str): Par de ativos (ex: 'BTC-USDT').
+            side (str): Direção da ordem ('BUY' ou 'SELL').
+            leverage (int): Alavancagem desejada.
+            side_leverage (str): Tipo de posição.
+            tp (float): Take Profit.
+            sl (float): Stop Loss.
+            preco_mercado (float): Preço de referência.
+            limite_usdt (float): Limite máximo de valor permitido pela corretora.
+
+        Returns:
+            bool: True se a ordem ajustada foi enviada com sucesso.
+        """
+        try:
+            quantidade = round((limite_usdt * leverage) / preco_mercado, 6)  # use a precisão adequada da exchange
+            logger.info(
+                f"🔁 - Ajustando quantidade com base no limite de {limite_usdt} USDT: Nova quantidade = {quantidade}")
+
+            sucesso, preco, order_id, retorno = self.enviar_ordem_tp_sl(
+                symbol=symbol,
+                side=side,
+                leverage=leverage,
+                side_leverage=side_leverage,
+                tp=tp,
+                sl=sl,
+                quantidade=quantidade,
+                preco_mercado=preco_mercado
+            )
+
+            if sucesso:
+                logger.info(f"✅ - Ordem ajustada enviada com sucesso - order_id: {order_id} - quantidade: {quantidade}")
+            else:
+                logger.warning(f"❌ - Falha ao enviar ordem ajustada: {retorno}")
+
+            return sucesso
+
+        except Exception as e:
+            logger.error(f"❌ - Erro ao ajustar e enviar ordem: {e}")
+            return False

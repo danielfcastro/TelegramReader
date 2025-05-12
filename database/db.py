@@ -15,6 +15,12 @@ debug_select=False
 debug_insert=True
 @contextmanager
 def conectar_db():
+    """
+    Context manager que cria e fecha uma conexão com o banco de dados PostgreSQL.
+
+    Yields:
+        connection (psycopg2.extensions.connection): Conexão ativa com o banco.
+    """
     conn = psycopg2.connect(
         dbname=os.getenv("db_name"),
         user=os.getenv("db_user"),
@@ -28,6 +34,16 @@ def conectar_db():
         conn.close()
 
 def executar_select(query, params=None):
+    """
+    Executa uma consulta SELECT no banco e retorna os resultados como dicionários.
+
+    Args:
+        query (str): Comando SQL.
+        params (dict, optional): Parâmetros para interpolar na query.
+
+    Returns:
+        list[dict]: Lista de resultados.
+    """
     with conectar_db() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             if debug_select:
@@ -37,6 +53,13 @@ def executar_select(query, params=None):
             return resultados
 
 def executar_update(query, params=None):
+    """
+    Executa uma instrução UPDATE no banco.
+
+    Args:
+        query (str): SQL com placeholders.
+        params (dict, optional): Parâmetros da consulta.
+    """
     with conectar_db() as conn:
         with conn.cursor() as cur:
             if debug_update:
@@ -45,6 +68,13 @@ def executar_update(query, params=None):
             conn.commit()
 
 def executar_insert(query, params=None):
+    """
+    Executa uma instrução INSERT no banco.
+
+    Args:
+        query (str): SQL com placeholders.
+        params (dict, optional): Parâmetros da consulta.
+    """
     with conectar_db() as conn:
         with conn.cursor() as cur:
             if debug_insert:
@@ -52,10 +82,15 @@ def executar_insert(query, params=None):
             cur.execute(query, params)
             conn.commit()
 
-#aqui o banco poderia ser atualizado com uma coluna chamada proporção que seria preenchida no momento em que inserir_sinal_com_multiplos_tps for executado.
 # Busca de sinais registrados no banco a partir da recepção das mensagens de Telegram
 # chamados de TradeExecutor
 def buscar_sinal_execucao():
+    """
+    Busca sinais pendentes de execução com menos de 3 tentativas.
+
+    Returns:
+        list[dict]: Lista de sinais prontos para envio de ordem.
+    """
     query = """
         SELECT * FROM sinais
         WHERE ordem_status_id = 0 AND 
@@ -67,6 +102,12 @@ def buscar_sinal_execucao():
 
 #Usado em TradeExecutor para listar todos os sinais que foram ativados em TelegramReader por ativar_break_even
 def buscar_sinal_para_break_even():
+    """
+    Busca o próximo sinal apto a ter break-even ativado.
+
+    Returns:
+        list[dict]: Lista com no máximo 1 sinal pronto para ajuste de BE.
+    """
     query = """
         SELECT * FROM sinais
         WHERE break_even_status_id = 1 AND 
@@ -82,6 +123,15 @@ def buscar_sinal_para_break_even():
 
 #Queries de alteração de status
 def marcar_ordem_enviada(id_sinal, entry_price, order_id, quantidade):
+    """
+    Marca um sinal como executado com ordem enviada com sucesso.
+
+    Args:
+        id_sinal (int): ID do sinal.
+        entry_price (float): Preço de entrada.
+        order_id (int): ID da ordem na corretora.
+        quantidade (float): Quantidade negociada.
+    """
     query = """
         UPDATE sinais
         SET ordem_status_id = 1, entry_price = %(entry_price)s, order_id = %(order_id)s, quantidade = %(quantidade)s
@@ -91,6 +141,12 @@ def marcar_ordem_enviada(id_sinal, entry_price, order_id, quantidade):
 
 #chamado dentro de TradeExecutor para incrementar o retry de envio de ordem
 def incrementar_retry_order(id_sinal):
+    """
+    Incrementa a contagem de tentativas de envio de ordem.
+
+    Args:
+        id_sinal (int): ID do sinal.
+    """
     query = """
         UPDATE sinais
         SET tentativas = tentativas + 1
@@ -100,6 +156,12 @@ def incrementar_retry_order(id_sinal):
 
 #chamado dentro de TradeExecutor para incrementar o retry de envio de ordem pra mover SL para Break Even
 def incrementar_retry_be(id_sinal):
+    """
+    Incrementa a contagem de tentativas de ajuste de break-even.
+
+    Args:
+        id_sinal (int): ID do sinal.
+    """
     query = """
         UPDATE sinais
         SET tentativas_be = tentativas_be + 1
@@ -109,6 +171,15 @@ def incrementar_retry_be(id_sinal):
 
 #Insere sinal recebido pelo TelegramReader no banco
 def inserir_sinal(dados):
+    """
+    Insere um novo sinal na tabela `sinais`.
+
+    Args:
+        dados (dict): Campos obrigatórios como par, tipo_ordem, margem, alavancagem, etc.
+
+    Returns:
+        int: ID do sinal recém-inserido.
+    """
     query = """
         INSERT INTO sinais (
             data_hora, par, tipo_ordem, margem, alavancagem,
@@ -128,6 +199,15 @@ def inserir_sinal(dados):
             return id_gerado
 
 def buscar_info_apos_sinal_de_monitoramento(par):
+    """
+    Busca o último sinal válido para break-even de um determinado par.
+
+    Args:
+        par (str): Par de negociação, ex: 'BTC/USDT'.
+
+    Returns:
+        dict | None: Registro mais recente se existir, ou None.
+    """
     query = """
         SELECT * FROM sinais
         WHERE par = %(par)s AND 
@@ -142,6 +222,12 @@ def buscar_info_apos_sinal_de_monitoramento(par):
 
 #Chamado por TelegramReader para marcar o sinal que atingiu TP2 e então ser atualizado por TradeExecutor.py
 def ativar_break_even(id_sinal):
+    """
+    Ativa o status de break-even para o sinal informado.
+
+    Args:
+        id_sinal (int): ID do sinal.
+    """
     query = """
         UPDATE sinais 
         SET break_even_status_id = 1
@@ -151,6 +237,12 @@ def ativar_break_even(id_sinal):
 
 #Chamado por TradeExecutor após uma execução bem sucedida de broker.ajustar_para_break_even
 def marcar_ordem_para_be_executado(par):
+    """
+    Marca o sinal como tendo o break-even executado com sucesso.
+
+    Args:
+        par (str): Par da ordem.
+    """
     sql = """
     UPDATE sinais
     SET break_even_status_id = 2
@@ -161,6 +253,12 @@ def marcar_ordem_para_be_executado(par):
 
 #chamado quando não encontra o símbolo ao buscar pelo preço
 def desabilitar_sinal(id_sinal):
+    """
+    Desabilita um sinal definindo status como falha (ordem_status_id = 2).
+
+    Args:
+        id_sinal (int): ID do sinal a ser desabilitado.
+    """
     query = """
         UPDATE sinais
         SET ordem_status_id = 2
@@ -169,6 +267,15 @@ def desabilitar_sinal(id_sinal):
     executar_update(query, {"id": id_sinal})
 
 def somar_quantidade_para_be(par):
+    """
+    Soma a quantidade total de sinais com break-even pendente para o par.
+
+    Args:
+        par (str): Par a ser analisado.
+
+    Returns:
+        float: Soma das quantidades.
+    """
     sql = """
     SELECT SUM(quantidade) AS total
     FROM sinais

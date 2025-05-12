@@ -8,11 +8,30 @@ from telethon.errors import ChannelInvalidError, ChatIdInvalidError
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 
 def ajustar_quantidade(qty, step):
+    """
+        Ajusta a quantidade `qty` para que seja múltipla do `step`, conforme exigência da corretora.
+
+        Args:
+            qty (float): Quantidade original desejada.
+            step (float): Incremento mínimo aceito (ex: 0.01 ou 0.0001).
+
+        Returns:
+            float: Quantidade ajustada e arredondada.
+        """
     step = float(step)
     qty_ajustada = math.floor(qty / step) * step
     return round(qty_ajustada, str(step)[::-1].find('.'))
 
 def carregar_config(path='config.properties'):
+    """
+    Carrega variáveis de configuração de um arquivo `.properties`.
+
+    Args:
+        path (str): Caminho do arquivo de configuração. Default: 'config.properties'.
+
+    Returns:
+        dict: Dicionário com as configurações carregadas.
+    """
     logger.info("🔧 - Carregando configuração do arquivo: %s", path)
     config = {}
     if not os.path.exists(path):
@@ -28,6 +47,15 @@ def carregar_config(path='config.properties'):
     return config
 
 def extrair_dados_mensagem(mensagem):
+    """
+    Extrai dados estruturados de uma mensagem de sinal do Telegram.
+
+    Args:
+        mensagem (str): Texto da mensagem contendo sinal de trade.
+
+    Returns:
+        dict: Dicionário com dados como par, tipo de ordem, SL, TP1..TP4, margem e alavancagem.
+    """
     logger.debug("📩 - Analisando mensagem completa:")
     logger.debug(f"\n{mensagem}")
 
@@ -65,9 +93,16 @@ def extrair_dados_mensagem(mensagem):
 
     return dados
 
-
-
 def classificar_mensagem(mensagem):
+    """
+    Classifica a mensagem como 'trade', 'monitoramento' ou 'desconhecido'.
+
+    Args:
+        mensagem (str): Texto da mensagem.
+
+    Returns:
+        dict: Dicionário com chave 'tipo' e os 'dados' extraídos.
+    """
     dados = extrair_dados_mensagem(mensagem)
     _msg = {}
 
@@ -84,15 +119,40 @@ def classificar_mensagem(mensagem):
     return _msg
 
 def limpar_nome(nome):
+    """
+    Limpa e formata um nome de arquivo ou pasta removendo caracteres inválidos.
+
+    Args:
+        nome (str): Nome original.
+
+    Returns:
+        str: Nome formatado com apenas letras, números, hífens e underscores.
+    """
     nome = nome.replace(' ', '_')
     nome = re.sub(r'[^A-Za-z0-9_\-]', '', nome)
     return nome
 
 def criar_pasta(path):
+    """
+    Cria uma pasta se ela ainda não existir.
+
+    Args:
+        path (str): Caminho da pasta a ser criada.
+    """
     if not os.path.exists(path):
         os.makedirs(path)
 
 async def obter_entidade(client, id_input):
+    """
+    Obtém uma entidade de grupo ou canal do Telegram, tratando diferentes tipos de ID.
+
+    Args:
+        client (TelegramClient): Cliente ativo do Telethon.
+        id_input (int | str): ID do grupo ou canal.
+
+    Returns:
+        telethon.tl.custom.chat.Chat | None: Entidade correspondente, ou None se não encontrada.
+    """
     try:
         return await client.get_entity(PeerChannel(int(id_input)))
     except (ChannelInvalidError, ValueError):
@@ -104,6 +164,9 @@ async def obter_entidade(client, id_input):
     return None
 
 def imprimir_configuracoes_ambiente():
+    """
+    Exibe no log as principais variáveis de ambiente de execução e status do ambiente (testnet/mainnet).
+    """
     logger.info("📄 - Variáveis de ambiente definidas:")
     for chave in ["BROKER", "IS_TESTNET", "trade_percentage", "bybit_api_key", "bybit_api_secret", "bybit_api_url"]:
         valor = os.getenv(chave)
@@ -113,3 +176,18 @@ def imprimir_configuracoes_ambiente():
     logger.info("🚦- Iniciando componentes...")
     logger.info("🚀 - Executando trade no broker: %s (Testnet=%s)", os.getenv('BROKER', '').upper(), is_testnet)
     logger.info("🔐 - Consultando saldo para calcular valor do trade...")
+
+def extrair_limite_usdt(mensagem):
+    """
+    Extrai o valor máximo de exposição (em USDT) a partir de uma mensagem de erro da corretora.
+
+    Args:
+        mensagem (str): Texto da mensagem de erro.
+
+    Returns:
+        float | None: Valor do limite em USDT se encontrado, ou None.
+    """
+    match = re.search(r'position limit of (\d+(?:\.\d+)?)\s*USDT', mensagem)
+    if match:
+        return float(match.group(1))
+    return None

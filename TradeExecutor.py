@@ -15,6 +15,19 @@ from utils import ajustar_quantidade
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 
 def iniciar_executor(broker):
+    """
+    Inicia o executor principal responsável por:
+
+    - Enviar ordens de trade com base em sinais pendentes.
+    - Ativar break even quando atingidas condições de monitoramento.
+    - Atualizar o banco de dados conforme o sucesso ou falha das operações.
+    - Tratar falhas específicas como símbolo inexistente ou erro de preço de mercado.
+
+    O executor roda em loop contínuo com pausa de 1.2s entre ciclos.
+
+    Args:
+        broker (BrokerInterface): Objeto que implementa os métodos de envio de ordens e ajuste de SL.
+    """
     logger.info("✅ - Executor iniciado com 1 thread para trade + break even")
 
     while True:
@@ -82,7 +95,7 @@ def iniciar_executor(broker):
                         else:
                             incrementar_retry_be(info["id"])
 
-            time.sleep(1)
+            time.sleep(1.2)
 
         except KeyboardInterrupt:
             logger.info("🛑 - Executor encerrado pelo usuário.")

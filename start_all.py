@@ -22,6 +22,13 @@ broker=None
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 
 def salvar_env_com_base_no_config(_broker, is_testnet):
+    """
+    Gera um arquivo `.env` com base nas configurações do `config.properties` para uso pelo restante da aplicação.
+
+    Args:
+        _broker (str): Nome do broker (ex: "bingx").
+        is_testnet (bool): Se `True`, configura para rede de testes; caso contrário, para rede principal.
+    """
     config = carregar_config()
     is_testnet_str = "true" if is_testnet else "false"
     env_lines = [
@@ -69,14 +76,34 @@ def salvar_env_com_base_no_config(_broker, is_testnet):
         logger.debug("  %s", linha)
 
 def iniciar_telegram_reader():
+    """
+    Inicia o componente de leitura de mensagens do Telegram, executando o script `TelegramReader.py`
+    em uma thread separada.
+    """
     logger.info("🚦 - Iniciando Telegram Reader...")
     os.system("python TelegramReader.py")
 
 def iniciar_trade_executor(_broker):
+    """
+    Inicia o componente de execução de ordens com base nos sinais salvos, em uma thread separada.
+
+    Args:
+        _broker (BrokerInterface): Instância do broker (ex: BingXBroker) para enviar ordens.
+    """
     executor_loop = iniciar_executor(_broker)
     executor_loop()
 
 def iniciar_com_broker(broker_name):
+    """
+    Inicializa os dois componentes principais:
+      - Leitor de sinais do Telegram
+      - Executor de ordens na corretora
+
+    Ambos são iniciados em threads daemonizadas.
+
+    Args:
+        broker_name (str): Nome do broker (ex: "bingx").
+    """
     if broker_name == "bingx":
         broker = BingXBroker()
 

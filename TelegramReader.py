@@ -7,6 +7,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from log.logger_config import configurar_logging
 from telethon import TelegramClient, events
+from telethon.sessions import MemorySession
 
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 configurar_logging()
@@ -42,6 +43,22 @@ client = TelegramClient(session_name, api_id, api_hash)
 proporcoes = [0.1, 0.2, 0.5, 0.1, 0.1]
 
 def inserir_sinal_com_multiplos_tps(dados):
+    """
+    Insere múltiplos registros de sinal na tabela `sinais` com diferentes proporções e Take Profits (TPs).
+
+    Os primeiros `len(proporcoes) - 1` sinais terão valores de TP correspondentes (ex: tp1, tp2...).
+    O último sinal será um lote livre (sem TP), usado para trailing stop ou gerenciamento posterior.
+
+    Args:
+        dados (dict): Dicionário com os dados do sinal extraídos do Telegram. Espera chaves como:
+            - pair (str): Par de trading, ex: "BTC/USDT"
+            - type (str): Tipo de ordem ("BUY" ou "SELL")
+            - stoploss (float): Valor de stop loss
+            - tp1..tp4 (float): Take profits (opcionalmente até tp4)
+            - margin (str): Tipo de margem, ex: "Cross"
+            - leverage (str): Alavancagem, ex: "20X"
+    """
+
     agora = datetime.utcnow().isoformat()
 
     for i, proporcao in enumerate(proporcoes, start=1):
@@ -67,6 +84,16 @@ def inserir_sinal_com_multiplos_tps(dados):
 
 
 async def main():
+    """
+    Inicia o listener do Telegram para capturar mensagens de sinais de trade ou monitoramento.
+
+    O bot escuta o grupo especificado, classifica as mensagens recebidas e:
+        - Insere sinais múltiplos com TPs no banco de dados (`public.sinais`) quando detectar sinal de trade.
+        - Ativa break-even automaticamente se uma mensagem de monitoramento atingir TP2 ou TP4.
+
+    Raises:
+        Exception: Em caso de falha de conexão ou erro inesperado no processamento da mensagem.
+    """
     grupo_entidade = await utils.obter_entidade(client, group_id)
     grupo_nome = getattr(grupo_entidade, 'title', f"grupo_{group_id}")
     grupo_id = grupo_entidade.id
@@ -74,6 +101,11 @@ async def main():
 
     @client.on(events.NewMessage(chats=grupo_entidade))
     async def handler(event):
+        """
+        Manipulador de eventos para novas mensagens recebidas no grupo.
+
+        Analisa se a mensagem é um sinal de trade ou monitoramento e toma ações conforme o tipo.
+        """
         mensagem = event.text
         logger.info("🚦 - Mensagem recebida - ainda não classificada entre sinal ou monitoramento.")
         resultado = classificar_mensagem(mensagem)
