@@ -319,3 +319,15 @@ sequenceDiagram
    - Se sucesso → `marcar_ordem_para_be_executado(par)`
    - Se falha → `incrementar_retry_be(id)`
 
+### Parte 4 - Geração de documentação
+
+> Navegue até a pasta docs
+- **Linux**
+```shell
+make html
+```
+- **Windows**:
+```bash
+make.bat html
+```
+
