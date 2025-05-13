@@ -1,20 +1,15 @@
-.. Telegram Reader documentation master file, created by
-   sphinx-quickstart on Mon May 12 16:32:32 2025.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. TelegramReader documentation master file
 
-Telegram Reader documentation
-=============================
-
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
-
+Bem-vindo à documentação do TelegramReader!
+============================================
 
 .. toctree::
    :maxdepth: 2
    :caption: Conteúdo
-   :glob:
 
-   modules
+   TelegramReader
+   TradeExecutor
+   utils
+   database.db
+   integration.BingXBroker
 

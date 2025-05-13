@@ -276,7 +276,7 @@ def desabilitar_sinal(id_sinal):
 def somar_quantidade_para_be(par):
     """
     Soma a quantidade total de sinais com break-even pendente para o par.
-
+    break_even_status_id = 1 - ATIVAR
     Args:
         par (str): Par a ser analisado.
 
