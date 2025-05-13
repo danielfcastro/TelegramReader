@@ -40,7 +40,9 @@ def conectar_db():
     try:
         yield conn
     finally:
-        DB_POOL.putconn(conn)
+        # Só tenta devolver a conexão se ela foi obtida e o pool está ativo
+        if conn and not DB_POOL.closed:
+            DB_POOL.putconn(conn)
 
 def executar_select(query, params=None):
     """

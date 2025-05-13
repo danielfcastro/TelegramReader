@@ -3,8 +3,10 @@ import logging
 import os
 import sys
 import threading
+import atexit
 
 from TradeExecutor import iniciar_executor
+from database import db
 from integration.BingXBroker import BingXBroker
 from log.logger_config import configurar_logging
 from utils import carregar_config
@@ -12,6 +14,7 @@ from utils import carregar_config
 # Diretório de logs
 LOG_DIR = "logs"
 os.makedirs(LOG_DIR, exist_ok=True)
+atexit.register(db.fechar_pool)
 
 # Configuração global de logging
 configurar_logging()
