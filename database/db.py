@@ -2,7 +2,6 @@ import logging
 import os
 from contextlib import contextmanager
 
-import psycopg2
 from dotenv import load_dotenv
 from psycopg2 import pool
 from psycopg2.extras import RealDictCursor

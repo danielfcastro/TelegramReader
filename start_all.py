@@ -1,9 +1,9 @@
 import argparse
+import atexit
 import logging
 import os
 import sys
 import threading
-import atexit
 
 from TradeExecutor import iniciar_executor
 from database import db

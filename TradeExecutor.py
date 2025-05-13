@@ -12,6 +12,7 @@ from database.db import (
     ordem_enviada
 )
 from utils import ajustar_quantidade
+from utils import extrair_limite_usdt
 
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 
@@ -65,7 +66,7 @@ def iniciar_executor(broker):
                     logger.info(f"📦 - Enviando ordem para {sinal['par']}")
 
                     sucesso, entry_price, order_id, info_extra = broker.enviar_ordem_tp_sl(
-                        symbol, side, leverage, side_leverage, float(sinal["tp"]), float(sinal["sl"]), quantidade, preco_mercado
+                        symbol, side, leverage, side_leverage, float(sinal["tp"]), float(sinal["sl"]), quantidade, preco_mercado, sinal["id"]
                     )
 
                     if sucesso:
@@ -74,6 +75,16 @@ def iniciar_executor(broker):
                         if "symbol not exist" in str(info_extra).lower():
                             ordem_desabilitar(sinal["id"])
                         else:
+                            codigo = info_extra.get("code", "sem_codigo")
+                            mensagem = info_extra.get("msg", "Erro desconhecido")
+                            motivo = f"[{codigo}] {mensagem}"
+                            logger.error(f"❌ - Falha ao enviar ordens: {motivo} - Dados: {response}")
+
+                            # Se o erro indicar limite de posição, tenta ajustar e reenviar
+                            limite_usdt = extrair_limite_usdt(motivo)
+                            broker.send_order_with_constraints_adjusted(
+                                symbol, side, leverage, side_leverage, float(sinal["tp"]), float(sinal["sl"]),
+                                preco_mercado, limite_usdt, sinal["id"])
                             ordem_incrementar_retry(sinal["id"])
             else:
                 sinal_be = break_even_sinal()

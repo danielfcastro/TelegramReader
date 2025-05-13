@@ -10,7 +10,6 @@ from dotenv import load_dotenv
 
 from database.db import break_even_soma_quantidade
 from integration.BrokerInterface import BrokerInterface
-from utils import extrair_limite_usdt
 
 load_dotenv()
 
@@ -135,7 +134,7 @@ class BingXBroker(BrokerInterface):
         Args:
             symbol (str): Símbolo do par.
             side (str): Direção da posição ('LONG', 'SHORT', 'BOTH').
-            l
+            leverage: O grau de alavancagem
         """
         path = "/openApi/swap/v2/trade/leverage"
         params = {
@@ -153,27 +152,20 @@ class BingXBroker(BrokerInterface):
         except Exception as e:
             logger.exception(f"❌ - Exceção ao ajustar leverage para {symbol}: {e}")
 
-    def enviar_ordem_tp_sl(self, symbol, side, leverage, side_leverage, tp, sl, quantidade, preco_mercado):
+    def enviar_ordem_tp_sl(self, symbol, side, leverage, side_leverage, tp, sl, quantidade, preco_mercado, id_sinal):
         """
-        Envia uma ordem de mercado com Take Profit e Stop Loss. Se o limite de posição for excedido, tenta ajustar e reenviar.
-
-        Args:
-            symbol (str): Par de trading.
-            side (str): Direção da ordem ("BUY" ou "SELL").
-            leverage (int): Alavancagem utilizada.
-            side_leverage (str): Lado da posição ("BOTH").
-            tp (float): Preço de Take Profit.
-            sl (float): Preço de Stop Loss.
-            quantidade (float): Quantidade do ativo.
-            preco_mercado (float): Preço de referência no momento da execução.
+        Envia uma ordem de mercado com Take Profit e Stop Loss.
+        Se falhar por limite, tenta ajustar e reenviar com quantidade recalculada.
 
         Returns:
-            tuple: (sucesso, preco_mercado, order_id, quantidade ou motivo)
+            tuple: (sucesso: bool, preco_mercado: float | None, order_id: int | None, info_extra: str | float)
         """
         side_leverage = "BOTH"
-        logger.debug(f"symbol: {symbol} - side: {side} - leverage: {leverage} - side_leverage: {side_leverage} - tp: {tp} - sl: {sl} - quantidade: {quantidade} - preco_mercado: {preco_mercado}")
+        logger.debug(
+            f"symbol: {symbol} - side: {side} - leverage: {leverage} - side_leverage: {side_leverage} - tp: {tp} - sl: {sl} - quantidade: {quantidade} - preco_mercado: {preco_mercado}")
+
         try:
-            # Configura o leverage antes de enviar a ordem
+            # Configura alavancagem
             self.set_leverage(symbol=symbol, side=side_leverage, leverage=leverage)
 
             body = {
@@ -196,46 +188,27 @@ class BingXBroker(BrokerInterface):
                     "workingType": "MARK_PRICE"
                 })
             }
-            path = "/openApi/swap/v2/trade/order"
 
+            path = "/openApi/swap/v2/trade/order"
             response = self._send_request("POST", path, body)
+
             logger.debug(f"response: {response} - body: {body} - path: {path} - POST")
+
             if response["code"] == 0:
                 order_id = response["data"]["order"]["orderId"]
                 logger.info(f"✅ - Ordens enviadas com sucesso - order_id: {order_id} - preco_mercado: {preco_mercado}")
                 return True, preco_mercado, order_id, quantidade
+
             else:
                 codigo = response.get("code", "sem_codigo")
                 mensagem = response.get("msg", "Erro desconhecido")
                 motivo = f"[{codigo}] {mensagem}"
-                limite_usdt = extrair_limite_usdt(motivo)
                 logger.error(f"❌ - Falha ao enviar ordens: {motivo} - Dados: {response}")
-                if limite_usdt:
-                    logger.warning(f"⚠️ Ordem excede limite de posição. Recalculando com limite de {limite_usdt} USDT.")
-                    response = self.send_order_with_constraints_adjusted(
-                        symbol=symbol,
-                        side=side,
-                        leverage=leverage,
-                        side_leverage="BOTH",
-                        tp=tp,
-                        sl=sl,
-                        preco_mercado=preco_mercado,
-                        limite_usdt=limite_usdt
-                    )
-                if response["code"] == 0:
-                    order_id = response["data"]["order"]["orderId"]
-                    logger.info(
-                        f"✅ - Ordens enviadas com sucesso - order_id: {order_id} - preco_mercado: {preco_mercado}")
-                    return True, preco_mercado, order_id, quantidade
-                else:
-                    codigo = response.get("code", "sem_codigo")
-                    mensagem = response.get("msg", "Erro desconhecido")
-                    motivo = f"[{codigo}] {mensagem}"
-                    logger.error(f"❌ - Falha ao enviar ordens: {motivo} - Dados: {response}")
-                    return False, None, None, motivo
+                return False, None, None, motivo  # Sempre 4 valores
+
         except Exception as e:
-            print("❌ - Erro ao enviar ordens BingX:", e)
-            return False, 0.0, 0
+            logger.exception(f"❌ - Erro ao enviar ordens BingX: {e}")
+            return False, None, None, str(e)  # Sempre 4 valores
 
     def cancela_stop_loss(self, symbol):
         """
@@ -258,6 +231,7 @@ class BingXBroker(BrokerInterface):
             return response
         except Exception as e:
             logger.exception(f"❌ - Erro ao cancelar SL para {symbol}: {e}")
+            return {}
 
     def ajustar_para_break_even(self, symbol, position_side, quantity, stop_price, order_id):
         """
@@ -291,10 +265,6 @@ class BingXBroker(BrokerInterface):
                 "positionSide": "BOTH",
                 "quantity": quantidade,
                 "recvWindow": "10000"
-            }
-
-            headers = {
-                "X-BX-APIKEY": self.API_KEY
             }
 
             response = self._send_request("POST", path, body)
@@ -333,33 +303,25 @@ class BingXBroker(BrokerInterface):
             return response
         except Exception as e:
             logger.exception(f"❌ - Erro ao boter detalhe de ordem {symbol}: {e}")
+            return {}
 
     def send_order_with_constraints_adjusted(
             self, symbol, side, leverage, side_leverage,
-            tp, sl, preco_mercado, limite_usdt
+            tp, sl, preco_mercado, limite_usdt, id_sinal
     ):
         """
         Recalcula e envia uma ordem com quantidade ajustada com base em limite de exposição da corretora.
-
-        Args:
-            symbol (str): Par de ativos (ex: 'BTC-USDT').
-            side (str): Direção da ordem ('BUY' ou 'SELL').
-            leverage (int): Alavancagem desejada.
-            side_leverage (str): Tipo de posição.
-            tp (float): Take Profit.
-            sl (float): Stop Loss.
-            preco_mercado (float): Preço de referência.
-            limite_usdt (float): Limite máximo de valor permitido pela corretora.
 
         Returns:
             bool: True se a ordem ajustada foi enviada com sucesso.
         """
         try:
-            quantidade = round((limite_usdt * leverage) / preco_mercado, 6)  # use a precisão adequada da exchange
+            quantidade = round((limite_usdt * leverage) / preco_mercado, 6)
             logger.info(
-                f"🔁 - Ajustando quantidade com base no limite de {limite_usdt} USDT: Nova quantidade = {quantidade}")
+                f"🔁 - Ajustando quantidade com base no limite de {limite_usdt} USDT: Nova quantidade = {quantidade}"
+            )
 
-            sucesso, preco, order_id, retorno = self.enviar_ordem_tp_sl(
+            result = self.enviar_ordem_tp_sl(
                 symbol=symbol,
                 side=side,
                 leverage=leverage,
@@ -367,16 +329,24 @@ class BingXBroker(BrokerInterface):
                 tp=tp,
                 sl=sl,
                 quantidade=quantidade,
-                preco_mercado=preco_mercado
+                preco_mercado=preco_mercado,
+                id_sinal=id_sinal  # ✅ CORRIGIDO: passa o id_sinal aqui!
             )
 
-            if sucesso:
-                logger.info(f"✅ - Ordem ajustada enviada com sucesso - order_id: {order_id} - quantidade: {quantidade}")
+            if isinstance(result, tuple) and len(result) == 4:
+                sucesso, preco, order_id, retorno = result
+                if sucesso:
+                    logger.info(
+                        f"✅ - Ordem ajustada enviada com sucesso - order_id: {order_id} - quantidade: {quantidade}")
+                    return True
+                else:
+                    logger.warning(f"❌ - Falha ao enviar ordem ajustada: {retorno}")
+                    return False
             else:
-                logger.warning(f"❌ - Falha ao enviar ordem ajustada: {retorno}")
-
-            return sucesso
+                logger.error("❌ - Formato inesperado no retorno de enviar_ordem_tp_sl (esperado 4 valores).")
+                return False
 
         except Exception as e:
-            logger.error(f"❌ - Erro ao ajustar e enviar ordem: {e}")
+            logger.exception(f"❌ - Erro ao ajustar e enviar ordem: {e}")
             return False
+
