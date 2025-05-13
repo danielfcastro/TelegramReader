@@ -4,6 +4,7 @@ from contextlib import contextmanager
 
 import psycopg2
 from dotenv import load_dotenv
+from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
 
 load_dotenv()
@@ -12,6 +13,21 @@ logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 debug_update=True
 debug_select=False
 debug_insert=True
+
+# Inicializa o pool globalmente
+DB_POOL = pool.SimpleConnectionPool(
+    minconn=1,
+    maxconn=10,
+    dbname=os.getenv("db_name"),
+    user=os.getenv("db_user"),
+    password=os.getenv("db_password"),
+    host=os.getenv("db_host"),
+    port=os.getenv("db_port")
+)
+
+if not DB_POOL:
+    raise Exception("❌ - Falha ao inicializar pool de conexões com o banco.")
+
 @contextmanager
 def conectar_db():
     """
@@ -20,17 +36,11 @@ def conectar_db():
     Yields:
         connection (psycopg2.extensions.connection): Conexão ativa com o banco.
     """
-    conn = psycopg2.connect(
-        dbname=os.getenv("db_name"),
-        user=os.getenv("db_user"),
-        password=os.getenv("db_password"),
-        host=os.getenv("db_host"),
-        port=os.getenv("db_port")
-    )
+    conn = DB_POOL.getconn()
     try:
         yield conn
     finally:
-        conn.close()
+        DB_POOL.putconn(conn)
 
 def executar_select(query, params=None):
     """
@@ -80,6 +90,11 @@ def executar_insert(query, params=None):
                 logger.debug(f"➕ SQL INSERT: {cur.mogrify(query, params).decode()}")
             cur.execute(query, params)
             conn.commit()
+
+def fechar_pool():
+    if DB_POOL:
+        DB_POOL.closeall()
+        logger.info("✅ - Pool de conexões fechado.")
 
 # Busca de sinais registrados no banco a partir da recepção das mensagens de Telegram
 # chamados de TradeExecutor
