@@ -1,7 +1,9 @@
-from flask import Flask, render_template
+import os
+
 import psycopg2
 import psycopg2.extras
-import os
+from flask import Flask, render_template
+
 
 def carregar_config(path):
     config = {}

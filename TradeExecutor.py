@@ -1,14 +1,15 @@
-import time
-import os
 import logging
+import os
+import time
+
 from database.db import (
-    buscar_sinal_execucao,
-    marcar_ordem_para_be_executado,
-    marcar_ordem_enviada,
-    incrementar_retry_be,
-    incrementar_retry_order,
-    desabilitar_sinal,
-    buscar_sinal_para_break_even
+    break_even_configurado,
+    break_even_incrementar_retry,
+    break_even_sinal,
+    ordem_desabilitar,
+    sinal_disparar_trade,
+    ordem_incrementar_retry,
+    ordem_enviada
 )
 from utils import ajustar_quantidade
 
@@ -32,7 +33,7 @@ def iniciar_executor(broker):
 
     while True:
         try:
-            sinais = buscar_sinal_execucao()
+            sinais = sinal_disparar_trade()
 
             if sinais:
                 #sinal já trará a proporção para ser usada no cálculo da quantidade
@@ -46,7 +47,7 @@ def iniciar_executor(broker):
                     if "erro ao obter preço de mercado de" in str(e).lower():
                         for sinal in sinais:
                             if sinal["par"].replace("/", "-").upper() == symbol:
-                                desabilitar_sinal(sinal["id"])
+                                ordem_desabilitar(sinal["id"])
                     continue
 
                 for sinal in sinais:
@@ -68,14 +69,14 @@ def iniciar_executor(broker):
                     )
 
                     if sucesso:
-                        marcar_ordem_enviada(sinal["id"], entry_price, order_id, quantidade)
+                        ordem_enviada(sinal["id"], entry_price, order_id, quantidade)
                     else:
                         if "symbol not exist" in str(info_extra).lower():
-                            desabilitar_sinal(sinal["id"])
+                            ordem_desabilitar(sinal["id"])
                         else:
-                            incrementar_retry_order(sinal["id"])
+                            ordem_incrementar_retry(sinal["id"])
             else:
-                sinal_be = buscar_sinal_para_break_even()
+                sinal_be = break_even_sinal()
                 _symbol = None
                 for info in sinal_be:
                     if info:
@@ -91,9 +92,9 @@ def iniciar_executor(broker):
                             order_id=info["order_id"]
                         )
                         if sucesso:
-                            marcar_ordem_para_be_executado(info["par"])
+                            break_even_configurado(info["par"])
                         else:
-                            incrementar_retry_be(info["id"])
+                            break_even_incrementar_retry(info["id"])
 
             time.sleep(2)
 

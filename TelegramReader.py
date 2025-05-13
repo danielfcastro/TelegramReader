@@ -1,13 +1,16 @@
-import os
 import logging
-import utils
-import psycopg2
+import os
 from datetime import datetime
 
+import psycopg2
 from dotenv import load_dotenv
-from log.logger_config import configurar_logging
 from telethon import TelegramClient, events
-from telethon.sessions import MemorySession
+
+import utils
+from log.logger_config import configurar_logging
+
+TRADE = "trade"
+MONITORAMENTO = "monitoramento"
 
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 configurar_logging()
@@ -27,9 +30,9 @@ db_params = {
 }
 
 from database.db import (
-    buscar_info_apos_sinal_de_monitoramento,
-    ativar_break_even,
-    inserir_sinal
+    ordem_info,
+    break_even_ativado,
+    ordem_inserir
 )
 
 from utils import (
@@ -42,7 +45,7 @@ cur = conn.cursor()
 client = TelegramClient(session_name, api_id, api_hash)
 proporcoes = [0.1, 0.2, 0.5, 0.1, 0.1]
 
-def inserir_sinal_com_multiplos_tps(dados):
+def ordem_inserir_com_multiplos_tps(dados):
     """
     Insere múltiplos registros de sinal na tabela `sinais` com diferentes proporções e Take Profits (TPs).
 
@@ -79,7 +82,7 @@ def inserir_sinal_com_multiplos_tps(dados):
         else:
             logger.info(f"📥 Inserindo ordem sem TP (lote livre): {novo_sinal}")
 
-        id_inserido = inserir_sinal(novo_sinal)
+        id_inserido = ordem_inserir(novo_sinal)
         logger.debug(f"🆔 ID gerado para ordem {i}: {id_inserido}")
 
 
@@ -112,16 +115,16 @@ async def main():
         tipo = resultado["tipo"]
         dados = resultado["dados"]
 
-        if tipo == "trade":
+        if tipo == ("%s" % TRADE):
             #com base no sinal do Telegram que vem com 4 TPs eu insiro isso na tabela public.sinais
-            inserir_sinal_com_multiplos_tps(dados)
+            ordem_inserir_com_multiplos_tps(dados)
             logger.info(f"✅ - Sinal inserido para {dados['pair']}")
             return
-        elif tipo == "monitoramento":
+        elif tipo == ("%s" % MONITORAMENTO):
             if dados["tp"] in ["TP2", "TP4"]:
-                info = buscar_info_apos_sinal_de_monitoramento(dados["pair"])
+                info = ordem_info(dados["pair"])
                 if info:
-                    ativar_break_even(info["id"])
+                    break_even_ativado(info["id"])
                     logger.info(f"✅ - Break-even ativado para {dados['pair']}")
                 else:
                     logger.warning(f"⚠️ - Nenhuma ordem encontrada para {dados['pair']} ao tentar ativar BE.")

@@ -1,14 +1,16 @@
-import os
-import time
 import hmac
 import json
-import requests
 import logging
+import os
+import time
 from hashlib import sha256
+
+import requests
 from dotenv import load_dotenv
-from utils import extrair_limite_usdt
-from database.db import somar_quantidade_para_be
+
+from database.db import break_even_soma_quantidade
 from integration.BrokerInterface import BrokerInterface
+from utils import extrair_limite_usdt
 
 load_dotenv()
 
@@ -276,7 +278,7 @@ class BingXBroker(BrokerInterface):
             orders = self.get_open_order_info(symbol,order_id)
             side = "SELL" if position_side.upper() == "SHORT" else "BUY"
             position_side = position_side.upper()
-            quantidade = somar_quantidade_para_be(symbol.replace("-", "/").upper())
+            quantidade = break_even_soma_quantidade(symbol.replace("-", "/").upper())
             logger.debug(
                 f"🛡️ - Ajustando Stop Loss - symbol: {symbol}, side: {side}, position_side: {position_side}, stop_price: {stop_price}")
 

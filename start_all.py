@@ -1,13 +1,13 @@
-import os
-import threading
 import argparse
-import sys
 import logging
+import os
+import sys
+import threading
 
-from utils import carregar_config
-from log.logger_config import configurar_logging
-from integration.BingXBroker import BingXBroker
 from TradeExecutor import iniciar_executor
+from integration.BingXBroker import BingXBroker
+from log.logger_config import configurar_logging
+from utils import carregar_config
 
 # Diretório de logs
 LOG_DIR = "logs"

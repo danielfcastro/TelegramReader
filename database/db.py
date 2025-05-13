@@ -1,11 +1,10 @@
-import psycopg2
 import logging
-from datetime import datetime
-from psycopg2.extras import RealDictCursor
-from contextlib import contextmanager
-from utils import ajustar_quantidade
 import os
+from contextlib import contextmanager
+
+import psycopg2
 from dotenv import load_dotenv
+from psycopg2.extras import RealDictCursor
 
 load_dotenv()
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
@@ -84,7 +83,7 @@ def executar_insert(query, params=None):
 
 # Busca de sinais registrados no banco a partir da recepção das mensagens de Telegram
 # chamados de TradeExecutor
-def buscar_sinal_execucao():
+def sinal_disparar_trade():
     """
     Busca sinais pendentes de execução com menos de 3 tentativas.
     ordem_status_id = 0 - RECEBIDA
@@ -100,8 +99,69 @@ def buscar_sinal_execucao():
     resultado = executar_select(query)
     return resultado if resultado is not None else []
 
+#Chamado por TelegramReader para marcar o sinal que atingiu TP2 e então ser atualizado por TradeExecutor.py
+def break_even_ativado(id_sinal):
+    """
+    Ativa o status de break-even para o sinal informado.
+    break_even_status_id = 1 - ATIVAR
+    Args:
+        id_sinal (int): ID do sinal.
+    """
+    query = """
+        UPDATE sinais 
+        SET break_even_status_id = 1
+        WHERE id = %(id)s
+    """
+    executar_update(query, {"id": id_sinal})
+
+#Chamado por TradeExecutor após uma execução bem sucedida de broker.ajustar_para_break_even
+def break_even_configurado(par):
+    """
+    Marca o sinal como tendo o break-even executado com sucesso.
+    ordem_status_id = 1 - ENVIADA
+    break_even_status_id = 2 - CONFIGURADO
+    Args:
+        par (str): Par da ordem.
+    """
+    sql = """
+    UPDATE sinais
+    SET break_even_status_id = 2
+    WHERE par = %(par)s AND 
+          ordem_status_id = 1
+    """
+    executar_update(sql, {"par": par})
+
+def break_even_desativado(id_sinal):
+    """
+    Desativa o status de break-even para o sinal informado.
+    break_even_status_id = 0 - ATIVAR
+    Args:
+        id_sinal (int): ID do sinal.
+    """
+    query = """
+        UPDATE sinais 
+        SET break_even_status_id = 0
+        WHERE id = %(id)s
+    """
+    executar_update(query, {"id": id_sinal})
+
+#chamado dentro de TradeExecutor para incrementar o retry de envio de ordem pra mover SL para Break Even
+def break_even_incrementar_retry(id_sinal):
+    """
+    Incrementa a contagem de tentativas de ajuste de break-even.
+
+    Args:
+        id_sinal (int): ID do sinal.
+    """
+    query = """
+        UPDATE sinais
+        SET tentativas_be = tentativas_be + 1
+        WHERE id = %(id)s
+    """
+    executar_update(query, {"id": id_sinal})
+
 #Usado em TradeExecutor para listar todos os sinais que foram ativados em TelegramReader por ativar_break_even
-def buscar_sinal_para_break_even():
+def break_even_sinal():
     """
     Busca o próximo sinal apto a ter break-even ativado.
     break_even_status_id = 1 - ATIVAR
@@ -120,61 +180,68 @@ def buscar_sinal_para_break_even():
     resultado = executar_select(query)
     return resultado if resultado is not None else []
 
-#Fim da busca de sinais
-
-#Queries de alteração de status
-def marcar_ordem_enviada(id_sinal, entry_price, order_id, quantidade):
+def break_even_soma_quantidade(par):
     """
-    Marca um sinal como executado com ordem enviada com sucesso.
+    Soma a quantidade total de sinais com break-even pendente para o par.
+    break_even_status_id = 1 - ATIVAR
+    Args:
+        par (str): Par a ser analisado.
+
+    Returns:
+        float: Soma das quantidades.
+    """
+    sql = """
+    SELECT SUM(quantidade) AS total
+    FROM sinais
+    WHERE par = %(par)s AND 
+          break_even_status_id = 1
+    """
+    resultado = executar_select(sql, {"par": par})
+    if resultado and resultado[0]["total"] is not None:
+        return resultado[0]["total"]
+    return 0.0
+
+#chamado quando não encontra o símbolo ao buscar pelo preço
+def ordem_desabilitar(id_sinal):
+    """
+    Desabilita um sinal definindo status como falha (ordem_status_id = 2).
+    ordem_status_id = 2 - DESABILITADA
+    Args:
+        id_sinal (int): ID do sinal a ser desabilitado.
+    """
+    query = """
+        UPDATE sinais
+        SET ordem_status_id = 2
+        WHERE id = %(id)s
+    """
+    executar_update(query, {"id": id_sinal})
+
+def ordem_info(par):
+    """
+    Busca o último sinal válido para break-even de um determinado par.
     ordem_status_id = 1 - ENVIADA
+    break_even_status_id = 0 - INATIVO
     Args:
-        id_sinal (int): ID do sinal.
-        entry_price (float): Preço de entrada.
-        order_id (int): ID da ordem na corretora.
-        quantidade (float): Quantidade negociada.
+        par (str): Par de negociação, ex: 'BTC/USDT'.
+
+    Returns:
+        dict | None: Registro mais recente se existir, ou None.
     """
     query = """
-        UPDATE sinais
-        SET ordem_status_id = 1, 
-            entry_price = %(entry_price)s, 
-            order_id = %(order_id)s, 
-            quantidade = %(quantidade)s
-        WHERE id = %(id)s
+        SELECT * FROM sinais
+        WHERE par = %(par)s AND 
+              ordem_status_id = 1 AND 
+              order_id != 0 AND 
+              break_even_status_id = 0 AND
+              tentativas_be < 3
+        ORDER BY id DESC
+        LIMIT 1
     """
-    executar_update(query, {"id": id_sinal, "entry_price": entry_price, "order_id": order_id, "quantidade": quantidade})
-
-#chamado dentro de TradeExecutor para incrementar o retry de envio de ordem
-def incrementar_retry_order(id_sinal):
-    """
-    Incrementa a contagem de tentativas de envio de ordem.
-
-    Args:
-        id_sinal (int): ID do sinal.
-    """
-    query = """
-        UPDATE sinais
-        SET tentativas = tentativas + 1
-        WHERE id = %(id)s
-    """
-    executar_update(query, {"id": id_sinal})
-
-#chamado dentro de TradeExecutor para incrementar o retry de envio de ordem pra mover SL para Break Even
-def incrementar_retry_be(id_sinal):
-    """
-    Incrementa a contagem de tentativas de ajuste de break-even.
-
-    Args:
-        id_sinal (int): ID do sinal.
-    """
-    query = """
-        UPDATE sinais
-        SET tentativas_be = tentativas_be + 1
-        WHERE id = %(id)s
-    """
-    executar_update(query, {"id": id_sinal})
+    resultado = executar_select(query, {"par": par})
+    return resultado[0] if resultado else None
 
 #Insere sinal recebido pelo TelegramReader no banco
-def inserir_sinal(dados):
+def ordem_inserir(dados):
     """
     Insere um novo sinal na tabela `sinais`.
     ordem_status_id = 0 - RECEBIDA - DEFAULT
@@ -203,93 +270,38 @@ def inserir_sinal(dados):
             conn.commit()
             return id_gerado
 
-def buscar_info_apos_sinal_de_monitoramento(par):
+#chamado dentro de TradeExecutor para incrementar o retry de envio de ordem
+def ordem_incrementar_retry(id_sinal):
     """
-    Busca o último sinal válido para break-even de um determinado par.
-    ordem_status_id = 1 - ENVIADA
-    break_even_status_id = 0 - INATIVO
-    Args:
-        par (str): Par de negociação, ex: 'BTC/USDT'.
+    Incrementa a contagem de tentativas de envio de ordem.
 
-    Returns:
-        dict | None: Registro mais recente se existir, ou None.
-    """
-    query = """
-        SELECT * FROM sinais
-        WHERE par = %(par)s AND 
-              ordem_status_id = 1 AND 
-              order_id != 0 AND 
-              break_even_status_id = 0
-        ORDER BY id DESC
-        LIMIT 1
-    """
-    resultado = executar_select(query, {"par": par})
-    return resultado[0] if resultado else None
-
-#Chamado por TelegramReader para marcar o sinal que atingiu TP2 e então ser atualizado por TradeExecutor.py
-def ativar_break_even(id_sinal):
-    """
-    Ativa o status de break-even para o sinal informado.
-    break_even_status_id = 1 - ATIVAR
     Args:
         id_sinal (int): ID do sinal.
     """
     query = """
-        UPDATE sinais 
-        SET break_even_status_id = 1
+        UPDATE sinais
+        SET tentativas = tentativas + 1
         WHERE id = %(id)s
     """
     executar_update(query, {"id": id_sinal})
 
-#Chamado por TradeExecutor após uma execução bem sucedida de broker.ajustar_para_break_even
-def marcar_ordem_para_be_executado(par):
+#Queries de alteração de status
+def ordem_enviada(id_sinal, entry_price, order_id, quantidade):
     """
-    Marca o sinal como tendo o break-even executado com sucesso.
+    Marca um sinal como executado com ordem enviada com sucesso.
     ordem_status_id = 1 - ENVIADA
-    break_even_status_id = 2 - CONFIGURADO
     Args:
-        par (str): Par da ordem.
-    """
-    sql = """
-    UPDATE sinais
-    SET break_even_status_id = 2
-    WHERE par = %(par)s AND 
-          ordem_status_id = 1
-    """
-    executar_update(sql, {"par": par})
-
-#chamado quando não encontra o símbolo ao buscar pelo preço
-def desabilitar_sinal(id_sinal):
-    """
-    Desabilita um sinal definindo status como falha (ordem_status_id = 2).
-    ordem_status_id = 2 - DESABILITADA
-    Args:
-        id_sinal (int): ID do sinal a ser desabilitado.
+        id_sinal (int): ID do sinal.
+        entry_price (float): Preço de entrada.
+        order_id (int): ID da ordem na corretora.
+        quantidade (float): Quantidade negociada.
     """
     query = """
         UPDATE sinais
-        SET ordem_status_id = 2
+        SET ordem_status_id = 1, 
+            entry_price = %(entry_price)s, 
+            order_id = %(order_id)s, 
+            quantidade = %(quantidade)s
         WHERE id = %(id)s
     """
-    executar_update(query, {"id": id_sinal})
-
-def somar_quantidade_para_be(par):
-    """
-    Soma a quantidade total de sinais com break-even pendente para o par.
-    break_even_status_id = 1 - ATIVAR
-    Args:
-        par (str): Par a ser analisado.
-
-    Returns:
-        float: Soma das quantidades.
-    """
-    sql = """
-    SELECT SUM(quantidade) AS total
-    FROM sinais
-    WHERE par = %(par)s AND 
-          break_even_status_id = 1
-    """
-    resultado = executar_select(sql, {"par": par})
-    if resultado and resultado[0]["total"] is not None:
-        return resultado[0]["total"]
-    return 0.0
+    executar_update(query, {"id": id_sinal, "entry_price": entry_price, "order_id": order_id, "quantidade": quantidade})
