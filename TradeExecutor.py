@@ -1,116 +1,146 @@
-import logging
+# Novo TradeExecutor.py com API REST
+import asyncio
 import os
-import time
 
-from database.db import (
-    break_even_configurado,
-    break_even_incrementar_retry,
-    break_even_sinal,
-    ordem_desabilitar,
-    sinal_disparar_trade,
-    ordem_incrementar_retry,
-    ordem_enviada
-)
-from utils import ajustar_quantidade
-from utils import extrair_limite_usdt
+import uvicorn
+from fastapi import FastAPI, Request
 
-logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
+import database.db
+from integration.BingXBroker import BingXBroker
+from utils import logger, ajustar_quantidade
 
-def iniciar_executor(broker):
-    """
-    Inicia o executor principal responsável por:
+app = FastAPI()
 
-    - Enviar ordens de trade com base em sinais pendentes.
-    - Ativar break even quando atingidas condições de monitoramento.
-    - Atualizar o banco de dados conforme o sucesso ou falha das operações.
-    - Tratar falhas específicas como símbolo inexistente ou erro de preço de mercado.
+broker = BingXBroker()
 
-    O executor roda em loop contínuo com pausa de 1.2s entre ciclos.
+# Nova rota para receber sinais do TelegramReader
+@app.post("/sinal")
+async def receber_sinal_ordem(request: Request):
+    dados = await request.json()
+    logger.info(f"📥 - POST /sinal recebido para {dados['par']}")
 
-    Args:
-        broker (BrokerInterface): Objeto que implementa os métodos de envio de ordens e ajuste de SL.
-    """
-    logger.info("✅ - Executor iniciado com 1 thread para trade + break even")
+    sinais = database.db.sinal_disparar_trade()
+    for sinal in sinais:
+        if sinal['par'] == dados['par'] and sinal['tipo_ordem'] == dados['tipo_ordem']:
+            symbol = sinais[0]["par"].replace("/", "-").upper()
+            try:
+                preco_mercado = broker.obter_preco_mercado(symbol)
+            except Exception as e:
+                logger.error(f"❌ - Erro ao obter preço de mercado de {symbol} - Exception: {e}")
+                continue
+            saldo = broker.obter_saldo_disponivel()
+            tipo_ordem = str(sinal["tipo_ordem"]).upper()
+            trade_percentage = float(os.getenv("TRADE_PERCENTAGE", "3"))
+            valor_trade = saldo * (trade_percentage / 100)
+            quantidade = ajustar_quantidade( valor_trade  / preco_mercado, step=0.0001)
+            logger.debug(f"⚠️ - symbol:? {symbol} - saldo: {saldo} - quantidade: {quantidade} - preco_mercado: {preco_mercado} - valor_trade: {valor_trade} - tipo_ordem: {tipo_ordem}")
+            try:
+                sucesso, preco_mercado, order_id, quantidade = broker.enviar_ordem_tp_sl(
+                    symbol=sinal["par"].replace("/", "-"),
+                    side = "BUY" if tipo_ordem == "LONG" else "SELL",
+                    leverage=sinal["alavancagem"],
+                    side_leverage=sinal["margem"],
+                    tp=None,  # agora os TPs vêm da tabela
+                    sl=sinal["sl"],
+                    quantidade=quantidade,
+                    preco_mercado=None,
+                    id_sinal=sinal["id"]
+                )
 
-    while True:
-        try:
-            sinais = sinal_disparar_trade()
+                if sucesso:
+                    database.db.ordem_enviada(sinal["id"], order_id, preco_mercado, quantidade)
+                    logger.info(f"✅ - Ordem enviada com sucesso para {sinal['par']} - ID: {sinal['id']}")
 
-            if sinais:
-                #sinal já trará a proporção para ser usada no cálculo da quantidade
-                saldo = broker.obter_saldo_disponivel()
-                symbol = sinais[0]["par"].replace("/", "-").upper()
-
-                try:
-                    preco_mercado = broker.obter_preco_mercado(symbol)
-                except Exception as e:
-                    logger.error(f"❌ - Erro ao obter preço de mercado de {symbol}")
-                    if "erro ao obter preço de mercado de" in str(e).lower():
-                        for sinal in sinais:
-                            if sinal["par"].replace("/", "-").upper() == symbol:
-                                ordem_desabilitar(sinal["id"])
-                    continue
-
-                for sinal in sinais:
-                    tipo_ordem = str(sinal["tipo_ordem"]).upper()
-                    symbol = sinal["par"].replace("/", "-").upper()
-                    side = "BUY" if tipo_ordem == "LONG" else "SELL"
-                    leverage = int(sinal["alavancagem"].replace("X", ""))
-                    side_leverage = "BOTH"
-                    trade_percentage = float(os.getenv("TRADE_PERCENTAGE", "3"))
-                    proporcao = sinal["proporcao"]
-
-                    valor_trade = saldo * (trade_percentage / 100)
-                    quantidade = ajustar_quantidade((valor_trade * proporcao) / preco_mercado, step=0.0001)
-
-                    logger.info(f"📦 - Enviando ordem para {sinal['par']}")
-
-                    sucesso, entry_price, order_id, info_extra = broker.enviar_ordem_tp_sl(
-                        symbol, side, leverage, side_leverage, float(sinal["tp"]), float(sinal["sl"]), quantidade, preco_mercado, sinal["id"]
-                    )
-
-                    if sucesso:
-                        ordem_enviada(sinal["id"], entry_price, order_id, quantidade)
-                    else:
-                        if "symbol not exist" in str(info_extra).lower():
-                            ordem_desabilitar(sinal["id"])
-                        else:
-                            codigo = info_extra.get("code", "sem_codigo")
-                            mensagem = info_extra.get("msg", "Erro desconhecido")
-                            motivo = f"[{codigo}] {mensagem}"
-                            logger.error(f"❌ - Falha ao enviar ordens: {motivo} - Dados: {response}")
-
-                            # Se o erro indicar limite de posição, tenta ajustar e reenviar
-                            limite_usdt = extrair_limite_usdt(motivo)
-                            broker.send_order_with_constraints_adjusted(
-                                symbol, side, leverage, side_leverage, float(sinal["tp"]), float(sinal["sl"]),
-                                preco_mercado, limite_usdt, sinal["id"])
-                            ordem_incrementar_retry(sinal["id"])
-            else:
-                sinal_be = break_even_sinal()
-                _symbol = None
-                for info in sinal_be:
-                    if info:
-                        if _symbol == info["par"].replace("/", "-").upper():
-                            continue
-                        _symbol = info["par"].replace("/", "-").upper()
-                        logger.info(f"⚙️ - Ajustando BE para {_symbol}")
-                        sucesso = broker.ajustar_para_break_even(
-                            symbol=_symbol,
-                            position_side="LONG" if info["tipo_ordem"].upper() == "LONG" else "SHORT",
-                            quantity=info["quantidade"],
-                            stop_price=info["entry_price"],
-                            order_id=info["order_id"]
+                    # Recuperar TPs do banco para atualizar com a quantidade real
+                    tps = database.db.take_profits_por_sinal(sinal["id"])
+                    for tp in tps:
+                        tp_quant = round(quantidade * tp["proporcao"], 6)
+                        database.db.ordem_atualizar_tp(
+                            sinal_id=sinal["id"],
+                            numero=tp["numero"],
+                            quantidade=tp_quant,
+                            valor=tp["valor"]
                         )
-                        if sucesso:
-                            break_even_configurado(info["par"])
-                        else:
-                            break_even_incrementar_retry(info["id"])
+                        broker.ajustar_take_profit(
+                            symbol=sinal["par"].replace("/", "-"),
+                            position_side=sinal["tipo_ordem"],
+                            quantity=tp_quant,
+                            stop_price=tp["valor"],
+                            numero=tp["numero"]
+                        )
 
-            time.sleep(2)
+                else:
+                    database.db.ordem_desabilitar(sinal["id"])
+                    logger.warning(f"⚠️ - Falha ao enviar ordem para {sinal['par']} - ID: {sinal['id']}")
+            except Exception as e:
+                logger.exception(f"❌ - Erro inesperado ao enviar ordem para {sinal['par']}: {e}")
 
-        except KeyboardInterrupt:
-            logger.info("🛑 - Executor encerrado pelo usuário.")
-            break
-        except Exception as e:
-            logger.error(f"❌ - Erro geral no executor: {e}")
+    return {"status": "ok"}
+
+
+
+@app.post("/monitoramento")
+async def receber_sinal_monitoramento(request: Request):
+    dados = await request.json()
+    logger.info(f"🔍 - POST /monitoramento recebido: {dados}")
+
+    par = dados["pair"]
+    tp_monitorado = int(dados.get("target_monitorado", 1))
+    symbol = par.replace("/", "-")
+
+    # Atualiza TP para status ATINGIDO (3)
+    logger.debug(f"✅ - par: {par} - tp_monitorado: {tp_monitorado}")
+    database.db.atualizar_status_tp(par, tp_monitorado, novo_status=3)
+
+    # Soma quantidades dos TPs com status = 2 (AGUARDANDO ENVIO DE SL)
+    quantidade = database.db.somar_quantidades_tps_ativos(par)
+
+    if not quantidade or quantidade == 0:
+        logger.warning(f"⚠️ - Nenhuma quantidade ativa encontrada para {par} no TP{tp_monitorado}")
+        return {"status": "no_active_orders"}
+
+    # Cancelar qualquer SL anterior
+    broker.cancela_stop_loss(par)
+
+    # Buscar informações da ordem principal
+    ordem = database.db.ordem_info(dados["pair"], exigir_break_even_inativo=False)
+    if not ordem:
+        logger.warning(f"⚠️ - Nenhuma ordem encontrada para {par}")
+        return {"status": "no_order"}
+
+    # Decide o novo stop_price com base no TP monitorado
+    stop_price = ordem["sl"] if tp_monitorado == 1 else ordem["entry_price"]
+
+    # Se TP2, TP3 ou TP4: atualiza sl da ordem no banco
+    if tp_monitorado != 1:
+        database.db.atualizar_stop_loss(par, novo_sl=ordem["entry_price"])
+
+    # Tentar até 3 vezes ajustar o SL
+    for tentativa in range(3):
+        sucesso = broker.ajustar_stop_loss(
+            symbol=symbol,
+            position_side="BOTH",
+            quantity=quantidade,
+            stop_price=stop_price,
+            order_id=ordem["order_id"]
+        )
+        if sucesso:
+            logger.info(f"✅ - SL ajustado para {par} - ordem {ordem['order_id']}")
+            return {"status": "ok"}
+
+        logger.warning(f"⚠️ - Tentativa {tentativa + 1}/3 falhou ao ajustar SL para {par}")
+        await asyncio.sleep(1.5)
+
+    logger.error(f"❌ - Falha ao ajustar SL após 3 tentativas para {par}")
+    return {"status": "failed"}
+
+
+
+# Inicializa a thread do executor e o servidor REST
+
+def iniciar_executor():
+    # Inicia o servidor REST
+    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="warning")
+
+if __name__ == "__main__":
+    iniciar_executor()

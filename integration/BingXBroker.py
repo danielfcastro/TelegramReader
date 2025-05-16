@@ -8,7 +8,7 @@ from hashlib import sha256
 import requests
 from dotenv import load_dotenv
 
-from database.db import break_even_soma_quantidade
+import database.db
 from integration.BrokerInterface import BrokerInterface
 
 load_dotenv()
@@ -233,7 +233,7 @@ class BingXBroker(BrokerInterface):
             logger.exception(f"❌ - Erro ao cancelar SL para {symbol}: {e}")
             return {}
 
-    def ajustar_para_break_even(self, symbol, position_side, quantity, stop_price, order_id):
+    def ajustar_stop_loss(self, symbol, position_side, quantity, stop_price, order_id):
         """
         Ajusta o Stop Loss de uma posição para o ponto de Break Even (sem lucro ou prejuízo).
 
@@ -252,9 +252,9 @@ class BingXBroker(BrokerInterface):
             orders = self.get_open_order_info(symbol,order_id)
             side = "SELL" if position_side.upper() == "SHORT" else "BUY"
             position_side = position_side.upper()
-            quantidade = break_even_soma_quantidade(symbol.replace("-", "/").upper())
+            quantidade = database.db.break_even_soma_quantidade(symbol.replace("-", "/").upper())
             logger.debug(
-                f"🛡️ - Ajustando Stop Loss - symbol: {symbol}, side: {side}, position_side: {position_side}, stop_price: {stop_price}")
+                f"🛡️ - Ajustando Stop Loss - symbol: {symbol}, side: {side}, position_side: {position_side}, stop_price: {stop_price}, quantidade: {quantidade}")
 
             path = "/openApi/swap/v2/trade/order"
             body = {
@@ -279,6 +279,53 @@ class BingXBroker(BrokerInterface):
 
         except Exception as e:
             logger.exception(f"❌ - Exceção ao ajustar SL para {symbol}: {e}")
+            return False
+
+    def ajustar_take_profit(self, symbol, position_side, quantity, stop_price, numero):
+        """
+        Cria uma ordem de Take Profit para uma fração da posição.
+
+        Args:
+            symbol (str): Par de trading (ex: "BCH-USDT").
+            position_side (str): Direção da posição ('LONG' ou 'SHORT').
+            quantity (float): Quantidade da fração.
+            stop_price (float): Preço alvo do TP.
+            numero (int): Número do TP (1 a 4).
+
+        Returns:
+            bool: True se a ordem foi enviada com sucesso.
+        """
+        try:
+            side = "SELL" if position_side.upper() == "LONG" else "BUY"
+            logger.debug(
+                f"🎯 - Configurando TP{numero}: symbol={symbol}, side={side}, quantity={quantity}, stop_price={stop_price}")
+
+            path = "/openApi/swap/v2/trade/order"
+            body = {
+                "symbol": symbol,
+                "side": side,
+                "type": "MARKET",
+                "price": round(stop_price, 6),
+                "quantity": round(quantity, 6),
+                "timeInForce": "GTC",
+                "reduceOnly": True,
+                "newClientOrderId": f"{symbol}-TP{numero}",
+                "positionSide": "BOTH",
+                "recvWindow": "10000"
+            }
+
+            response = self._send_request("POST", path, body)
+            logger.debug(f"📩 Resposta da ordem TP{numero}: {response} - body: {body}")
+
+            if response["code"] == 0:
+                logger.info(f"✅ - TP{numero} configurado com sucesso para {symbol} a {stop_price}")
+                return True
+            else:
+                logger.warning(f"⚠️ - Falha ao configurar TP{numero} para {symbol}: {response}")
+                return False
+
+        except Exception as e:
+            logger.exception(f"❌ - Exceção ao configurar TP{numero} para {symbol}: {e}")
             return False
 
     def get_open_order_info(self, symbol, order_id):

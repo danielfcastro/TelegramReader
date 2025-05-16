@@ -10,7 +10,11 @@ class BrokerInterface(ABC):
         pass
 
     @abstractmethod
-    def ajustar_para_break_even(self, symbol, position_side, quantity, stop_price, order_id):
+    def ajustar_stop_loss(self, symbol, position_side, quantity, stop_price, order_id):
+        pass
+
+    @abstractmethod
+    def ajustar_take_profit(self, symbol, position_side, quantity, stop_price, numero):
         pass
 
     @abstractmethod

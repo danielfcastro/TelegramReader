@@ -5,6 +5,7 @@ import re
 
 from telethon.errors import ChannelInvalidError, ChatIdInvalidError
 from telethon.tl.types import PeerChannel, PeerChat
+from message.mensagem_sinal import MensagemSinal
 
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 
