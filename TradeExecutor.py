@@ -4,6 +4,7 @@ import os
 
 import uvicorn
 from fastapi import FastAPI, Request
+from starlette.responses import JSONResponse
 
 import database.db
 from integration.BingXBroker import BingXBroker
@@ -17,11 +18,19 @@ broker = BingXBroker()
 @app.post("/sinal")
 async def receber_sinal_ordem(request: Request):
     dados = await request.json()
-    logger.info(f"📥 - POST /sinal recebido para {dados['par']}")
+    logger.info(f"📥 - POST /sinal recebido Request - {dados}")
+
+    # Normaliza nomes de chave para manter compatibilidade
+    dados["par"] = dados.pop("pair", None)
+
+    # Evite acesso direto sem verificação
+    if not dados.get("par") or not dados.get("id"):
+        logger.error("❌ - Campos obrigatórios ausentes em dados recebidos.")
+        return JSONResponse(content={"erro": "Campos obrigatórios ausentes"}, status_code=400)
 
     sinais = database.db.sinal_disparar_trade()
     for sinal in sinais:
-        if sinal['par'] == dados['par'] and sinal['tipo_ordem'] == dados['tipo_ordem']:
+        if sinal['par'] == dados['par'] and sinal['id'] == dados['id']:
             symbol = sinais[0]["par"].replace("/", "-").upper()
             try:
                 preco_mercado = broker.obter_preco_mercado(symbol)
@@ -66,7 +75,8 @@ async def receber_sinal_ordem(request: Request):
                             position_side=sinal["tipo_ordem"],
                             quantity=tp_quant,
                             stop_price=tp["valor"],
-                            numero=tp["numero"]
+                            numero=tp["numero"],
+                            order_id=order_id
                         )
 
                 else:

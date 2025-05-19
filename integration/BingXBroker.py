@@ -281,7 +281,7 @@ class BingXBroker(BrokerInterface):
             logger.exception(f"❌ - Exceção ao ajustar SL para {symbol}: {e}")
             return False
 
-    def ajustar_take_profit(self, symbol, position_side, quantity, stop_price, numero):
+    def ajustar_take_profit(self, symbol, position_side, quantity, stop_price, numero, order_id):
         """
         Cria uma ordem de Take Profit para uma fração da posição.
 
@@ -303,15 +303,13 @@ class BingXBroker(BrokerInterface):
             path = "/openApi/swap/v2/trade/order"
             body = {
                 "symbol": symbol,
-                "side": side,
-                "type": "MARKET",
-                "price": round(stop_price, 6),
-                "quantity": round(quantity, 6),
-                "timeInForce": "GTC",
-                "reduceOnly": True,
-                "newClientOrderId": f"{symbol}-TP{numero}",
                 "positionSide": "BOTH",
-                "recvWindow": "10000"
+                "side": side,
+                "type":"TAKE_PROFIT_MARKET",
+                "stopPrice": round(stop_price, 6),
+                "quantity": round(quantity, 6),
+                "workingType": "MARK_PRICE",
+                "orderId": order_id
             }
 
             response = self._send_request("POST", path, body)

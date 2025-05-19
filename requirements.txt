@@ -12,3 +12,5 @@ sphinxcontrib-napoleon
 uvicorn~=0.34.2
 fastapi~=0.115.12
 asyncio ; python_version < "3.11"
+asyncio~=3.4.3
+starlette~=0.46.2

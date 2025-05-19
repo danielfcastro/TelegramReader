@@ -142,7 +142,7 @@ def sinal_disparar_trade():
     query = """
         SELECT * FROM sinais
         WHERE ordem_status_id = 0
-        ORDER BY id ASC
+        ORDER BY id DESC
         FOR UPDATE SKIP LOCKED
     """
     resultado = executar_select(query)

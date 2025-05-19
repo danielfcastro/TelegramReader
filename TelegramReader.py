@@ -76,6 +76,7 @@ def ordem_inserir_com_multiplos_tps(dados):
 
     id_sinal = database.db.ordem_inserir(novo_sinal, take_profits)
     logger.debug(f"🆔 - ID gerado para o sinal: {id_sinal}")
+    return id_sinal
 
 async def main():
     grupo_entidade = await utils.obter_entidade(client, group_id)
@@ -92,17 +93,16 @@ async def main():
         dados = resultado["dados"]
 
         if tipo == TRADE:
-            ordem_inserir_com_multiplos_tps(dados)
+            id_iserido = ordem_inserir_com_multiplos_tps(dados)
             try:
                 payload = {
-                    "pair": dados["pair"],
-                    "type": dados["type"]
+                    "id":id_iserido,
+                    "pair": dados["pair"]
                 }
                 requests.post(ENDPOINT_SINAL, json=payload, timeout=2)
-                logger.info(f"🚀 - POST /sinal enviado para {dados['pair']}")
+                logger.info(f"🚀 - POST /sinal enviado com payload: {payload}")
             except Exception as e:
                 logger.warning(f"❌ - Falha ao chamar /sinal: {e}")
-            logger.info(f"✅ - Sinal inserido para {dados['pair']}")
 
         elif tipo == MONITORAMENTO:
             tp_numero = int(dados["tp"].replace("TP", ""))

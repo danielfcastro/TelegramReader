@@ -14,7 +14,7 @@ class BrokerInterface(ABC):
         pass
 
     @abstractmethod
-    def ajustar_take_profit(self, symbol, position_side, quantity, stop_price, numero):
+    def ajustar_take_profit(self, symbol, position_side, quantity, stop_price, numero, order_id):
         pass
 
     @abstractmethod
