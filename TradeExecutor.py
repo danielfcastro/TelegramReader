@@ -42,11 +42,11 @@ async def receber_sinal_ordem(request: Request):
             trade_percentage = float(os.getenv("TRADE_PERCENTAGE", "3"))
             valor_trade = saldo * (trade_percentage / 100)
             quantidade = ajustar_quantidade( valor_trade  / preco_mercado, step=0.0001)
-            logger.debug(f"⚠️ - symbol:? {symbol} - saldo: {saldo} - quantidade: {quantidade} - preco_mercado: {preco_mercado} - valor_trade: {valor_trade} - tipo_ordem: {tipo_ordem}")
+            logger.debug(f"⚠️ - symbol: {symbol} - saldo: {saldo} - quantidade: {quantidade} - preco_mercado: {preco_mercado} - valor_trade: {valor_trade} - tipo_ordem: {tipo_ordem}")
             try:
                 sucesso, preco_mercado, order_id, quantidade = broker.enviar_ordem_tp_sl(
                     symbol=sinal["par"].replace("/", "-"),
-                    side = "BUY" if tipo_ordem == "LONG" else "SELL",
+                    side = tipo_ordem,
                     leverage=sinal["alavancagem"],
                     side_leverage=sinal["margem"],
                     tp=None,  # agora os TPs vêm da tabela
@@ -57,11 +57,13 @@ async def receber_sinal_ordem(request: Request):
                 )
 
                 if sucesso:
-                    database.db.ordem_enviada(sinal["id"], order_id, preco_mercado, quantidade)
+                    database.db.ordem_enviada(id_sinal=sinal["id"],
+                                              entry_price=preco_mercado,
+                                              order_id=order_id, quantidade=quantidade)
                     logger.info(f"✅ - Ordem enviada com sucesso para {sinal['par']} - ID: {sinal['id']}")
 
                     # Recuperar TPs do banco para atualizar com a quantidade real
-                    tps = database.db.take_profits_por_sinal(sinal["id"])
+                    tps = database.db.take_profits_por_sinal(sinal_id=sinal["id"])
                     for tp in tps:
                         tp_quant = round(quantidade * tp["proporcao"], 6)
                         database.db.ordem_atualizar_tp(
