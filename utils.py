@@ -177,7 +177,6 @@ def imprimir_configuracoes_ambiente():
     is_testnet = os.getenv("IS_TESTNET", "false").strip('"').lower() == "true"
     logger.info("🚦- Iniciando componentes...")
     logger.info("🚀 - Executando trade no broker: %s (Testnet=%s)", os.getenv('BROKER', '').upper(), is_testnet)
-    logger.info("🔐 - Consultando saldo para calcular valor do trade...")
 
 def extrair_limite_usdt(mensagem):
     """

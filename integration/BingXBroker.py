@@ -48,11 +48,12 @@ class BingXBroker(BrokerInterface):
         Args:
             method (str): Método HTTP (ex: 'GET', 'POST').
             path (str): Caminho do endpoint da API.
-            params (dict): Parâmetros da requisição.
+            params (dict): Parâmetros da requisição (corpo ou query).
 
         Returns:
-            dict: Resposta da API em formato JSON.
+            dict: Resposta da API convertida em JSON.
         """
+
         query = self._build_query(params)
         sign = self._get_sign(query)
         url = f"{self.API_URL}{path}?{query}&signature={sign}"
@@ -129,13 +130,14 @@ class BingXBroker(BrokerInterface):
 
     def set_leverage(self, symbol, side, leverage):
         """
-        Configura a alavancagem para um determinado par de ativos.
+        Configura a alavancagem para um determinado par na corretora BingX.
 
         Args:
-            symbol (str): Símbolo do par.
+            symbol (str): Par de ativos (ex: 'BTC-USDT').
             side (str): Direção da posição ('LONG', 'SHORT', 'BOTH').
-            leverage: O grau de alavancagem
+            leverage (int | str): Alavancagem desejada.
         """
+
         path = "/openApi/swap/v2/trade/leverage"
         params = {
             "symbol": symbol,
@@ -196,7 +198,7 @@ class BingXBroker(BrokerInterface):
 
             if response["code"] == 0:
                 order_id = response["data"]["order"]["orderId"]
-                logger.info(f"✅ - Ordens enviadas com sucesso - order_id: {order_id} - preco_mercado: {preco_mercado}")
+                logger.info(f"✅ - Ordens enviadas com sucesso - order_id: {order_id} - preco_mercado: {preco_mercado} - response: {response}")
                 return True, preco_mercado, order_id, quantidade
 
             else:
@@ -226,8 +228,9 @@ class BingXBroker(BrokerInterface):
                 "symbol": symbol,
                 "type": "STOP_MARKET"
             }
+            logger.debug(f"✅ - Cancelamento de SL: path: {path} - body {body}")
             response = self._send_request("DELETE", path, body)
-            logger.debug(f"✅ - Cancelamento de SL: {response} com sucesso")
+            logger.debug(f"✅ - Cancelamento de SL: response: {response} com sucesso")
             return response
         except Exception as e:
             logger.exception(f"❌ - Erro ao cancelar SL para {symbol}: {e}")
@@ -355,11 +358,23 @@ class BingXBroker(BrokerInterface):
             tp, sl, preco_mercado, limite_usdt, id_sinal
     ):
         """
-        Recalcula e envia uma ordem com quantidade ajustada com base em limite de exposição da corretora.
+        Recalcula e envia uma ordem com a quantidade ajustada, baseada no limite de exposição da corretora (em USDT).
+
+        Args:
+            symbol (str): Par de negociação.
+            side (str): Direção da ordem ('BUY' ou 'SELL').
+            leverage (int): Alavancagem utilizada.
+            side_leverage (str): Posição (ex: 'BOTH').
+            tp (float): Take Profit.
+            sl (float): Stop Loss.
+            preco_mercado (float): Preço atual do ativo.
+            limite_usdt (float): Quantia máxima permitida (exposição).
+            id_sinal (int): ID do sinal relacionado no banco.
 
         Returns:
             bool: True se a ordem ajustada foi enviada com sucesso.
         """
+
         try:
             quantidade = round((limite_usdt * leverage) / preco_mercado, 6)
             logger.info(

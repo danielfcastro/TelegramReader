@@ -44,13 +44,24 @@ client = TelegramClient(session_name, api_id, api_hash)
 proporcoes = [0.1, 0.2, 0.5, 0.2]
 
 def ordem_inserir_com_multiplos_tps(dados):
-    agora = datetime.now(timezone.utc)
+    """
+    Insere um sinal no banco com múltiplos Take Profits e aciona o serviço de execução.
 
-    tipo_ordem = dados["type"]
-    if tipo_ordem.upper() == "LONG":
-        tipo_ordem = "BUY"
-    elif tipo_ordem.upper() == "SHORT":
-        tipo_ordem = "SELL"
+    Verifica duplicidade com base em (par, janela_5min). Em caso de sucesso,
+    envia o ID e o par para o endpoint /sinal.
+
+    Args:
+        dados (dict): Dicionário com os dados do sinal extraídos da mensagem do Telegram.
+
+    Returns:
+        int | None: ID do sinal inserido ou None em caso de duplicidade ou erro.
+    """
+
+    agora = datetime.now(timezone.utc)
+    janela_5min = agora.replace(second=0, microsecond=0, minute=(agora.minute // 5) * 5)
+
+    tipo_ordem = dados["type"].upper()
+    tipo_ordem = "BUY" if tipo_ordem == "LONG" else "SELL"
 
     novo_sinal = {
         "data_hora": agora,
@@ -59,10 +70,9 @@ def ordem_inserir_com_multiplos_tps(dados):
         "margem": dados.get("margin", "Cross"),
         "alavancagem": dados.get("leverage", "20X"),
         "sl": dados["stoploss"],
-        "quantidade": dados.get("quantidade", 0)
+        "quantidade": dados.get("quantidade", 0),
+        "janela_5min": janela_5min
     }
-
-    logger.info(f"📅 - Inserindo novo sinal: {novo_sinal}")
 
     take_profits = []
     for i, proporcao in enumerate(proporcoes, start=1):
@@ -74,11 +84,43 @@ def ordem_inserir_com_multiplos_tps(dados):
                 "proporcao": proporcao
             })
 
-    id_sinal = database.db.ordem_inserir(novo_sinal, take_profits)
-    logger.debug(f"🆔 - ID gerado para o sinal: {id_sinal}")
+    try:
+        id_sinal = database.db.ordem_inserir(novo_sinal, take_profits)
+        logger.debug(f"🆔 - ID gerado para o sinal: {id_sinal}")
+    except psycopg2.errors.UniqueViolation:
+        logger.warning(f"⚠️ - Sinal duplicado detectado: {dados['pair']} @ {janela_5min}")
+        return None
+    except Exception as e:
+        logger.exception(f"❌ - Erro ao inserir sinal: {e}")
+        return None
+
+    # Chamada ao serviço externo
+    try:
+        payload = {
+            "id": id_sinal,
+            "pair": dados["pair"]
+        }
+        requests.post(ENDPOINT_SINAL, json=payload, timeout=2)
+        logger.info(f"🚀 - POST /sinal enviado com payload: {payload}")
+    except Exception as e:
+        logger.warning(f"❌ - Falha ao chamar /sinal: {e}")
+
     return id_sinal
 
+
 async def main():
+    """
+    Função principal assíncrona que:
+
+    1. Obtém a entidade do grupo configurado no Telegram.
+    2. Registra o handler de mensagens recebidas.
+    3. Classifica mensagens como sinal de trade ou monitoramento.
+    4. Executa a lógica correspondente de inserção ou ajuste de stop loss.
+    5. Envia payloads para os endpoints /sinal e /monitoramento.
+
+    Inicia a escuta assíncrona do cliente Telegram.
+    """
+
     grupo_entidade = await utils.obter_entidade(client, group_id)
     grupo_nome = getattr(grupo_entidade, 'title', f"grupo_{group_id}")
     grupo_id = grupo_entidade.id
@@ -86,6 +128,22 @@ async def main():
 
     @client.on(events.NewMessage(chats=grupo_entidade))
     async def handler(event):
+        """
+        Handler que processa novas mensagens do Telegram.
+
+        - Se for um sinal de trade:
+            - Insere no banco (se não for duplicado).
+            - Dispara o processo de execução via /sinal.
+
+        - Se for um monitoramento (TP1–TP4):
+            - Marca TP como concluído.
+            - Se for TP2 ou TP4, prepara ajuste de SL para break-even.
+            - Envia evento para /monitoramento.
+
+        Args:
+            event (telethon.events.NewMessage.Event): Evento de nova mensagem recebida.
+        """
+
         mensagem = event.text
         logger.info("🚦 - Mensagem recebida - ainda não classificada entre sinal ou monitoramento.")
         resultado = classificar_mensagem(mensagem)
@@ -93,34 +151,30 @@ async def main():
         dados = resultado["dados"]
 
         if tipo == TRADE:
-            id_iserido = ordem_inserir_com_multiplos_tps(dados)
-            try:
-                payload = {
-                    "id":id_iserido,
-                    "pair": dados["pair"]
-                }
-                requests.post(ENDPOINT_SINAL, json=payload, timeout=2)
-                logger.info(f"🚀 - POST /sinal enviado com payload: {payload}")
-            except Exception as e:
-                logger.warning(f"❌ - Falha ao chamar /sinal: {e}")
+            id_sinal = ordem_inserir_com_multiplos_tps(dados)
+            if id_sinal is None:
+                logger.info(f"🛑 - Sinal não processado (duplicado ou erro). Ignorando.")
+
 
         elif tipo == MONITORAMENTO:
             tp_numero = int(dados["tp"].replace("TP", ""))
             try:
-                database.db.ordem_marcar_concluida(dados["pair"], tp_numero)
+                database.db.tp_marcar_concluida(dados["pair"], tp_numero)
                 logger.info(f"✅ - Ordem marcada como concluída para {dados['pair']}")
             except Exception as e:
                 logger.warning(f"❌ - Erro ao marcar ordem concluída: {e}")
 
             ordem = database.db.ordem_info(dados["pair"], exigir_break_even_inativo=True)
 
+            ativar_break_even=False
             if ordem:
                 if dados["tp"] == "TP1":
-                    novo_sl = None
+                    novo_sl = ordem["sl"]
                 else:
                     novo_sl = ordem["entry_price"]
+                    ativar_break_even = True
 
-                database.db.sinal_stop_loss_ajuste(ordem["id"], novo_sl)
+                database.db.sinal_stop_loss_ajuste(id_sinal=ordem["id"], sl=novo_sl, ativar_break_even=ativar_break_even)
                 logger.info(f"✅ - SL sugerido para ordem {ordem['id']} = {novo_sl}")
             else:
                 logger.warning(f"⚠️ - Nenhuma ordem ativa encontrada para ajuste de SL em {dados['pair']}")
