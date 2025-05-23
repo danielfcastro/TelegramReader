@@ -3,6 +3,8 @@ import json
 import logging
 import os
 import time
+import re
+
 from hashlib import sha256
 
 import requests
@@ -48,11 +50,12 @@ class BingXBroker(BrokerInterface):
         Args:
             method (str): Método HTTP (ex: 'GET', 'POST').
             path (str): Caminho do endpoint da API.
-            params (dict): Parâmetros da requisição.
+            params (dict): Parâmetros da requisição (corpo ou query).
 
         Returns:
-            dict: Resposta da API em formato JSON.
+            dict: Resposta da API convertida em JSON.
         """
+
         query = self._build_query(params)
         sign = self._get_sign(query)
         url = f"{self.API_URL}{path}?{query}&signature={sign}"
@@ -129,13 +132,14 @@ class BingXBroker(BrokerInterface):
 
     def set_leverage(self, symbol, side, leverage):
         """
-        Configura a alavancagem para um determinado par de ativos.
+        Configura a alavancagem para um determinado par na corretora BingX.
 
         Args:
-            symbol (str): Símbolo do par.
+            symbol (str): Par de ativos (ex: 'BTC-USDT').
             side (str): Direção da posição ('LONG', 'SHORT', 'BOTH').
-            leverage: O grau de alavancagem
+            leverage (int | str): Alavancagem desejada.
         """
+
         path = "/openApi/swap/v2/trade/leverage"
         params = {
             "symbol": symbol,
@@ -196,7 +200,7 @@ class BingXBroker(BrokerInterface):
 
             if response["code"] == 0:
                 order_id = response["data"]["order"]["orderId"]
-                logger.info(f"✅ - Ordens enviadas com sucesso - order_id: {order_id} - preco_mercado: {preco_mercado}")
+                logger.info(f"✅ - Ordens enviadas com sucesso - order_id: {order_id} - preco_mercado: {preco_mercado} - response: {response}")
                 return True, preco_mercado, order_id, quantidade
 
             else:
@@ -226,8 +230,9 @@ class BingXBroker(BrokerInterface):
                 "symbol": symbol,
                 "type": "STOP_MARKET"
             }
+            logger.debug(f"✅ - Cancelamento de SL: path: {path} - body {body}")
             response = self._send_request("DELETE", path, body)
-            logger.debug(f"✅ - Cancelamento de SL: {response} com sucesso")
+            logger.debug(f"✅ - Cancelamento de SL: response: {response} com sucesso")
             return response
         except Exception as e:
             logger.exception(f"❌ - Erro ao cancelar SL para {symbol}: {e}")
@@ -236,50 +241,68 @@ class BingXBroker(BrokerInterface):
     def ajustar_stop_loss(self, symbol, position_side, quantity, stop_price, order_id):
         """
         Ajusta o Stop Loss de uma posição para o ponto de Break Even (sem lucro ou prejuízo).
-
-        Args:
-            symbol (str): Símbolo do par.
-            position_side (str): Direção da posição ('LONG' ou 'SHORT').
-            quantity (float): Quantidade da posição.
-            stop_price (float): Preço alvo para Stop Loss.
-            order_id (str): ID da ordem original.
+        Tenta novamente com a quantidade sugerida pela BingX se a original for rejeitada.
 
         Returns:
             bool: True se o SL foi ajustado com sucesso.
         """
         try:
-            cancel = self.cancela_stop_loss(symbol)
-            orders = self.get_open_order_info(symbol,order_id)
-            side = "SELL" if position_side.upper() == "SHORT" else "BUY"
+            self.cancela_stop_loss(symbol)
+            ordem = self.get_open_order_info(symbol, order_id)
+            if not ordem:
+                logger.warning(f"⚠️ - Nenhuma ordem encontrada para {par}")
+                return {"status": "no_order"}
             position_side = position_side.upper()
+            current_order_side = ordem["data"]["order"]["side"]
+            side = "SELL" if current_order_side == "BUY" else "SELL"
+
             quantidade = database.db.break_even_soma_quantidade(symbol.replace("-", "/").upper())
+            stop_price_final = float(ordem['data']['order']['avgPrice'])
+
+            def enviar_sl(qtd):
+                body = {
+                    "symbol": symbol,
+                    "side": side,
+                    "type": "STOP_MARKET",
+                    "stopPrice": stop_price_final,
+                    "positionSide": "BOTH",
+                    "quantity": qtd,
+                    "recvWindow": "10000"
+                }
+                return self._send_request("POST", "/openApi/swap/v2/trade/order", body)
+
             logger.debug(
-                f"🛡️ - Ajustando Stop Loss - symbol: {symbol}, side: {side}, position_side: {position_side}, stop_price: {stop_price}, quantidade: {quantidade}")
+                f"🛡️ - Tentando SL - symbol: {symbol}, side: {side}, position_side: {position_side}, stop_price: {stop_price_final}, quantidade: {quantidade}")
+            response = enviar_sl(quantidade)
 
-            path = "/openApi/swap/v2/trade/order"
-            body = {
-                "symbol": symbol,
-                "side": side,
-                "type": "STOP_MARKET",
-                "stopPrice": float(orders['data']['order']['avgPrice']),
-                "positionSide": "BOTH",
-                "quantity": quantidade,
-                "recvWindow": "10000"
-            }
-
-            response = self._send_request("POST", path, body)
-            logger.debug(f"📩 Resposta do SL: {response} - body: {body} - path: {path} - POST")
-
+            # Verifica sucesso
             if response["code"] == 0:
                 logger.info(f"✅ - Stop Loss ajustado com sucesso para {symbol}")
                 return True
+
+            # Erro 110424: Tenta ajustar automaticamente
+            if response.get("code") == 110424:
+                msg = response.get("msg", "")
+                match = re.search(r'available amount of (\d+\.?\d*)', msg)
+                if match:
+                    nova_quantidade = float(match.group(1))
+                    nova_quantidade = round(nova_quantidade, 6)
+                    logger.warning(f"⚠️ - Ajustando SL com quantidade reduzida: {nova_quantidade} para {symbol}")
+                    response2 = enviar_sl(nova_quantidade)
+                    if response2["code"] == 0:
+                        logger.info(f"✅ - SL ajustado com nova quantidade para {symbol}")
+                        return True
+                    else:
+                        logger.error(f"❌ - Mesmo após ajuste, falhou SL para {symbol}: {response2}")
+                else:
+                    logger.error(f"❌ - Erro 110424 sem número detectável em: {msg}")
             else:
                 logger.error(f"❌ - Erro ao ajustar SL para {symbol}: {response}")
-                return False
 
         except Exception as e:
             logger.exception(f"❌ - Exceção ao ajustar SL para {symbol}: {e}")
-            return False
+
+        return False
 
     def ajustar_take_profit(self, symbol, position_side, quantity, stop_price, numero, order_id):
         """
@@ -355,11 +378,23 @@ class BingXBroker(BrokerInterface):
             tp, sl, preco_mercado, limite_usdt, id_sinal
     ):
         """
-        Recalcula e envia uma ordem com quantidade ajustada com base em limite de exposição da corretora.
+        Recalcula e envia uma ordem com a quantidade ajustada, baseada no limite de exposição da corretora (em USDT).
+
+        Args:
+            symbol (str): Par de negociação.
+            side (str): Direção da ordem ('BUY' ou 'SELL').
+            leverage (int): Alavancagem utilizada.
+            side_leverage (str): Posição (ex: 'BOTH').
+            tp (float): Take Profit.
+            sl (float): Stop Loss.
+            preco_mercado (float): Preço atual do ativo.
+            limite_usdt (float): Quantia máxima permitida (exposição).
+            id_sinal (int): ID do sinal relacionado no banco.
 
         Returns:
             bool: True se a ordem ajustada foi enviada com sucesso.
         """
+
         try:
             quantidade = round((limite_usdt * leverage) / preco_mercado, 6)
             logger.info(

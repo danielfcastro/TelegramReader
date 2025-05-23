@@ -31,7 +31,9 @@ if not DB_POOL:
 @contextmanager
 def conectar_db():
     """
-    Context manager que cria e fecha uma conexão com o banco de dados PostgreSQL.
+    Context manager que gerencia a conexão com o banco de dados PostgreSQL.
+
+    Garante que a conexão seja retornada ao pool, mesmo em caso de erro.
 
     Yields:
         connection (psycopg2.extensions.connection): Conexão ativa com o banco.
@@ -64,6 +66,16 @@ def executar_select(query, params=None):
             return resultados
 
 def executar_update(query, params=None):
+    """
+    Executa uma instrução UPDATE no banco.
+
+    Args:
+        query (str): Comando SQL.
+        params (dict, optional): Parâmetros da query.
+
+    Observação:
+        Em caso de falha de conexão, tenta uma nova conexão automaticamente.
+    """
     try:
         with conectar_db() as conn:
             with conn.cursor() as cur:
@@ -104,13 +116,17 @@ def executar_insert(query, params=None):
 
 
 def fechar_pool():
+    """
+    Fecha a conexão com o banco de dados PostgreSQL.
+    """
     global DB_POOL
     if DB_POOL and not DB_POOL.closed:
         DB_POOL.closeall()
         logger.info("✅ - Pool de conexões fechado.")
 
 
-def atualizar_stop_loss(par, novo_sl):
+#MÉTODOS DE SINAIS - STOP LOSS
+def stop_loss_update(par, novo_sl):
     """
     Atualiza o Stop Loss da ordem principal de um determinado par.
 
@@ -125,14 +141,36 @@ def atualizar_stop_loss(par, novo_sl):
     """
     try:
         executar_update(query, (novo_sl, par))
-        logger.info(f"✅ - SL atualizado para {par}: {novo_sl}")
+        logger.debug(f"✅ - SL atualizado para {par}: {novo_sl}")
     except Exception as e:
         logger.exception(f"❌ - Falha ao atualizar SL para {par}: {e}")
 
+#Chamado por TelegramReader para marcar o sinal que atingiu TP2 e então ser atualizado por TradeExecutor.py
+def stop_loss_ajuste(id_sinal, sl, ativar_break_even: bool):
+    """
+    Marca o sinal para ajuste de Stop Loss via TradeExecutor.
 
+    - Atualiza o campo `sl` com o valor fornecido.
+    - Define `break_even_status_id` como 1 (True) ou 0 (False).
+    """
+    query = """
+        UPDATE sinais 
+        SET break_even_status_id = %(break_even)s,
+            sl = %(sl)s
+        WHERE id = %(id)s
+    """
+    params = {
+        "id": id_sinal,
+        "sl": sl,
+        "break_even": 1 if ativar_break_even else 0
+    }
+
+    executar_update(query, params)
+
+#MÉTODOS DE DISPARO DE TRADE
 # Busca de sinais registrados no banco a partir da recepção das mensagens de Telegram
 # chamados de TradeExecutor
-def sinal_disparar_trade():
+def trade_fire():
     """
     Busca sinais pendentes de execução
     ordem_status_id = 0 - RECEBIDA
@@ -147,31 +185,6 @@ def sinal_disparar_trade():
     """
     resultado = executar_select(query)
     return resultado if resultado is not None else []
-
-#Chamado por TelegramReader para marcar o sinal que atingiu TP2 e então ser atualizado por TradeExecutor.py
-def sinal_stop_loss_ajuste(id_sinal, sl=None):
-    """
-    Marca o sinal para ajuste de Stop Loss via TradeExecutor.
-    - break_even_status_id = 1 sempre será atualizado.
-    - sl só será atualizado se não for None (para evitar violação do NOT NULL).
-    """
-    if sl is not None:
-        query = """
-            UPDATE sinais 
-            SET break_even_status_id = 1,
-                sl = %(sl)s
-            WHERE id = %(id)s
-        """
-        params = {"id": id_sinal, "sl": sl}
-    else:
-        query = """
-            UPDATE sinais 
-            SET break_even_status_id = 0
-            WHERE id = %(id)s
-        """
-        params = {"id": id_sinal}
-
-    executar_update(query, params)
 
 def break_even_soma_quantidade(par):
     """
@@ -195,38 +208,25 @@ def break_even_soma_quantidade(par):
         return resultado[0]["total"]
     return 0.0
 
-def ordem_marcar_concluida(par, tp_numero):
+#MÉTODOS DE CONTROLE DE ORDENS
+def ordem_atualizar_tp(sinal_id, numero, quantidade, valor):
     """
-    Marca o TP específico como atingido (tp_status_id = 3) na tabela `take_profits`.
-
-    Se o TP for o último (TP4), também marca a ordem principal como concluída (ordem_status_id = 3)
-    na tabela `sinais`.
+    Atualiza o valor e a quantidade de um TP específico, desde que esteja com status CONFIGURADO (tp_status_id = 2).
 
     Args:
-        par (str): Par do sinal, ex: 'BTC/USDT'.
-        tp_numero (int): Número do TP atingido (1 a 4).
+        sinal_id (int): ID do sinal.
+        numero (int): Número do TP (1 a 5).
+        quantidade (float): Quantidade ajustada.
+        valor (float): Novo valor-alvo do TP.
     """
-    # Atualiza o status do TP correspondente
-    query_tp = """
+
+    query = """
         UPDATE take_profits
-        SET tp_status_id = 3
-        WHERE numero = %(tp_numero)s
-          AND sinal_id IN (
-              SELECT id FROM sinais
-              WHERE par = %(par)s AND ordem_status_id = 1
-          )
+        SET quantidade = %s, valor = %s
+        WHERE sinal_id = %s AND numero = %s AND tp_status_id = 2
     """
-    executar_update(query_tp, {"par": par, "tp_numero": tp_numero})
-
-    # Se for TP4, marca a ordem como concluída
-    if tp_numero == 4:
-        query_ordem = """
-            UPDATE sinais
-            SET ordem_status_id = 3
-            WHERE par = %(par)s AND ordem_status_id = 1
-        """
-        executar_update(query_ordem, {"par": par})
-
+    params = (quantidade, valor, sinal_id, numero)
+    executar_update(query, params)
 
 #chamado quando não encontra o símbolo ao buscar pelo preço
 def ordem_desabilitar(id_sinal):
@@ -243,6 +243,43 @@ def ordem_desabilitar(id_sinal):
     """
     executar_update(query, {"id": id_sinal})
 
+def ordem_concluir(symbol):
+    """
+    Marca todos os sinais ativos (ordem_status_id = 1) de um par como concluídos (ordem_status_id = 3).
+
+    Args:
+        symbol (str): Par de trading (ex: 'BTC/USDT').
+    """
+    query = """
+        UPDATE sinais
+        SET ordem_status_id = 3
+        WHERE id IN (
+            SELECT id FROM sinais
+            WHERE par = %(par)s AND ordem_status_id = 1
+        )
+    """
+    executar_update(query, {"par": symbol})
+
+def ordem_enviar(id_sinal, entry_price, order_id, quantidade):
+    """
+    Marca um sinal como executado com ordem enviada com sucesso.
+    Essa atualização ocorre após confirmação da corretora de que a ordem foi enviada com sucesso.
+    ordem_status_id = 1 - ENVIADA
+    Args:
+        id_sinal (int): ID do sinal.
+        entry_price (float): Preço de entrada.
+        order_id (int): ID da ordem na corretora.
+        quantidade (float): Quantidade negociada.
+    """
+    query = """
+        UPDATE sinais
+        SET ordem_status_id = 1, 
+            entry_price = %(entry_price)s, 
+            order_id = %(order_id)s, 
+            quantidade = %(quantidade)s
+        WHERE id = %(id)s
+    """
+    executar_update(query, {"id": id_sinal, "entry_price": entry_price, "order_id": order_id, "quantidade": quantidade})
 
 def ordem_info(par, exigir_break_even_inativo=False):
     """
@@ -322,75 +359,43 @@ def ordem_inserir(dados, take_profits):
 
     return sinal_id
 
-def ordem_inserir_tp(sinal_id, take_profits, quantidade_total):
+def stop_loss_fire():
     """
-    Insere TPs na tabela `take_profits` com base na quantidade total e proporções.
-
-    Args:
-        sinal_id (int): ID do sinal pai.
-        take_profits (list): Lista de dicionários com {numero, valor, proporcao}.
-        quantidade_total (float): Quantidade total da ordem.
+    Busca sinais pendentes de execução
+    ordem_status_id = 0 - RECEBIDA
+    Returns:
+        list[dict]: Lista de sinais prontos para envio de ordem.
     """
     query = """
-        INSERT INTO take_profits (
-            sinal_id, numero, valor, quantidade, proporcao
-        ) VALUES (
-            %(sinal_id)s, %(numero)s, %(valor)s, %(quantidade)s, %(proporcao)s
-        )
+        SELECT 
+            s.*,
+            (
+                SELECT MIN(tp.numero)
+                FROM public.take_profits tp
+                WHERE tp.sinal_id = s.id
+                  AND tp.tp_status_id IN (1, 2)
+            ) AS tp_monitorado,
+            (
+                SELECT SUM(tp.quantidade)
+                FROM public.take_profits tp
+                WHERE tp.sinal_id = s.id
+                  AND tp.tp_status_id IN (1, 2)
+            ) AS quantidade
+        FROM public.sinais s
+        WHERE s.break_even_status_id = 1
+          AND s.ordem_status_id = 1
+          AND EXISTS (
+              SELECT 1
+              FROM public.take_profits tp
+              WHERE tp.sinal_id = s.id
+                AND tp.tp_status_id IN (1, 2)
+          )
+        ORDER BY s.id DESC;
     """
+    resultado = executar_select(query)
+    return resultado if resultado is not None else []
 
-    for tp in take_profits:
-        params = {
-            "sinal_id": sinal_id,
-            "numero": tp["numero"],
-            "valor": tp["valor"],
-            "quantidade": round(quantidade_total * tp["proporcao"], 6),
-            "proporcao": tp["proporcao"]
-        }
-        executar_insert(query, params)
-
-
-def take_profits_por_sinal(sinal_id):
-    query = """
-        SELECT numero, valor, proporcao FROM take_profits
-        WHERE sinal_id = %s
-        ORDER BY numero
-    """
-    return executar_select(query, (sinal_id,))
-
-
-def ordem_atualizar_tp(sinal_id, numero, quantidade, valor):
-    query = """
-        UPDATE take_profits
-        SET quantidade = %s, valor = %s
-        WHERE sinal_id = %s AND numero = %s
-    """
-    params = (quantidade, valor, sinal_id, numero)
-    executar_update(query, params)
-
-
-#Queries de alteração de status
-def ordem_enviada(id_sinal, entry_price, order_id, quantidade):
-    """
-    Marca um sinal como executado com ordem enviada com sucesso.
-    ordem_status_id = 1 - ENVIADA
-    Args:
-        id_sinal (int): ID do sinal.
-        entry_price (float): Preço de entrada.
-        order_id (int): ID da ordem na corretora.
-        quantidade (float): Quantidade negociada.
-    """
-    query = """
-        UPDATE sinais
-        SET ordem_status_id = 1, 
-            entry_price = %(entry_price)s, 
-            order_id = %(order_id)s, 
-            quantidade = %(quantidade)s
-        WHERE id = %(id)s
-    """
-    executar_update(query, {"id": id_sinal, "entry_price": entry_price, "order_id": order_id, "quantidade": quantidade})
-
-def atualizar_status_tp(par, numero_tp, novo_status=3):
+def take_profits_atualizar(par, numero_tp, novo_status=3):
     """
     Atualiza o status de um Take Profit específico de um par.
 
@@ -399,6 +404,7 @@ def atualizar_status_tp(par, numero_tp, novo_status=3):
         numero_tp (int): Número do TP (1 a 5).
         novo_status (int): Novo status (ex: 3 = atingido).
     """
+
     query = """
         UPDATE take_profits
         SET tp_status_id = %(status)s
@@ -411,9 +417,27 @@ def atualizar_status_tp(par, numero_tp, novo_status=3):
     params = {"par": par, "numero": numero_tp, "status": novo_status}
     executar_update(query, params)
 
-def somar_quantidades_tps_ativos(par):
+def take_profits_por_sinal(sinal_id):
     """
-    Soma a quantidade total de TPs com status 2 (AGUARDANDO ENVIO DE SL)
+    Retorna os Take Profits cadastrados para um sinal.
+
+    Args:
+        sinal_id (int): ID do sinal.
+
+    Returns:
+        list[dict]: Lista de TPs ordenada pelo número.
+    """
+
+    query = """
+        SELECT numero, valor, proporcao FROM take_profits
+        WHERE sinal_id = %s
+        ORDER BY numero
+    """
+    return executar_select(query, (sinal_id,))
+
+def take_profits_somar_quantidades_de_take_profits_ativos(par):
+    """
+    Soma a quantidade total de TPs com status 2 (CONFIGURADO)
     para sinais com ordem_status_id = 1 (enviada).
 
     Args:
@@ -428,7 +452,7 @@ def somar_quantidades_tps_ativos(par):
         INNER JOIN sinais s ON tp.sinal_id = s.id
         WHERE s.par = %(par)s
           AND s.ordem_status_id = 1
-          AND tp.tp_status_id = 2
+          AND tp.tp_status_id IN (1, 2)
     """
     resultado = executar_select(query, {"par": par})
     if resultado and resultado[0]["total"] is not None:

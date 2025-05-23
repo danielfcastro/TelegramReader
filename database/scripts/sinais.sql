@@ -1,7 +1,3 @@
--- Table: public.sinais
-
--- DROP TABLE IF EXISTS public.sinais;
-
 CREATE TABLE IF NOT EXISTS public.sinais
 (
     id integer NOT NULL DEFAULT nextval('sinais_id_seq'::regclass),
@@ -15,7 +11,8 @@ CREATE TABLE IF NOT EXISTS public.sinais
     break_even_status_id smallint NOT NULL DEFAULT 0,
     order_id bigint DEFAULT 0,
     entry_price real DEFAULT 0,
-    quantidade real DEFAULT 0,
+    quantidade real NOT NULL DEFAULT 0,
+    janela_5min timestamp without time zone GENERATED ALWAYS AS ((date_trunc('minute'::text, data_hora) - ('00:01:00'::interval * (((EXTRACT(minute FROM data_hora))::integer % 5))::double precision))) STORED,
     CONSTRAINT sinais_pkey PRIMARY KEY (id),
     CONSTRAINT fk_break_even_status FOREIGN KEY (break_even_status_id)
         REFERENCES public.break_even_status (id) MATCH SIMPLE
@@ -31,11 +28,13 @@ TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS public.sinais
     OWNER to tradebot;
--- Index: idx_sinais_par_status
-
--- DROP INDEX IF EXISTS public.idx_sinais_par_status;
 
 CREATE INDEX IF NOT EXISTS idx_sinais_par_status
     ON public.sinais USING btree
     (par COLLATE pg_catalog."default" ASC NULLS LAST, ordem_status_id ASC NULLS LAST)
+    TABLESPACE pg_default;
+
+CREATE UNIQUE INDEX IF NOT EXISTS unique_par_janela
+    ON public.sinais USING btree
+    (par COLLATE pg_catalog."default" ASC NULLS LAST, janela_5min ASC NULLS LAST)
     TABLESPACE pg_default;
