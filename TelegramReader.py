@@ -3,6 +3,7 @@ import os
 import psycopg2
 import requests
 from dotenv import load_dotenv
+from mypy.errorcodes import RETURN
 from telethon import TelegramClient, events
 from datetime import datetime, timezone
 
@@ -24,6 +25,7 @@ group_id = int(os.getenv("group_id"))
 
 ENDPOINT_SINAL = "http://127.0.0.1:8000/sinal"
 ENDPOINT_MONITORAMENTO = "http://127.0.0.1:8000/monitoramento"
+ENDPOINT_FECHAMENTO = "http://127.0.0.1:8000/fechamento"
 
 db_params = {
     "host": os.getenv("db_host"),
@@ -151,20 +153,43 @@ async def main():
         dados = resultado["dados"]
 
         if tipo == TRADE:
+            logger.info("✅ - Mensagem recebida e classificada. - TRADE")
             id_sinal = ordem_inserir_com_multiplos_tps(dados)
             if id_sinal is None:
                 logger.info(f"🛑 - Sinal não processado (duplicado ou erro). Ignorando.")
+                return None
+            return None
 
 
         elif tipo == MONITORAMENTO:
+            logger.info("✅ - Mensagem recebida e classificada. - MONITORAMENTO/TP")
             tp_numero = int(dados["tp"].replace("TP", ""))
+            symbol = dados["pair"]
             try:
-                database.db.tp_marcar_concluida(dados["pair"], tp_numero)
-                logger.info(f"✅ - Ordem marcada como concluída para {dados['pair']}")
+                database.db.take_profits_atualizar(par=symbol, numero_tp=tp_numero, novo_status=3)
+                logger.info(f"✅ - Ordem marcada como concluída para {symbol}")
             except Exception as e:
                 logger.warning(f"❌ - Erro ao marcar ordem concluída: {e}")
 
-            ordem = database.db.ordem_info(dados["pair"], exigir_break_even_inativo=True)
+            if tp_numero==4:
+                logger.info("✅ - Mensagem recebida e classificada. - MONITORAMENTO/TP - CASO ESPECIAL TP4")
+                logger.debug(f"🚀 TP4 - enviar para endpoint /fechamento")
+                try:
+                    ordem = database.db.ordem_info(par=symbol, exigir_break_even_inativo=False)
+                    payload = {
+                        "pair": symbol,
+                        "id_sinal": ordem["id"],
+                        "order_id": ordem["order_id"]
+                    }
+                    logger.debug(f"🚀 Ordem Info - ordem: {ordem} - payload {payload} - Take Profit: {tp_numero}")
+                    requests.post(ENDPOINT_FECHAMENTO, json=payload, timeout=2)
+                    logger.debug(f"🚀 - POST /fechamento enviado")
+                    return tp_numero
+                except Exception as e:
+                    logger.warning(f"❌ - Falha ao chamar /fechamento: {e}")
+                    return None
+
+            ordem = database.db.ordem_info(symbol, exigir_break_even_inativo=True)
 
             ativar_break_even=False
             if ordem:
@@ -174,7 +199,7 @@ async def main():
                     novo_sl = ordem["entry_price"]
                     ativar_break_even = True
 
-                database.db.sinal_stop_loss_ajuste(id_sinal=ordem["id"], sl=novo_sl, ativar_break_even=ativar_break_even)
+                database.db.stop_loss_ajuste(id_sinal=ordem["id"], sl=novo_sl, ativar_break_even=ativar_break_even)
                 logger.info(f"✅ - SL sugerido para ordem {ordem['id']} = {novo_sl}")
             else:
                 logger.warning(f"⚠️ - Nenhuma ordem ativa encontrada para ajuste de SL em {dados['pair']}")
@@ -183,6 +208,8 @@ async def main():
                 payload = {
                     "pair": dados["pair"],
                     "tp": dados["tp"],
+                    "id_sinal": ordem["id"],
+                    "order_id": ordem["order_id"],
                     "target_monitorado": dados["tp"].replace("TP", "")
                 }
                 logger.debug(f"🚀 - dados: {dados} - payload {payload}")
@@ -190,10 +217,10 @@ async def main():
                 logger.info(f"🚀 - POST /monitoramento enviado para {dados['pair']} - TP: {dados['tp']}")
             except Exception as e:
                 logger.warning(f"❌ - Falha ao chamar /monitoramento: {e}")
+                return None
         else:
             logger.warning("❌ - Não foi possível extrair sinal ou monitoramento da mensagem.")
-
-        logger.info("✅ - Mensagem recebida e classificada.")
+            return None
 
     await client.run_until_disconnected()
 

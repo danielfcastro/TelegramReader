@@ -1,6 +1,7 @@
 # Novo TradeExecutor.py com API REST
 import asyncio
 import os
+import time
 
 import uvicorn
 from fastapi import FastAPI, Request
@@ -44,11 +45,11 @@ async def receber_sinal_ordem(request: Request):
         logger.error("❌ - Campos obrigatórios ausentes em dados recebidos.")
         return JSONResponse(content={"erro": "Campos obrigatórios ausentes"}, status_code=400)
 
-    sinais = database.db.sinal_disparar_trade()
+    sinais = database.db.trade_fire()
     for sinal in sinais:
         if sinal['par'] == dados['par'] and sinal['id'] == dados['id']:
             _id = sinal['id']
-            symbol = sinais[0]["par"].replace("/", "-").upper()
+            symbol = sinal['par'].replace("/", "-").upper()
             try:
                 preco_mercado = broker.obter_preco_mercado(symbol)
             except Exception as e:
@@ -72,17 +73,17 @@ async def receber_sinal_ordem(request: Request):
                     sl=sinal["sl"],
                     quantidade=quantidade,
                     preco_mercado=None,
-                    id_sinal=sinal["id"]
+                    id_sinal=_id
                 )
 
                 if sucesso:
-                    database.db.ordem_enviada(id_sinal=sinal["id"],
-                                              entry_price=preco_mercado,
-                                              order_id=order_id, quantidade=quantidade)
-                    database.db.atualizar_status_tp(par=symbol, numero_tp=1, novo_status=2)
-                    database.db.atualizar_status_tp(par=symbol, numero_tp=2, novo_status=2)
-                    database.db.atualizar_status_tp(par=symbol, numero_tp=3, novo_status=2)
-                    database.db.atualizar_status_tp(par=symbol, numero_tp=4, novo_status=2)
+                    database.db.ordem_enviar(id_sinal=_id,
+                                             entry_price=preco_mercado,
+                                             order_id=order_id, quantidade=quantidade)
+                    database.db.take_profits_atualizar(par=symbol, numero_tp=1, novo_status=2)
+                    database.db.take_profits_atualizar(par=symbol, numero_tp=2, novo_status=2)
+                    database.db.take_profits_atualizar(par=symbol, numero_tp=3, novo_status=2)
+                    database.db.take_profits_atualizar(par=symbol, numero_tp=4, novo_status=2)
                     logger.info(f"⚠️ - Ordem enviada com sucesso para symbol: ID: {_id} - symbol: {symbol} - saldo: {saldo} - trade_percentage: {trade_percentage} - quantidade: {quantidade} - preco_mercado: {preco_mercado} - valor_trade: {valor_trade} - tipo_ordem: {tipo_ordem} - order_id: {order_id} - quantidade: {quantidade}")
 
                     # Recuperar TPs do banco para atualizar com a quantidade real
@@ -130,40 +131,40 @@ async def receber_sinal_monitoramento(request: Request):
     Returns:
         JSONResponse: {'status': 'ok'}, 'failed', 'no_active_orders' ou 'no_order'
     """
+    sinal = await request.json()
+    logger.info(f"🔍 - POST /monitoramento recebido: {sinal}")
 
-    dados = await request.json()
-    logger.info(f"🔍 - POST /monitoramento recebido: {dados}")
+    par = sinal["pair"]
+    order_id = sinal["order_id"]
+    tp_monitorado = int(sinal.get("target_monitorado", 1))
 
-    par = dados["pair"]
-    tp_monitorado = int(dados.get("target_monitorado", 1))
     symbol = par.replace("/", "-")
 
     # Atualiza TP para status ATINGIDO (3)
     logger.debug(f"✅ - par: {par} - tp_monitorado: {tp_monitorado}")
-    database.db.atualizar_status_tp(par, tp_monitorado, novo_status=3)
+    database.db.take_profits_atualizar(par=par, numero_tp=tp_monitorado, novo_status=3)
 
     # Soma quantidades dos TPs com status = 2 (CONFIGURADO)
-    quantidade = database.db.somar_quantidades_tps_ativos(par)
+    quantidade = database.db.take_profits_somar_quantidades_de_take_profits_ativos(par)
 
     if not quantidade or quantidade == 0:
         logger.warning(f"⚠️ - Nenhuma quantidade ativa encontrada para {par} no TP{tp_monitorado}")
         return {"status": "no_active_orders"}
 
-    # Cancelar qualquer SL anterior
-    broker.cancela_stop_loss(par)
-
     # Buscar informações da ordem principal
-    ordem = database.db.ordem_info(dados["pair"], exigir_break_even_inativo=False)
+    ordem = database.db.ordem_info(par=par, exigir_break_even_inativo=False)
     if not ordem:
         logger.warning(f"⚠️ - Nenhuma ordem encontrada para {par}")
         return {"status": "no_order"}
 
+    position_side = "SELL" if ordem["tipo_ordem"] == "BUY" else "BUY"
     # Decide o novo stop_price com base no TP monitorado
     stop_price = ordem["sl"] if tp_monitorado == 1 else ordem["entry_price"]
 
-    # Se TP2, TP3 ou TP4: atualiza sl da ordem no banco
-    if tp_monitorado != 1:
-        database.db.atualizar_stop_loss(par, novo_sl=ordem["entry_price"])
+    database.db.stop_loss_update(par=par, novo_sl=stop_price)
+    broker.ajustar_stop_loss(symbol=symbol, position_side=position_side, quantity=quantidade, stop_price=stop_price,
+                             order_id=order_id)
+    reprocessa_sinais_breakeven_perdidos()
 
     # Tentar até 3 vezes ajustar o SL
     for tentativa in range(3):
@@ -185,8 +186,38 @@ async def receber_sinal_monitoramento(request: Request):
     return {"status": "failed"}
 
 
+@app.post("/fechamento")
+async def receber_sinal_fechamento(request: Request):
+    dados = await request.json()
+    symbol = dados["pair"]
+    id_sinal = dados["id_sinal"]
+    order_id = dados["order_id"]
 
+    # verificar se ainda tem ordem aberta por conta de lote residual
+    # se tiver deve fechar a ordem e o stop loss
+    # get_open_order_info
+    database.db.ordem_concluir(symbol=symbol)
+    response = broker.get_open_order_info(symbol=symbol, order_id=order_id)
+    logger.debug(
+        f"Recuperando ordem/lote remanescente depois de TP4 - symbol: {symbol} - order_id: {order_id} - response: {response}")
+    broker.cancela_stop_loss(symbol)
+    time.sleep(1.5)
+    response = broker.get_open_order_info(symbol=symbol, order_id=order_id)
+    logger.debug(f"Recuperando ordem/lote remanescente depois de TP4 - symbol: {symbol} - order_id: {order_id} - response: {response}")
+    return {"status": "cancelei as ordens residuais após TP4"}
 # Inicializa a thread do executor e o servidor REST
+
+def reprocessa_sinais_breakeven_perdidos():
+    sinais = database.db.stop_loss_fire()
+    for sinal in sinais:
+        symbol = sinal["par"]
+        quantidade = sinal["quantidade"]
+        order_id = sinal["order_id"]
+        position_side="SELL" if sinal["tipo_ordem"] == "BUY" else "BUY"
+        tp_monitorado = sinal["tp_monitorado"]
+        stop_price = sinal["sl"] if tp_monitorado == 1 else sinal["entry_price"]
+        database.db.stop_loss_update(symbol, novo_sl=stop_price)
+        broker.ajustar_stop_loss(symbol=symbol.replace("/", "-"), position_side=position_side, quantity=quantidade, stop_price=stop_price, order_id=order_id)
 
 def iniciar_executor():
     """
