@@ -216,7 +216,7 @@ Este projeto integra sinais de trade recebidos via Telegram com execução autom
 ### 1. Leitura de Sinais do Telegram
 - Monitoramento de mensagens com sinais de trade (entrada, TPs e SL).
 - Extração dos dados relevantes (par, tipo, entrada, take profits, stop loss).
-- Armazenamento estruturado no banco e em JSON.
+- Armazenamento estruturado no banco.
 
 ### 2. Controle de Configuração
 - Arquivo `config.properties` centraliza todas as chaves da BingX, e parâmetros de trade.
@@ -226,6 +226,16 @@ Este projeto integra sinais de trade recebidos via Telegram com execução autom
 ### 3. Logs e Erros
 - Logs detalhados das chamadas à API.
 - Tratamento de erros de envio de ordens e TP.
+
+## 🔍 Documentação dos Arquivos-Chave
+
+- `TelegramReader.py`: leitor de mensagens Telegram e sinalizador para TradeExecutor
+- `TradeExecutor.py`: executor de ordens baseado nos sinais oriundos de TelegramReader
+- `BingXBroker.py`: interface com a API da corretora BingX
+- `db.py`: camada de persistência com PostgreSQL
+- `utils.py`: funções auxiliares (parser, arredondamento, config)
+- `start_all.py`: script principal para iniciar os serviços
+- `criar_tabela.py`: script para criação de banco de dados
 
 ## Diagrama de Sequência
 
@@ -319,3 +329,79 @@ sequenceDiagram
    - Se sucesso → `marcar_ordem_para_be_executado(par)`
    - Se falha → `incrementar_retry_be(id)`
 
+### Parte 4 - Geração de documentação
+
+> Navegue até a pasta docs
+- **Linux**
+```shell
+make html
+```
+- **Windows**:
+```bash
+make.bat html
+```
+
+## 📚 Dicionário de Dados
+
+### 🧾 Tabela `sinais`
+
+Registra cada sinal de trade detectado e processado.
+
+| Campo             | Tipo       | Descrição |
+|------------------|------------|-----------|
+| id               | `serial`   | Identificador único do sinal |
+| data_hora        | `timestamp with time zone` | Momento em que o sinal foi capturado |
+| par              | `text`     | Par de negociação (ex: BTC/USDT) |
+| tipo_ordem       | `text`     | Direção da ordem (BUY / SELL) |
+| margem           | `text`     | Tipo de margem (ex: Cross) |
+| alavancagem      | `text`     | Alavancagem usada (ex: 20X) |
+| sl               | `real`     | Stop loss configurado |
+| quantidade       | `real`     | Quantidade total da ordem |
+| break_even_status_id | `smallint` | Status do break even (FK) |
+| ordem_status_id  | `smallint` | Status geral da ordem (FK) |
+| order_id         | `bigint`   | ID da ordem na corretora |
+| entry_price      | `real`     | Preço de entrada efetivo |
+| janela_5min      | `timestamp`| Janela de tempo usada para evitar duplicação |
+
+### 🎯 Tabela `take_profits`
+
+Armazena os múltiplos alvos de lucro para cada sinal.
+
+| Campo       | Tipo       | Descrição |
+|-------------|------------|-----------|
+| sinal_id    | `integer`  | ID do sinal (FK para `sinais`) |
+| numero      | `smallint` | Número do TP (1 a 4) |
+| valor       | `real`     | Valor do TP em preço |
+| quantidade  | `real`     | Quantidade associada a este TP |
+| tp_status_id| `smallint` | Status do TP (FK) |
+| proporcao   | `real`     | Proporção da ordem total alocada neste TP |
+
+### ⚙️ Tabela `ordem_status`
+
+Define os estados possíveis para a ordem principal (`sinais.ordem_status_id`).
+
+| ID | Descrição       |
+|----|------------------|
+| 0  | RECEBIDA         |
+| 1  | ENVIADA          |
+| 2  | DESABILITADA     |
+| 3  | CONCLUÍDA        |
+
+### ⚙️ Tabela `break_even_status`
+
+Define os estados do controle de break-even (`sinais.break_even_status_id`).
+
+| ID | Descrição  |
+|----|------------|
+| 0  | INATIVO    |
+| 1  | ATIVAR     |
+
+### ⚙️ Tabela `take_profit_status`
+
+Define os estados para cada TP (`take_profits.tp_status_id`).
+
+| ID | Descrição     |
+|----|----------------|
+| 1  | PENDENTE       |
+| 2  | CONFIGURADO    |
+| 3  | ATINGIDO       |

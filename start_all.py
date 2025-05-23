@@ -1,45 +1,50 @@
-import os
-import threading
 import argparse
-import sys
+import atexit
 import logging
+import os
+import sys
+import threading
+import signal
 
-from utils import carregar_config
-from log.logger_config import configurar_logging
-from integration.BingXBroker import BingXBroker
 from TradeExecutor import iniciar_executor
+from database import db
+from log.logger_config import configurar_logging
+from utils import carregar_config
 
 # Diretório de logs
 LOG_DIR = "logs"
 os.makedirs(LOG_DIR, exist_ok=True)
+atexit.register(db.fechar_pool)
 
 # Configuração global de logging
 configurar_logging()
-broker=None
 
 # Silenciar logs detalhados de utils, mostrando apenas WARNING ou mais graves
 #logging.getLogger("utils").setLevel(logging.WARNING)
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 
-def salvar_env_com_base_no_config(_broker, is_testnet):
+def salvar_env_com_base_no_config(is_testnet):
+    """
+    Gera um arquivo `.env` com base nas configurações do `config.properties` para uso pelo restante da aplicação.
+
+    Args:
+        is_testnet (bool): Se `True`, configura para rede de testes; caso contrário, para rede principal.
+    """
     config = carregar_config()
     is_testnet_str = "true" if is_testnet else "false"
     env_lines = [
         f"#broker configuration",
-        f"BROKER={_broker}",
+        f"BROKER=BingX",
         f"IS_TESTNET={is_testnet_str}",
         f"",
     ]
+    env_lines.append(f"broker_api_key={config['bingx_api_key']}")
+    env_lines.append(f"broker_api_secret={config['bingx_secret_key']}")
 
-    if broker == "bingx":
-        if is_testnet:
-            env_lines.append(f"broker_api_key={config['bingx_apy_key']}")
-            env_lines.append(f"broker_api_secret={config['bingx_secret_key']}")
-            env_lines.append(f"broker_api_url={config['bingx_api_url_testnet']}")
-        else:
-            env_lines.append(f"broker_api_key={config['bingx_apy_key']}")
-            env_lines.append(f"broker_api_secret={config['bingx_secret_key']}")
-            env_lines.append(f"broker_api_url={config['bingx_api_url']}")
+    if is_testnet:
+        env_lines.append(f"broker_api_url={config['bingx_api_url_testnet']}")
+    else:
+        env_lines.append(f"broker_api_url={config['bingx_api_url']}")
 
     env_lines.extend([
         "",
@@ -69,19 +74,35 @@ def salvar_env_com_base_no_config(_broker, is_testnet):
         logger.debug("  %s", linha)
 
 def iniciar_telegram_reader():
+    """
+    Inicia o componente de leitura de mensagens do Telegram, executando o script `TelegramReader.py`
+    em uma thread separada.
+    """
     logger.info("🚦 - Iniciando Telegram Reader...")
     os.system("python TelegramReader.py")
 
-def iniciar_trade_executor(_broker):
-    executor_loop = iniciar_executor(_broker)
+def iniciar_trade_executor():
+    """
+    Inicia o componente de execução de ordens com base nos sinais salvos, em uma thread separada.
+
+    Args:
+        _broker (BrokerInterface): Instância do broker (ex: BingXBroker) para enviar ordens.
+    """
+    executor_loop = iniciar_executor()
     executor_loop()
 
-def iniciar_com_broker(broker_name):
-    if broker_name == "bingx":
-        broker = BingXBroker()
+def iniciar_com_broker():
+    """
+    Inicializa os dois componentes principais:
+      - Leitor de sinais do Telegram
+      - Executor de ordens na corretora
+
+    Ambos são iniciados em threads daemonizadas.
+
+    """
 
     t1 = threading.Thread(target=iniciar_telegram_reader, daemon=True)
-    t2 = threading.Thread(target=iniciar_trade_executor, args=(broker,), daemon=True)
+    t2 = threading.Thread(target=iniciar_trade_executor, daemon=True)
 
     t1.start()
     t2.start()
@@ -92,6 +113,14 @@ def iniciar_com_broker(broker_name):
     except KeyboardInterrupt:
         logger.warning("🛑 - Execução do bot interrompida pelo usuário.")
         sys.exit(0)
+
+def finalizar_programa(signal_received, frame):
+    logger.info("⚠️ - Encerrando aplicação por sinal do sistema...")
+    db.fechar_pool()
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, finalizar_programa)
+signal.signal(signal.SIGTERM, finalizar_programa)
 
 if __name__ == "__main__":
     logger.info("🚦 - Iniciando Telegram Signal Bot")
@@ -121,9 +150,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     testnet = args.testnet
-    broker = "bingx"
 
-    salvar_env_com_base_no_config(broker, testnet)
+    salvar_env_com_base_no_config(testnet)
 
     logger.info("🚦 - Iniciando componentes...")
-    iniciar_com_broker(broker)
+    iniciar_com_broker()

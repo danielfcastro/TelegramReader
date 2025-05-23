@@ -5,6 +5,19 @@ import os
 log_format = "%(asctime)s - %(levelname)-8s - %(name)-15s - %(funcName)-35s - %(message)s"
 
 class ColoredFormatter(logging.Formatter):
+    """
+    Formatador de logs com cores ANSI, para facilitar a leitura no terminal.
+
+    Herda de:
+        logging.Formatter
+
+    Atributos:
+        COLORS (dict): Mapeia níveis de log para códigos ANSI.
+        RESET (str): Código ANSI para resetar cor.
+
+    Métodos:
+        format(record): Formata a mensagem aplicando cor conforme o nível.
+    """
     COLORS = {
         'DEBUG': '\033[92m',   # verde
         'INFO': '\033[0m',     # branco (default)
@@ -15,13 +28,34 @@ class ColoredFormatter(logging.Formatter):
     RESET = '\033[0m'
 
     def format(self, record):
+        """
+        Aplica cor ANSI à mensagem de log com base no nível de severidade.
+
+        Args:
+            record (LogRecord): Objeto contendo os detalhes do log.
+
+        Returns:
+            str: Mensagem formatada com cor.
+        """
         color = self.COLORS.get(record.levelname, self.RESET)
         message = super().format(record)
         return f"{color}{message}{self.RESET}"
 
 def configurar_logging(log_level=logging.DEBUG, log_dir='logs', log_file='app.log'):
-    os.makedirs(log_dir, exist_ok=True)
+    """
+    Configura o sistema de logging para terminal e arquivo com formatação colorida e detalhada.
 
+    - Cria diretório de logs se não existir.
+    - Envia logs para console e arquivo simultaneamente.
+    - Define níveis de log por módulo (start_all, utils, db etc).
+    - Aplica filtros em bibliotecas de terceiros como `telethon` e `asyncio`.
+
+    Args:
+        log_level (int): Nível mínimo de log (ex: logging.DEBUG).
+        log_dir (str): Diretório onde o arquivo de log será salvo.
+        log_file (str): Nome do arquivo de log.
+    """
+    os.makedirs(log_dir, exist_ok=True)
 
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(ColoredFormatter(log_format))
@@ -39,7 +73,7 @@ def configurar_logging(log_level=logging.DEBUG, log_dir='logs', log_file='app.lo
     logging.getLogger("TelegramReader").setLevel(logging.DEBUG)
     logging.getLogger("TradeExecutor").setLevel(logging.DEBUG)
     logging.getLogger("BingXBroker").setLevel(logging.DEBUG)
-    logging.getLogger("utils").setLevel(logging.INFO)
+    logging.getLogger("utils").setLevel(logging.DEBUG)
     logging.getLogger("db").setLevel(logging.DEBUG)
 
     logging.getLogger("telethon").setLevel(logging.INFO)

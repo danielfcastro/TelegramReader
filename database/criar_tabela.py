@@ -1,114 +1,48 @@
-import sqlite3
+
 import os
+import psycopg2
+from dotenv import load_dotenv
 
-DB_PATH = 'database/sinais.db'
+load_dotenv()
 
-def criar_banco():
-    if not os.path.exists('database'):
-        os.makedirs('database')
-    conn = sqlite3.connect(DB_PATH)
+def executar_sql_de_arquivo(cursor, caminho):
+    with open(caminho, 'r', encoding='utf-8') as f:
+        sql = f.read()
+        cursor.execute(sql)
+
+def criar_e_popular_banco():
+    conn = psycopg2.connect(
+        dbname=os.getenv("db_name"),
+        user=os.getenv("db_user"),
+        password=os.getenv("db_password"),
+        host=os.getenv("db_host"),
+        port=os.getenv("db_port")
+    )
     cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS public.break_even_status
-        (
-            id integer NOT NULL,
-            descricao text COLLATE pg_catalog."default" NOT NULL,
-            CONSTRAINT break_even_status_pkey PRIMARY KEY (id)
-        )
-        
-        TABLESPACE pg_default;
-        
-        ALTER TABLE IF EXISTS public.break_even_status
-            OWNER to tradebot;
-        
-        CREATE TABLE IF NOT EXISTS public.ordem_status
-        (
-            id integer NOT NULL,
-            descricao text COLLATE pg_catalog."default" NOT NULL,
-            CONSTRAINT trailing_stop_status_pkey PRIMARY KEY (id)
-        )
-        
-        TABLESPACE pg_default;
-        
-        ALTER TABLE IF EXISTS public.ordem_status
-            OWNER to tradebot;
-        
-        CREATE TABLE IF NOT EXISTS public.sinais
-        (
-            id integer NOT NULL DEFAULT nextval('sinais_id_seq'::regclass),
-            data_hora text COLLATE pg_catalog."default" NOT NULL,
-            par text COLLATE pg_catalog."default" NOT NULL,
-            tipo_ordem text COLLATE pg_catalog."default" NOT NULL,
-            margem text COLLATE pg_catalog."default" NOT NULL,
-            alavancagem text COLLATE pg_catalog."default" NOT NULL,
-            tp real NOT NULL,
-            sl real NOT NULL,
-            tentativas smallint NOT NULL DEFAULT 0,
-            order_id bigint DEFAULT 0,
-            entry_price real DEFAULT 0,
-            tentativas_be smallint DEFAULT 0,
-            quantidade real DEFAULT 0,
-            proporcao real NOT NULL DEFAULT 0,
-            ordem_status_id smallint NOT NULL DEFAULT 0,
-            break_even_status_id smallint NOT NULL DEFAULT 0,
-            CONSTRAINT sinais_pkey PRIMARY KEY (id),
-            CONSTRAINT fk_break_even_status FOREIGN KEY (break_even_status_id)
-                REFERENCES public.break_even_status (id) MATCH SIMPLE
-                ON UPDATE NO ACTION
-                ON DELETE NO ACTION
-                NOT VALID,
-            CONSTRAINT fk_trailing_stop_status FOREIGN KEY (ordem_status_id)
-                REFERENCES public.ordem_status (id) MATCH SIMPLE
-                ON UPDATE NO ACTION
-                ON DELETE NO ACTION
-                NOT VALID
-        )
-        
-        TABLESPACE pg_default;
-        
-        ALTER TABLE IF EXISTS public.sinais
-            OWNER to tradebot;
-        
-        CREATE INDEX IF NOT EXISTS fki_fk_break_even_status
-            ON public.sinais USING btree
-            (break_even_status_id ASC NULLS LAST)
-            TABLESPACE pg_default;
-        
-        CREATE INDEX IF NOT EXISTS fki_fk_trailing_stop_status
-            ON public.sinais USING btree
-            (ordem_status_id ASC NULLS LAST)
-            TABLESPACE pg_default;
-        
-        CREATE INDEX IF NOT EXISTS idx_be_ordem_status_tentativasbe
-            ON public.sinais USING btree
-            (break_even_status_id ASC NULLS LAST, ordem_status_id ASC NULLS LAST, tentativas_be ASC NULLS LAST)
-            TABLESPACE pg_default;
-        
-        CREATE INDEX IF NOT EXISTS idx_ordem_status_tentativas
-            ON public.sinais USING btree
-            (ordem_status_id ASC NULLS LAST, tentativas ASC NULLS LAST)
-            TABLESPACE pg_default;
-        
-        CREATE INDEX IF NOT EXISTS idx_par_be
-            ON public.sinais USING btree
-            (par COLLATE pg_catalog."default" ASC NULLS LAST, break_even_status_id ASC NULLS LAST)
-            TABLESPACE pg_default;
-        
-        CREATE INDEX IF NOT EXISTS idx_par_ordem_orderid_be
-            ON public.sinais USING btree
-            (par COLLATE pg_catalog."default" ASC NULLS LAST, ordem_status_id ASC NULLS LAST, order_id ASC NULLS LAST, break_even_status_id ASC NULLS LAST)
-            TABLESPACE pg_default;
-        
-        CREATE INDEX IF NOT EXISTS idx_par_ordem_status
-            ON public.sinais USING btree
-            (par COLLATE pg_catalog."default" ASC NULLS LAST, ordem_status_id ASC NULLS LAST)
-            TABLESPACE pg_default;
-            
-    ''')
+
+    print("🛠️ - Criando estrutura de tabelas e populando dados...")
+
+    base_dir = os.path.join(os.path.dirname(__file__), "scripts")
+    arquivos_ordem = [
+        "break_even_status.sql",
+        "ordem_stauts.sql",
+        "take_profit_status.sql",
+        "sinais.sql",
+        "take_profits.sql",
+        "inser_break_even_status.sql",
+        "inser_ordem_status.sql",
+        "inser_take_profit_status.sql"
+    ]
+
+    for arquivo in arquivos_ordem:
+        caminho_completo = os.path.join(base_dir, arquivo)
+        print(f"📄 Executando {arquivo}...")
+        executar_sql_de_arquivo(cursor, caminho_completo)
 
     conn.commit()
+    cursor.close()
     conn.close()
-    print("Banco de dados criado ou já existente.")
+    print("✅ Setup finalizado com sucesso.")
 
-if __name__ == '__main__':
-    criar_banco()
+if __name__ == "__main__":
+    criar_e_popular_banco()

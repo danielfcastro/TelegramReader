@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 class BrokerInterface(ABC):
     @abstractmethod
-    def enviar_ordem_tp_sl(self, symbol, side, leverage, side_leverage, tp, sl, quantidade, preco_mercado):
+    def enviar_ordem_tp_sl(self, symbol, side, leverage, side_leverage, tp, sl, quantidade, preco_mercado, id_sinal):
         pass
 
     @abstractmethod
@@ -10,7 +10,11 @@ class BrokerInterface(ABC):
         pass
 
     @abstractmethod
-    def ajustar_para_break_even(self, symbol, position_side, quantity, stop_price, order_id):
+    def ajustar_stop_loss(self, symbol, position_side, quantity, stop_price, order_id):
+        pass
+
+    @abstractmethod
+    def ajustar_take_profit(self, symbol, position_side, quantity, stop_price, numero, order_id):
         pass
 
     @abstractmethod
@@ -22,9 +26,9 @@ class BrokerInterface(ABC):
         pass
 
     @abstractmethod
-    def ativar_trailing_stop(self, symbol, order_id, side, quantity, price_rate, position_side):
+    def get_open_order_info(self, symbol, order_id):
         pass
 
     @abstractmethod
-    def get_open_order_info(self, symbol, order_id):
+    def send_order_with_constraints_adjusted(self, symbol, side, leverage, side_leverage,tp, sl, preco_mercado, limite_usdt, id_sinal):
         pass
