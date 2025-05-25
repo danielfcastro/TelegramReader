@@ -200,13 +200,14 @@ async def receber_sinal_fechamento(request: Request):
     # se tiver deve fechar a ordem e o stop loss
     # get_open_order_info
     database.db.ordem_concluir(symbol=symbol)
-    response = broker.get_open_order_info(symbol=symbol, order_id=order_id)
+    response = broker.obter_todas_ordens_abertas(symbol=symbol)
+    order_id=response["data"]["order"]["orderId"]
     logger.debug(
         f"Recuperando ordem/lote remanescente depois de TP4 - symbol: {symbol} - order_id: {order_id} - response: {response}")
-    broker.cancela_stop_loss(symbol)
+    #broker.cancela_stop_loss(symbol)
     time.sleep(1.5)
-    response = broker.get_open_order_info(symbol=symbol, order_id=order_id)
-    logger.debug(f"Recuperando ordem/lote remanescente depois de TP4 - symbol: {symbol} - order_id: {order_id} - response: {response}")
+    broker.fechar_todas_ordens_abertas(symbol=symbol)
+    response = broker.obter_todas_ordens_abertas(symbol=symbol)
     return {"status": "cancelei as ordens residuais após TP4"}
 # Inicializa a thread do executor e o servidor REST
 

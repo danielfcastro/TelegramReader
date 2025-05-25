@@ -394,8 +394,22 @@ class BingXBroker(BrokerInterface):
                 "symbol": symbol
             }
             response = self._send_request("GET", path, body)
-            logger.debug(f"✅ - Detalhe de ordem: {response}")
+            logger.debug(f"✅ - Ordens abertas: {response}")
             return response
         except Exception as e:
             logger.exception(f"❌ - Erro ao listas as ordens abertas para o símbolo {symbol}: {e}")
+            return {}
+
+    def fechar_todas_ordens_abertas(self, symbol):
+        try:
+            path = "/openApi/swap/v2/trade/closeAllPositions"
+            body = {
+                "symbol": symbol
+            }
+            logger.debug(f"✅ - Fechando ordem: {body}")
+            response = self._send_request("POST", path, body)
+            logger.debug(f"✅ - ordem fechada: {response}")
+            return response
+        except Exception as e:
+            logger.exception(f"❌ - Erro ao fechar ordens para o simbolo {symbol}: {e}")
             return {}
