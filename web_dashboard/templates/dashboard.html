@@ -29,7 +29,7 @@
           <tbody>
           {% for sinal in sinais %}
             <tr>
-              <td>{{ sinal.data_hora }}</td><td>{{ sinal.par }}</td><td>{{ sinal.tipo_ordem }}</td><td>{{ sinal.margem }}</td>
+              <td>{{ sinal.data_hora }}</td><td>{{ sinal.symbol }}</td><td>{{ sinal.tipo_ordem }}</td><td>{{ sinal.margem }}</td>
               <td>{{ sinal.alavancagem }}</td><td>{{ sinal.entrada_inferior }}</td><td>{{ sinal.entrada_superior }}</td>
               <td>{{ sinal.tp1 }}</td><td>{{ sinal.tp2 }}</td><td>{{ sinal.tp3 }}</td><td>{{ sinal.tp4 }}</td><td>{{ sinal.stoploss }}</td>
             </tr>
@@ -49,7 +49,7 @@
           <tbody>
           {% for mon in monitoramentos %}
             <tr>
-              <td>{{ mon.data_hora }}</td><td>{{ mon.par }}</td><td>{{ mon.price }}</td><td>{{ mon.profit }}</td>
+              <td>{{ mon.data_hora }}</td><td>{{ mon.symbol }}</td><td>{{ mon.price }}</td><td>{{ mon.profit }}</td>
               <td>{{ mon.spent }}</td><td>{{ mon.instruction }}</td><td>{{ mon.target_done }}</td>
             </tr>
           {% endfor %}

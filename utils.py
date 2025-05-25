@@ -5,7 +5,6 @@ import re
 
 from telethon.errors import ChannelInvalidError, ChatIdInvalidError
 from telethon.tl.types import PeerChannel, PeerChat
-from message.mensagem_sinal import MensagemSinal
 
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 
@@ -56,7 +55,7 @@ def extrair_dados_mensagem(mensagem):
         mensagem (str): Texto da mensagem contendo sinal de trade.
 
     Returns:
-        dict: Dicionário com dados como par, tipo de ordem, SL, TP1..TP4, margem e alavancagem.
+        dict: Dicionário com dados como symbol, tipo de ordem, SL, TP1..TP4, margem e alavancagem.
     """
     logger.debug("📩 - Analisando mensagem completa:")
     logger.debug(f"\n{mensagem}")
@@ -64,15 +63,15 @@ def extrair_dados_mensagem(mensagem):
     dados = {}
 
     # Extração comum
-    pair_match = re.search(r"([A-Z0-9]+/USDT)", mensagem)
+    symbol = re.search(r"([A-Z0-9]+/USDT)", mensagem)
     type_match = re.search(r"(LONG|BUY|SHORT|SELL)", mensagem, re.IGNORECASE)
     sl_match = re.search(r"\*\*STOPLOSS:\*\*\s*\[`?([0-9\.]+)`?\]", mensagem, re.IGNORECASE)
     margin_match = re.search(r"Margin:\s*(\w+),\s*(\d+)X", mensagem, re.IGNORECASE)
     targets = re.findall(r"\[`?([0-9\.]+)`?\]", mensagem)
     target_done = re.search(r"TARGET #(\d) DONE", mensagem, re.IGNORECASE)
 
-    if pair_match:
-        dados["pair"] = pair_match.group(1).upper()
+    if symbol:
+        dados["symbol"] = normalizar_symbol(symbol.group(1).upper())
     if type_match:
         dados["type"] = type_match.group(1).upper()
     if sl_match:
@@ -85,7 +84,7 @@ def extrair_dados_mensagem(mensagem):
     for i, alvo in enumerate(targets[:4], start=1):
         dados[f"tp{i}"] = float(alvo)
 
-    logger.debug("🔎 - Par: %s", pair_match.group(1) if pair_match else "N/A")
+    logger.debug("🔎 - Par: %s", symbol.group(1) if symbol else "N/A")
     logger.debug("🔎 - Tipo: %s", type_match.group(1) if type_match else "N/A")
     logger.debug("🔎 - SL: %s", sl_match.group(1) if sl_match else "N/A")
     logger.debug("🔎 - Targets extraídos: %s", ', '.join(targets) if targets else "N/A")
@@ -112,13 +111,24 @@ def classificar_mensagem(mensagem):
         _msg = {"tipo": "trade", "dados": dados}
     elif "tp" in dados:
         _msg = {"tipo": "monitoramento", "dados": {
-            "pair": dados.get("pair", "N/A"),
+            "symbol": dados.get("symbol", "N/A"),
             "tp": dados["tp"]
         }}
     else:
         _msg = {"tipo": "desconhecido", "dados": dados}
 
     return _msg
+
+def normalizar_symbol(symbol: str) -> str:
+    """
+    Normaliza o símbolo de trading para o formato esperado pela API: BTC-USDT.
+    Substitui '/' por '-', e garante caixa alta.
+
+    Ex:
+        BTC/USDT -> BTC-USDT
+        eth-usdt -> ETH-USDT
+    """
+    return symbol.upper().replace("/", "-")
 
 def limpar_nome(nome):
     """

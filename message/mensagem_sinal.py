@@ -4,7 +4,7 @@ from typing import Optional
 class MensagemSinal:
     def __init__(
         self,
-        pair: str,
+        symbol: str,
         tipo_ordem: Optional[str] = None,
         stoploss: Optional[float] = None,
         tp1: Optional[float] = None,
@@ -15,7 +15,7 @@ class MensagemSinal:
         alavancagem: Optional[str] = None,
         tp_monitorado: Optional[str] = None,
     ):
-        self.pair = pair
+        self.symbol = symbol
         self.tipo_ordem = tipo_ordem
         self.stoploss = stoploss
         self.tp1 = tp1
@@ -34,7 +34,7 @@ class MensagemSinal:
 
     def to_dict(self):
         return {
-            "pair": self.pair,
+            "symbol": self.symbol,
             "type": self.tipo_ordem,
             "stoploss": self.stoploss,
             "tp1": self.tp1,
