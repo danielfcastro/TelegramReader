@@ -196,13 +196,13 @@ def trade_fire():
             be.descricao AS status_break_even
         FROM 
             public.sinais s
-        LEFT JOIN 
+        JOIN 
             public.ordem_status os ON s.ordem_status_id = os.id
-        LEFT JOIN 
+        JOIN 
             public.break_even_status be ON s.break_even_status_id = be.id
         ORDER BY 
             s.id DESC
-    FOR UPDATE SKIP LOCKED
+        FOR UPDATE SKIP LOCKED;
     """
     resultado = executar_select(query)
     return resultado if resultado is not None else []

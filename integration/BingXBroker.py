@@ -366,11 +366,12 @@ class BingXBroker(BrokerInterface):
                 "symbol": symbol,
                 "orderId": order_id
             }
+            logger.debug(f"✅ - Obtendo todas as ordens para o símbolo: {symbol} - body: {body}")
             response = self._send_request("GET", path, body)
-            logger.debug(f"✅ - Detalhe de ordem: {response}")
+            logger.debug(f"✅ - ordens para o símbolo obtidas: {response}")
             return response
         except Exception as e:
-            logger.exception(f"❌ - Erro ao boter detalhe de ordem {symbol}: {e}")
+            logger.exception(f"❌ - Erro ao boter detalhe de ordens para o sílmbolo {symbol}: {e}")
             return {}
 
     def cancela_order(self, symbol, order_id=None):

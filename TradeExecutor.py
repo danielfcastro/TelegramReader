@@ -113,9 +113,6 @@ async def receber_sinal_ordem(request: Request):
                 logger.exception(f"❌ - Erro inesperado ao enviar ordem para {symbol}: {e}")
 
     return {"status": "ok"}
-
-
-
 @app.post("/monitoramento")
 async def receber_sinal_monitoramento(request: Request):
     """
@@ -134,16 +131,14 @@ async def receber_sinal_monitoramento(request: Request):
     """
     sinal = await request.json()
     logger.info(f"🔍 - POST /monitoramento recebido: {sinal}")
-
     symbol = sinal["symbol"]
     order_id = sinal["order_id"]
     tp_monitorado = int(sinal.get("target_monitorado", 1))
-
     symbol = utils.normalizar_symbol(symbol)
+    broker.obter_todas_ordens_abertas(symbol)
 
     # Atualiza TP para status ATINGIDO (3)
     logger.debug(f"✅ - symbol: {symbol} - tp_monitorado: {tp_monitorado}")
-    broker.obter_todas_ordens_abertas(symbol)
     database.db.take_profits_atualizar(symbol=symbol, numero_tp=tp_monitorado, novo_status=3)
 
     # Soma quantidades dos TPs com status = 2 (CONFIGURADO)
@@ -186,14 +181,13 @@ async def receber_sinal_monitoramento(request: Request):
 
     logger.error(f"❌ - Falha ao ajustar SL após 3 tentativas para {symbol}")
     return {"status": "failed"}
-
-
 @app.post("/fechamento")
 async def receber_sinal_fechamento(request: Request):
     dados = await request.json()
     symbol = dados["symbol"]
     id_sinal = dados["id_sinal"]
     order_id = dados["order_id"]
+    broker.obter_todas_ordens_abertas(symbol)
 
     ordem = database.db.ordem_info(symbol=symbol)
     if ordem is None:
