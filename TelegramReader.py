@@ -49,8 +49,8 @@ def ordem_inserir_com_multiplos_tps(dados):
     """
     Insere um sinal no banco com múltiplos Take Profits e aciona o serviço de execução.
 
-    Verifica duplicidade com base em (par, janela_5min). Em caso de sucesso,
-    envia o ID e o par para o endpoint /sinal.
+    Verifica duplicidade com base em (symbol, janela_5min). Em caso de sucesso,
+    envia o ID e o symbol para o endpoint /sinal.
 
     Args:
         dados (dict): Dicionário com os dados do sinal extraídos da mensagem do Telegram.
@@ -67,7 +67,7 @@ def ordem_inserir_com_multiplos_tps(dados):
 
     novo_sinal = {
         "data_hora": agora,
-        "par": dados["pair"],
+        "symbol": dados["symbol"],
         "tipo_ordem": tipo_ordem,
         "margem": dados.get("margin", "Cross"),
         "alavancagem": dados.get("leverage", "20X"),
@@ -90,7 +90,7 @@ def ordem_inserir_com_multiplos_tps(dados):
         id_sinal = database.db.ordem_inserir(novo_sinal, take_profits)
         logger.debug(f"🆔 - ID gerado para o sinal: {id_sinal}")
     except psycopg2.errors.UniqueViolation:
-        logger.warning(f"⚠️ - Sinal duplicado detectado: {dados['pair']} @ {janela_5min}")
+        logger.warning(f"⚠️ - Sinal duplicado detectado: {dados['symbol']} @ {janela_5min}")
         return None
     except Exception as e:
         logger.exception(f"❌ - Erro ao inserir sinal: {e}")
@@ -100,7 +100,7 @@ def ordem_inserir_com_multiplos_tps(dados):
     try:
         payload = {
             "id": id_sinal,
-            "pair": dados["pair"]
+            "symbol": dados["symbol"]
         }
         requests.post(ENDPOINT_SINAL, json=payload, timeout=2)
         logger.info(f"🚀 - POST /sinal enviado com payload: {payload}")
@@ -164,26 +164,30 @@ async def main():
         elif tipo == MONITORAMENTO:
             logger.info("✅ - Mensagem recebida e classificada. - MONITORAMENTO/TP")
             tp_numero = int(dados["tp"].replace("TP", ""))
-            symbol = dados["pair"]
+            symbol = utils.normalizar_symbol(dados["symbol"])
             try:
-                database.db.take_profits_atualizar(par=symbol, numero_tp=tp_numero, novo_status=3)
+                database.db.take_profits_atualizar(symbol=symbol, numero_tp=tp_numero, novo_status=3)
                 logger.info(f"✅ - Ordem marcada como concluída para {symbol}")
             except Exception as e:
                 logger.warning(f"❌ - Erro ao marcar ordem concluída: {e}")
 
-            if tp_numero==4:
+            if tp_numero == 4:
                 logger.info("✅ - Mensagem recebida e classificada. - MONITORAMENTO/TP - CASO ESPECIAL TP4")
-                logger.debug(f"🚀 TP4 - enviar para endpoint /fechamento")
+                logger.info(f"🚀 TP4 - enviar para endpoint /fechamento")
                 try:
-                    ordem = database.db.ordem_info(par=symbol, exigir_break_even_inativo=False)
+                    ordem = database.db.ordem_info(symbol=symbol, exigir_break_even_inativo=False)
+                    if ordem is None:
+                        logger.warning(f"❌ - Nenhuma ordem encontrada no banco para symbol: {symbol}")
+                        return None
+
                     payload = {
-                        "pair": symbol,
+                        "symbol": symbol,
                         "id_sinal": ordem["id"],
                         "order_id": ordem["order_id"]
                     }
-                    logger.debug(f"🚀 Ordem Info - ordem: {ordem} - payload {payload} - Take Profit: {tp_numero}")
+                    logger.info(f"🚀 Ordem Info - ordem: {ordem} - payload {payload} - Take Profit: {tp_numero}")
                     requests.post(ENDPOINT_FECHAMENTO, json=payload, timeout=2)
-                    logger.debug(f"🚀 - POST /fechamento enviado")
+                    logger.info(f"🚀 - POST /fechamento enviado")
                     return tp_numero
                 except Exception as e:
                     logger.warning(f"❌ - Falha ao chamar /fechamento: {e}")
@@ -202,11 +206,11 @@ async def main():
                 database.db.stop_loss_ajuste(id_sinal=ordem["id"], sl=novo_sl, ativar_break_even=ativar_break_even)
                 logger.info(f"✅ - SL sugerido para ordem {ordem['id']} = {novo_sl}")
             else:
-                logger.warning(f"⚠️ - Nenhuma ordem ativa encontrada para ajuste de SL em {dados['pair']}")
+                logger.warning(f"⚠️ - Nenhuma ordem ativa encontrada para ajuste de SL em {dados['symbol']}")
 
             try:
                 payload = {
-                    "pair": dados["pair"],
+                    "symbol": dados["symbol"],
                     "tp": dados["tp"],
                     "id_sinal": ordem["id"],
                     "order_id": ordem["order_id"],
@@ -214,7 +218,7 @@ async def main():
                 }
                 logger.debug(f"🚀 - dados: {dados} - payload {payload}")
                 requests.post(ENDPOINT_MONITORAMENTO, json=payload, timeout=2)
-                logger.info(f"🚀 - POST /monitoramento enviado para {dados['pair']} - TP: {dados['tp']}")
+                logger.info(f"🚀 - POST /monitoramento enviado para {dados['symbol']} - TP: {dados['tp']}")
             except Exception as e:
                 logger.warning(f"❌ - Falha ao chamar /monitoramento: {e}")
                 return None

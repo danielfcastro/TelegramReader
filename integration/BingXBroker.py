@@ -132,10 +132,10 @@ class BingXBroker(BrokerInterface):
 
     def set_leverage(self, symbol, side, leverage):
         """
-        Configura a alavancagem para um determinado par na corretora BingX.
+        Configura a alavancagem para um determinado symbol na corretora BingX.
 
         Args:
-            symbol (str): Par de ativos (ex: 'BTC-USDT').
+            symbol (str): symbol de ativos (ex: 'BTC-USDT').
             side (str): Direção da posição ('LONG', 'SHORT', 'BOTH').
             leverage (int | str): Alavancagem desejada.
         """
@@ -250,7 +250,7 @@ class BingXBroker(BrokerInterface):
             self.cancela_stop_loss(symbol)
             ordem = self.get_open_order_info(symbol, order_id)
             if not ordem:
-                logger.warning(f"⚠️ - Nenhuma ordem encontrada para {par}")
+                logger.warning(f"⚠️ - Nenhuma ordem encontrada para {symbol}")
                 return {"status": "no_order"}
             position_side = position_side.upper()
             current_order_side = ordem["data"]["order"]["side"]
@@ -373,60 +373,28 @@ class BingXBroker(BrokerInterface):
             logger.exception(f"❌ - Erro ao boter detalhe de ordem {symbol}: {e}")
             return {}
 
-    def send_order_with_constraints_adjusted(
-            self, symbol, side, leverage, side_leverage,
-            tp, sl, preco_mercado, limite_usdt, id_sinal
-    ):
-        """
-        Recalcula e envia uma ordem com a quantidade ajustada, baseada no limite de exposição da corretora (em USDT).
-
-        Args:
-            symbol (str): Par de negociação.
-            side (str): Direção da ordem ('BUY' ou 'SELL').
-            leverage (int): Alavancagem utilizada.
-            side_leverage (str): Posição (ex: 'BOTH').
-            tp (float): Take Profit.
-            sl (float): Stop Loss.
-            preco_mercado (float): Preço atual do ativo.
-            limite_usdt (float): Quantia máxima permitida (exposição).
-            id_sinal (int): ID do sinal relacionado no banco.
-
-        Returns:
-            bool: True se a ordem ajustada foi enviada com sucesso.
-        """
-
+    def cancela_order(self, symbol, order_id=None):
         try:
-            quantidade = round((limite_usdt * leverage) / preco_mercado, 6)
-            logger.info(
-                f"🔁 - Ajustando quantidade com base no limite de {limite_usdt} USDT: Nova quantidade = {quantidade}"
-            )
-
-            result = self.enviar_ordem_tp_sl(
-                symbol=symbol,
-                side=side,
-                leverage=leverage,
-                side_leverage=side_leverage,
-                tp=tp,
-                sl=sl,
-                quantidade=quantidade,
-                preco_mercado=preco_mercado,
-                id_sinal=id_sinal  # ✅ CORRIGIDO: passa o id_sinal aqui!
-            )
-
-            if isinstance(result, tuple) and len(result) == 4:
-                sucesso, preco, order_id, retorno = result
-                if sucesso:
-                    logger.info(
-                        f"✅ - Ordem ajustada enviada com sucesso - order_id: {order_id} - quantidade: {quantidade}")
-                    return True
-                else:
-                    logger.warning(f"❌ - Falha ao enviar ordem ajustada: {retorno}")
-                    return False
-            else:
-                logger.error("❌ - Formato inesperado no retorno de enviar_ordem_tp_sl (esperado 4 valores).")
-                return False
-
+            path = "/openApi/spot/v1/trade/cancelOpenOrders"
+            body = {
+                "symbol": symbol
+            }
+            response = self._send_request("POST", path, body)
+            logger.debug(f"✅ - Detalhe de ordem: {response}")
+            return response
         except Exception as e:
-            logger.exception(f"❌ - Erro ao ajustar e enviar ordem: {e}")
-            return False
+            logger.exception(f"❌ - Erro ao boter detalhe de ordem {symbol}: {e}")
+            return {}
 
+    def obter_todas_ordens_abertas(self, symbol):
+        try:
+            path = "/openApi/spot/v1/trade/openOrders"
+            body = {
+                "symbol": symbol
+            }
+            response = self._send_request("GET", path, body)
+            logger.debug(f"✅ - Detalhe de ordem: {response}")
+            return response
+        except Exception as e:
+            logger.exception(f"❌ - Erro ao listas as ordens abertas para o símbolo {symbol}: {e}")
+            return {}

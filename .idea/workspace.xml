@@ -4,7 +4,20 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Configuração para Linux Alpine" />
+    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Configuração para Linux Alpine">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TelegramReader.py" beforeDir="false" afterPath="$PROJECT_DIR$/TelegramReader.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TradeExecutor.py" beforeDir="false" afterPath="$PROJECT_DIR$/TradeExecutor.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/db.py" beforeDir="false" afterPath="$PROJECT_DIR$/database/db.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/scripts/sinais.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/scripts/sinais.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/integration/BingXBroker.py" beforeDir="false" afterPath="$PROJECT_DIR$/integration/BingXBroker.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/integration/BrokerInterface.py" beforeDir="false" afterPath="$PROJECT_DIR$/integration/BrokerInterface.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/message/mensagem_sinal.py" beforeDir="false" afterPath="$PROJECT_DIR$/message/mensagem_sinal.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tools/testar_monitoramento_be.py" beforeDir="false" afterPath="$PROJECT_DIR$/tools/testar_monitoramento_be.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web_dashboard/templates/dashboard.html" beforeDir="false" afterPath="$PROJECT_DIR$/web_dashboard/templates/dashboard.html" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -35,22 +48,22 @@
     &quot;assignee&quot;: &quot;danielfcastro&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "git@github.com:danielfcastro/TelegramReader.git",
-    "accountId": "3c41e348-8633-4c81-8b59-457772a987ba"
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;git@github.com:danielfcastro/TelegramReader.git&quot;,
+    &quot;accountId&quot;: &quot;3c41e348-8633-4c81-8b59-457772a987ba&quot;
   },
-  "recentNewPullRequestHead": {
-    "server": {
-      "useHttp": false,
-      "host": "github.com",
-      "port": null,
-      "suffix": null
+  &quot;recentNewPullRequestHead&quot;: {
+    &quot;server&quot;: {
+      &quot;useHttp&quot;: false,
+      &quot;host&quot;: &quot;github.com&quot;,
+      &quot;port&quot;: null,
+      &quot;suffix&quot;: null
     },
-    "owner": "danielfcastro",
-    "repository": "TelegramReader"
+    &quot;owner&quot;: &quot;danielfcastro&quot;,
+    &quot;repository&quot;: &quot;TelegramReader&quot;
   }
-}]]></component>
+}</component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
   &quot;isMigrated&quot;: true
@@ -70,11 +83,12 @@
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "Python.TradeExecutor.executor": "Run",
-    "Python.start_all.executor": "Run",
+    "Python.start_all.executor": "Debug",
     "Python.testar_insercao_sinal.executor": "Run",
     "Python.testar_monitoramento_be.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
     "ignore.virus.scanning.warn.message": "true",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -457,6 +471,18 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/TelegramReader.py</url>
+          <line>175</line>
+          <option name="timeStamp" value="84" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/TradeExecutor.py</url>
+          <line>195</line>
+          <option name="timeStamp" value="85" />
+        </line-breakpoint>
+      </breakpoints>
       <default-breakpoints>
         <breakpoint type="python-exception">
           <properties notifyOnTerminate="true" exception="BaseException">
@@ -465,15 +491,11 @@
         </breakpoint>
       </default-breakpoints>
     </breakpoint-manager>
-    <watches-manager>
-      <configuration name="PythonConfigurationType">
-        <watch expression="response" />
-      </configuration>
-    </watches-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/ProjetoTelegram$testar_monitoramento_be.coverage" NAME="testar_monitoramento_be Coverage Results" MODIFIED="1746316630390" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tools" />
     <SUITE FILE_PATH="coverage/ProjetoTelegram$testar_insercao_sinal.coverage" NAME="testar_insercao_sinal Coverage Results" MODIFIED="1746316087789" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tools" />
+    <SUITE FILE_PATH="coverage/TelegramReader$start_all.coverage" NAME="start_all Coverage Results" MODIFIED="1748170737562" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/ProjetoTelegram$start_all.coverage" NAME="start_all Coverage Results" MODIFIED="1746918623277" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/ProjetoTelegram$TradeExecutor.coverage" NAME="TradeExecutor Coverage Results" MODIFIED="1746666069586" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>

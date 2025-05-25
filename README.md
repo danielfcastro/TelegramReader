@@ -215,7 +215,7 @@ Este projeto integra sinais de trade recebidos via Telegram com execução autom
 
 ### 1. Leitura de Sinais do Telegram
 - Monitoramento de mensagens com sinais de trade (entrada, TPs e SL).
-- Extração dos dados relevantes (par, tipo, entrada, take profits, stop loss).
+- Extração dos dados relevantes (symbol, tipo, entrada, take profits, stop loss).
 - Armazenamento estruturado no banco.
 
 ### 2. Controle de Configuração
@@ -298,7 +298,7 @@ sequenceDiagram
 
 4. **Se for mensagem de monitoramento:**
    - Se for **TP2 ou TP4**:
-     - `buscar_info_apos_sinal_de_monitoramento(par)`  
+     - `buscar_info_apos_sinal_de_monitoramento(symbol)`  
      - Se encontrar ordem, chama `ativar_break_even(id)` para sinalizar que o SL pode ser movido.
    - Outros TPs são atualmente ignorados.
 
@@ -326,7 +326,7 @@ sequenceDiagram
 
 8. **Executa ajuste de SL para preço de entrada:**
    - Chama `broker.ajustar_para_break_even(...)` (cancela SL antigo e envia novo SL)
-   - Se sucesso → `marcar_ordem_para_be_executado(par)`
+   - Se sucesso → `marcar_ordem_para_be_executado(symbol)`
    - Se falha → `incrementar_retry_be(id)`
 
 ### Parte 4 - Geração de documentação
@@ -351,7 +351,7 @@ Registra cada sinal de trade detectado e processado.
 |------------------|------------|-----------|
 | id               | `serial`   | Identificador único do sinal |
 | data_hora        | `timestamp with time zone` | Momento em que o sinal foi capturado |
-| par              | `text`     | Par de negociação (ex: BTC/USDT) |
+| symbol           | `text`     | Par de negociação (ex: BTC/USDT) |
 | tipo_ordem       | `text`     | Direção da ordem (BUY / SELL) |
 | margem           | `text`     | Tipo de margem (ex: Cross) |
 | alavancagem      | `text`     | Alavancagem usada (ex: 20X) |

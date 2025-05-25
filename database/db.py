@@ -126,24 +126,24 @@ def fechar_pool():
 
 
 #MÉTODOS DE SINAIS - STOP LOSS
-def stop_loss_update(par, novo_sl):
+def stop_loss_update(symbol, novo_sl):
     """
-    Atualiza o Stop Loss da ordem principal de um determinado par.
+    Atualiza o Stop Loss da ordem principal de um determinado symbol.
 
     Args:
-        par (str): Par de trading (ex: "BTC/USDT").
+        symbol (str): symbol de trading (ex: "BTC/USDT").
         novo_sl (float): Novo valor de Stop Loss.
     """
     query = """
         UPDATE sinais
         SET sl = %s
-        WHERE par = %s AND ordem_status_id = 1
+        WHERE symbol = %s AND ordem_status_id = 1
     """
     try:
-        executar_update(query, (novo_sl, par))
-        logger.debug(f"✅ - SL atualizado para {par}: {novo_sl}")
+        executar_update(query, (novo_sl, symbol))
+        logger.debug(f"✅ - SL atualizado para {symbol}: {novo_sl}")
     except Exception as e:
-        logger.exception(f"❌ - Falha ao atualizar SL para {par}: {e}")
+        logger.exception(f"❌ - Falha ao atualizar SL para {symbol}: {e}")
 
 #Chamado por TelegramReader para marcar o sinal que atingiu TP2 e então ser atualizado por TradeExecutor.py
 def stop_loss_ajuste(id_sinal, sl, ativar_break_even: bool):
@@ -178,20 +178,41 @@ def trade_fire():
         list[dict]: Lista de sinais prontos para envio de ordem.
     """
     query = """
-        SELECT * FROM sinais
-        WHERE ordem_status_id = 0
-        ORDER BY id DESC
-        FOR UPDATE SKIP LOCKED
+        SELECT 
+            s.id,
+            s.data_hora,
+            s.symbol,
+            s.tipo_ordem,
+            s.margem,
+            s.alavancagem,
+            s.sl,
+            s.ordem_status_id,
+            s.break_even_status_id,
+            s.order_id,
+            s.entry_price,
+            s.quantidade,
+            s.janela_5min,
+            os.descricao AS status_ordem,
+            be.descricao AS status_break_even
+        FROM 
+            public.sinais s
+        LEFT JOIN 
+            public.ordem_status os ON s.ordem_status_id = os.id
+        LEFT JOIN 
+            public.break_even_status be ON s.break_even_status_id = be.id
+        ORDER BY 
+            s.id DESC
+    FOR UPDATE SKIP LOCKED
     """
     resultado = executar_select(query)
     return resultado if resultado is not None else []
 
-def break_even_soma_quantidade(par):
+def break_even_soma_quantidade(symbol):
     """
-    Soma a quantidade total de sinais com break-even pendente para o par.
+    Soma a quantidade total de sinais com break-even pendente para o symbol.
     break_even_status_id = 1 - ATIVAR
     Args:
-        par (str): Par a ser analisado.
+        symbol (str): symbol a ser analisado.
 
     Returns:
         float: Soma das quantidades.
@@ -199,11 +220,11 @@ def break_even_soma_quantidade(par):
     sql = """
     SELECT SUM(quantidade) AS total
     FROM sinais
-    WHERE par = %(par)s 
+    WHERE symbol = %(symbol)s 
       AND break_even_status_id = 1
       AND ordem_status_id = 1
     """
-    resultado = executar_select(sql, {"par": par})
+    resultado = executar_select(sql, {"symbol": symbol})
     if resultado and resultado[0]["total"] is not None:
         return resultado[0]["total"]
     return 0.0
@@ -245,20 +266,20 @@ def ordem_desabilitar(id_sinal):
 
 def ordem_concluir(symbol):
     """
-    Marca todos os sinais ativos (ordem_status_id = 1) de um par como concluídos (ordem_status_id = 3).
+    Marca todos os sinais ativos (ordem_status_id = 1) de um symbol como concluídos (ordem_status_id = 3).
 
     Args:
-        symbol (str): Par de trading (ex: 'BTC/USDT').
+        symbol (str): symbol de trading (ex: 'BTC/USDT').
     """
     query = """
         UPDATE sinais
         SET ordem_status_id = 3
         WHERE id IN (
             SELECT id FROM sinais
-            WHERE par = %(par)s AND ordem_status_id = 1
+            WHERE symbol = %(symbol)s AND ordem_status_id = 1
         )
     """
-    executar_update(query, {"par": symbol})
+    executar_update(query, {"symbol": symbol})
 
 def ordem_enviar(id_sinal, entry_price, order_id, quantidade):
     """
@@ -281,21 +302,21 @@ def ordem_enviar(id_sinal, entry_price, order_id, quantidade):
     """
     executar_update(query, {"id": id_sinal, "entry_price": entry_price, "order_id": order_id, "quantidade": quantidade})
 
-def ordem_info(par, exigir_break_even_inativo=False):
+def ordem_info(symbol, exigir_break_even_inativo=False):
     """
-    Busca a última ordem enviada para um determinado par.
+    Busca a última ordem enviada para um determinado symbol.
 
     Se `exigir_break_even_inativo` for True, filtra apenas ordens com break_even_status_id = 0.
 
     Args:
-        par (str): Par de negociação, ex: 'BTC/USDT'.
+        symbol (str): symbol de negociação, ex: 'BTC/USDT'.
         exigir_break_even_inativo (bool): Se True, filtra por break_even_status_id = 0.
 
     Returns:
         dict | None: Registro mais recente da ordem, ou None.
     """
     condicoes = [
-        "par = %(par)s",
+        "symbol = %(symbol)s",
         "ordem_status_id = 1",
         "order_id != 0"
     ]
@@ -309,7 +330,7 @@ def ordem_info(par, exigir_break_even_inativo=False):
         ORDER BY id DESC
         LIMIT 1
     """
-    resultado = executar_select(query, {"par": par})
+    resultado = executar_select(query, {"symbol": symbol})
     return resultado[0] if resultado else None
 
 
@@ -320,7 +341,7 @@ def ordem_inserir(dados, take_profits):
     mas sem definir a quantidade dos TPs neste momento.
 
     Args:
-        dados (dict): Dados do sinal (par, tipo_ordem, margem, alavancagem, sl, quantidade, etc.).
+        dados (dict): Dados do sinal (symbol, tipo_ordem, margem, alavancagem, sl, quantidade, etc.).
         take_profits (list): Lista de dicionários com {numero, valor, proporcao}.
 
     Returns:
@@ -328,10 +349,10 @@ def ordem_inserir(dados, take_profits):
     """
     query_sinal = """
         INSERT INTO sinais (
-            data_hora, par, tipo_ordem, margem, alavancagem,
+            data_hora, symbol, tipo_ordem, margem, alavancagem,
             sl, quantidade
         ) VALUES (
-            %(data_hora)s, %(par)s, %(tipo_ordem)s, %(margem)s, %(alavancagem)s,
+            %(data_hora)s, %(symbol)s, %(tipo_ordem)s, %(margem)s, %(alavancagem)s,
             %(sl)s, %(quantidade)s
         ) RETURNING id
     """
@@ -395,12 +416,12 @@ def stop_loss_fire():
     resultado = executar_select(query)
     return resultado if resultado is not None else []
 
-def take_profits_atualizar(par, numero_tp, novo_status=3):
+def take_profits_atualizar(symbol, numero_tp, novo_status=3):
     """
-    Atualiza o status de um Take Profit específico de um par.
+    Atualiza o status de um Take Profit específico de um symbol.
 
     Args:
-        par (str): Par do sinal (ex: "BTC/USDT").
+        symbol (str): symbol do sinal (ex: "BTC/USDT").
         numero_tp (int): Número do TP (1 a 5).
         novo_status (int): Novo status (ex: 3 = atingido).
     """
@@ -410,11 +431,11 @@ def take_profits_atualizar(par, numero_tp, novo_status=3):
         SET tp_status_id = %(status)s
         WHERE sinal_id IN (
             SELECT id FROM sinais
-            WHERE par = %(par)s AND ordem_status_id = 1
+            WHERE symbol = %(symbol)s AND ordem_status_id = 1
         )
         AND numero = %(numero)s
     """
-    params = {"par": par, "numero": numero_tp, "status": novo_status}
+    params = {"symbol": symbol, "numero": numero_tp, "status": novo_status}
     executar_update(query, params)
 
 def take_profits_por_sinal(sinal_id):
@@ -435,13 +456,13 @@ def take_profits_por_sinal(sinal_id):
     """
     return executar_select(query, (sinal_id,))
 
-def take_profits_somar_quantidades_de_take_profits_ativos(par):
+def take_profits_somar_quantidades_de_take_profits_ativos(symbol):
     """
     Soma a quantidade total de TPs com status 2 (CONFIGURADO)
     para sinais com ordem_status_id = 1 (enviada).
 
     Args:
-        par (str): Par de negociação.
+        symbol (str): symbol de negociação.
 
     Returns:
         float: Soma total das quantidades.
@@ -450,11 +471,11 @@ def take_profits_somar_quantidades_de_take_profits_ativos(par):
         SELECT SUM(tp.quantidade) AS total
         FROM take_profits tp
         INNER JOIN sinais s ON tp.sinal_id = s.id
-        WHERE s.par = %(par)s
+        WHERE s.symbol = %(symbol)s
           AND s.ordem_status_id = 1
           AND tp.tp_status_id IN (1, 2)
     """
-    resultado = executar_select(query, {"par": par})
+    resultado = executar_select(query, {"symbol": symbol})
     if resultado and resultado[0]["total"] is not None:
         return resultado[0]["total"]
     return 0.0

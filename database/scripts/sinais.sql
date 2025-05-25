@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS public.sinais
 (
     id integer NOT NULL DEFAULT nextval('sinais_id_seq'::regclass),
     data_hora timestamp without time zone NOT NULL,
-    par text COLLATE pg_catalog."default" NOT NULL,
+    symbol text COLLATE pg_catalog."default" NOT NULL,
     tipo_ordem text COLLATE pg_catalog."default" NOT NULL,
     margem text COLLATE pg_catalog."default" NOT NULL,
     alavancagem text COLLATE pg_catalog."default" NOT NULL,
@@ -31,10 +31,10 @@ ALTER TABLE IF EXISTS public.sinais
 
 CREATE INDEX IF NOT EXISTS idx_sinais_par_status
     ON public.sinais USING btree
-    (par COLLATE pg_catalog."default" ASC NULLS LAST, ordem_status_id ASC NULLS LAST)
+    (symbol COLLATE pg_catalog."default" ASC NULLS LAST, ordem_status_id ASC NULLS LAST)
     TABLESPACE pg_default;
 
 CREATE UNIQUE INDEX IF NOT EXISTS unique_par_janela
     ON public.sinais USING btree
-    (par COLLATE pg_catalog."default" ASC NULLS LAST, janela_5min ASC NULLS LAST)
+    (symbol COLLATE pg_catalog."default" ASC NULLS LAST, janela_5min ASC NULLS LAST)
     TABLESPACE pg_default;

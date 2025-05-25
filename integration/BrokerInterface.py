@@ -30,5 +30,8 @@ class BrokerInterface(ABC):
         pass
 
     @abstractmethod
-    def send_order_with_constraints_adjusted(self, symbol, side, leverage, side_leverage,tp, sl, preco_mercado, limite_usdt, id_sinal):
+    def cancela_order(self, symbol, order_id=None):
+        pass
+    @abstractmethod
+    def obter_todas_ordens_abertas(self, symbol):
         pass

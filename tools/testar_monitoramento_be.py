@@ -16,10 +16,10 @@ monitoramento = extrair_mensagem_monitoramento(mensagem)
 
 if monitoramento:
     if monitoramento["tp"] == "TP2":
-        print(f"📡 Monitoramento TP2 detectado: {monitoramento['pair']}")
-        info = buscar_info_apos_sinal_de_monitoramento(monitoramento["pair"])
+        print(f"📡 Monitoramento TP2 detectado: {monitoramento['symbol']}")
+        info = buscar_info_apos_sinal_de_monitoramento(monitoramento["symbol"])
         if info:
-            print(f"🟢 Ativando BE para ID {info['id']} / par {monitoramento['pair']}")
+            print(f"🟢 Ativando BE para ID {info['id']} / symbol {monitoramento['symbol']}")
             ativar_break_even(info["id"])
         else:
             print("❌ Nenhuma ordem enviada encontrada para este par.")
