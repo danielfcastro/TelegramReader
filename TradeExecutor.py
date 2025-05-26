@@ -201,9 +201,12 @@ async def receber_sinal_fechamento(request: Request):
     # get_open_order_info
     database.db.ordem_concluir(symbol=symbol)
     response = broker.obter_todas_ordens_abertas(symbol=symbol)
-    order_id=response["data"]["order"]["orderId"]
-    logger.debug(
-        f"Recuperando ordem/lote remanescente depois de TP4 - symbol: {symbol} - order_id: {order_id} - response: {response}")
+    order_data = response.get("data", {}).get("order")
+    if not order_data:
+        logger.warning(f"❌ - Detalhe de ordem não encontrado na resposta: {response}")
+        return JSONResponse(content={"erro": "Detalhe da ordem ausente na resposta"}, status_code=500)
+
+    order_id = order_data["orderId"]
     #broker.cancela_stop_loss(symbol)
     time.sleep(1.5)
     broker.fechar_todas_ordens_abertas(symbol=symbol)
