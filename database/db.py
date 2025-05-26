@@ -218,12 +218,12 @@ def break_even_soma_quantidade(symbol):
         float: Soma das quantidades.
     """
     sql = """
-    SELECT SUM(quantidade) AS total
-    FROM sinais
-    WHERE symbol = %(symbol)s 
-      AND break_even_status_id = 1
-      AND ordem_status_id = 1
-    """
+        SELECT SUM(tp.quantidade) AS total
+        FROM take_profits tp
+        JOIN sinais s ON s.id = tp.sinal_id
+        WHERE s.symbol = %(symbol)s 
+        AND tp.tp_status_id = 2
+          """
     resultado = executar_select(sql, {"symbol": symbol})
     if resultado and resultado[0]["total"] is not None:
         return resultado[0]["total"]

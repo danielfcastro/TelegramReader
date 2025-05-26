@@ -256,24 +256,22 @@ class BingXBroker(BrokerInterface):
             current_order_side = ordem["data"]["order"]["side"]
             side = "SELL" if current_order_side == "BUY" else "SELL"
 
-            quantidade = database.db.break_even_soma_quantidade(symbol.replace("-", "/").upper())
+            quantidade = database.db.break_even_soma_quantidade(symbol)
             stop_price_final = float(ordem['data']['order']['avgPrice'])
 
-            def enviar_sl(qtd):
-                body = {
-                    "symbol": symbol,
-                    "side": side,
-                    "type": "STOP_MARKET",
-                    "stopPrice": stop_price_final,
-                    "positionSide": "BOTH",
-                    "quantity": qtd,
-                    "recvWindow": "10000"
-                }
-                return self._send_request("POST", "/openApi/swap/v2/trade/order", body)
 
             logger.debug(
                 f"🛡️ - Tentando SL - symbol: {symbol}, side: {side}, position_side: {position_side}, stop_price: {stop_price_final}, quantidade: {quantidade}")
-            response = enviar_sl(quantidade)
+            body = {
+                "symbol": symbol,
+                "side": side,
+                "type": "STOP_MARKET",
+                "stopPrice": stop_price_final,
+                "positionSide": "BOTH",
+                "quantity": quantidade,
+                "recvWindow": "10000"
+            }
+            response = self._send_request("POST", "/openApi/swap/v2/trade/order", body)
 
             # Verifica sucesso
             if response["code"] == 0:
@@ -366,9 +364,9 @@ class BingXBroker(BrokerInterface):
                 "symbol": symbol,
                 "orderId": order_id
             }
-            logger.debug(f"✅ - Obtendo todas as ordens para o símbolo: {symbol} - body: {body}")
+            logger.debug(f"✅ - Obtendo ordem para: {symbol} - body: {body}")
             response = self._send_request("GET", path, body)
-            logger.debug(f"✅ - ordens para o símbolo obtidas: {response}")
+            logger.debug(f"✅ - ordem para o símbolo obtidas: {response}")
             return response
         except Exception as e:
             logger.exception(f"❌ - Erro ao boter detalhe de ordens para o sílmbolo {symbol}: {e}")

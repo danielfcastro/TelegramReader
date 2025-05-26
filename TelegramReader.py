@@ -102,7 +102,7 @@ def ordem_inserir_com_multiplos_tps(dados):
             "id": id_sinal,
             "symbol": dados["symbol"]
         }
-        requests.post(ENDPOINT_SINAL, json=payload, timeout=2)
+        requests.post(ENDPOINT_SINAL, json=payload, timeout=10)
         logger.info(f"🚀 - POST /sinal enviado com payload: {payload}")
     except Exception as e:
         logger.warning(f"❌ - Falha ao chamar /sinal: {e}")
@@ -186,7 +186,7 @@ async def main():
                         "order_id": ordem["order_id"]
                     }
                     logger.info(f"🚀 Ordem Info - ordem: {ordem} - payload {payload} - Take Profit: {tp_numero}")
-                    requests.post(ENDPOINT_FECHAMENTO, json=payload, timeout=2)
+                    requests.post(ENDPOINT_FECHAMENTO, json=payload, timeout=10)
                     logger.info(f"🚀 - POST /fechamento enviado")
                     return tp_numero
                 except Exception as e:
@@ -217,7 +217,7 @@ async def main():
                     "target_monitorado": dados["tp"].replace("TP", "")
                 }
                 logger.debug(f"🚀 - dados: {dados} - payload {payload}")
-                requests.post(ENDPOINT_MONITORAMENTO, json=payload, timeout=2)
+                requests.post(ENDPOINT_MONITORAMENTO, json=payload, timeout=10)
                 logger.info(f"🚀 - POST /monitoramento enviado para {dados['symbol']} - TP: {dados['tp']}")
             except Exception as e:
                 logger.warning(f"❌ - Falha ao chamar /monitoramento: {e}")
