@@ -5,6 +5,7 @@ psycopg2-binary~=2.9.10
 pybit
 python-dotenv~=1.1.0
 psycopg2~=2.9.10
+subprocess
 sphinx
 sphinx_rtd_theme
 sphinx-autodoc-typehints
