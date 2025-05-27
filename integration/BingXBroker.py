@@ -376,12 +376,12 @@ class BingXBroker(BrokerInterface):
 
     def cancela_order(self, symbol, order_id=None):
         try:
-            path = "/openApi/spot/v1/trade/cancelOpenOrders"
+            path = "/openApi/swap/v2/trade/allOpenOrders"
             body = {
                 "symbol": symbol
             }
-            response = self._send_request("POST", path, body)
-            logger.debug(f"✅ - Detalhe de ordem: {response}")
+            response = self._send_request("DELETE", path, body)
+            logger.debug(f"✅ - Resposta do cancelamento de ordem: {response}")
             return response
         except Exception as e:
             logger.exception(f"❌ - Erro ao boter detalhe de ordem {symbol}: {e}")

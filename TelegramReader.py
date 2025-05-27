@@ -172,8 +172,8 @@ async def main():
                 logger.warning(f"❌ - Erro ao marcar ordem concluída: {e}")
 
             if tp_numero == 4:
-                logger.info("✅ - Mensagem recebida e classificada. - MONITORAMENTO/TP - CASO ESPECIAL TP4")
-                logger.info(f"🚀 TP4 - enviar para endpoint /fechamento")
+                logger.debug("✅ - Mensagem recebida e classificada. - MONITORAMENTO/TP - CASO ESPECIAL TP4")
+                logger.debug(f"🚀 TP4 - enviar para endpoint /fechamento")
                 try:
                     ordem = database.db.ordem_info(symbol=symbol, exigir_break_even_inativo=False)
                     if ordem is None:
@@ -185,12 +185,12 @@ async def main():
                         "id_sinal": ordem["id"],
                         "order_id": ordem["order_id"]
                     }
-                    logger.info(f"🚀 Ordem Info - ordem: {ordem} - payload {payload} - Take Profit: {tp_numero}")
+                    logger.debug(f"🚀 Ordem Info - ordem: {ordem} - payload {payload} - Take Profit: {tp_numero}")
                     requests.post(ENDPOINT_FECHAMENTO, json=payload, timeout=10)
-                    logger.info(f"🚀 - POST /fechamento enviado")
+                    logger.debug(f"🚀 - POST /fechamento enviado")
                     return tp_numero
                 except Exception as e:
-                    logger.warning(f"❌ - Falha ao chamar /fechamento: {e}")
+                    logger.error(f"❌ - Falha ao chamar /fechamento: {e}")
                     return None
 
             ordem = database.db.ordem_info(symbol, exigir_break_even_inativo=True)
@@ -205,23 +205,22 @@ async def main():
 
                 database.db.stop_loss_ajuste(id_sinal=ordem["id"], sl=novo_sl, ativar_break_even=ativar_break_even)
                 logger.info(f"✅ - SL sugerido para ordem {ordem['id']} = {novo_sl}")
+                try:
+                    payload = {
+                        "symbol": dados["symbol"],
+                        "tp": dados["tp"],
+                        "id_sinal": ordem["id"],
+                        "order_id": ordem["order_id"],
+                        "target_monitorado": dados["tp"].replace("TP", "")
+                    }
+                    logger.debug(f"🚀 - dados: {dados} - payload {payload}")
+                    requests.post(ENDPOINT_MONITORAMENTO, json=payload, timeout=10)
+                    logger.debug(f"🚀 - POST /monitoramento enviado para {dados['symbol']} - TP: {dados['tp']}")
+                except Exception as e:
+                    logger.error(f"❌ - Falha ao chamar /monitoramento: {e}")
+                    return None
             else:
                 logger.warning(f"⚠️ - Nenhuma ordem ativa encontrada para ajuste de SL em {dados['symbol']}")
-
-            try:
-                payload = {
-                    "symbol": dados["symbol"],
-                    "tp": dados["tp"],
-                    "id_sinal": ordem["id"],
-                    "order_id": ordem["order_id"],
-                    "target_monitorado": dados["tp"].replace("TP", "")
-                }
-                logger.debug(f"🚀 - dados: {dados} - payload {payload}")
-                requests.post(ENDPOINT_MONITORAMENTO, json=payload, timeout=10)
-                logger.info(f"🚀 - POST /monitoramento enviado para {dados['symbol']} - TP: {dados['tp']}")
-            except Exception as e:
-                logger.warning(f"❌ - Falha ao chamar /monitoramento: {e}")
-                return None
         else:
             logger.warning("❌ - Não foi possível extrair sinal ou monitoramento da mensagem.")
             return None

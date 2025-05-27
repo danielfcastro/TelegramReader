@@ -185,33 +185,18 @@ async def receber_sinal_monitoramento(request: Request):
 async def receber_sinal_fechamento(request: Request):
     dados = await request.json()
     symbol = dados["symbol"]
-    id_sinal = dados["id_sinal"]
-    order_id = dados["order_id"]
-    broker.obter_todas_ordens_abertas(symbol)
-
-    ordem = database.db.ordem_info(symbol=symbol)
-    if ordem is None:
-        return JSONResponse(content={"erro": "Ordem inativa ou não encontrada"}, status_code=404)
-
-    # verificar se ainda tem ordem aberta por conta de lote residual
-
-
-    # verificar se ainda tem ordem aberta por conta de lote residual
-    # se tiver deve fechar a ordem e o stop loss
-    # get_open_order_info
-    database.db.ordem_concluir(symbol=symbol)
-    response = broker.obter_todas_ordens_abertas(symbol=symbol)
-    order_data = response.get("data", {}).get("order")
-    if not order_data:
-        logger.warning(f"❌ - Detalhe de ordem não encontrado na resposta: {response}")
-        return JSONResponse(content={"erro": "Detalhe da ordem ausente na resposta"}, status_code=500)
-
-    order_id = order_data["orderId"]
-    #broker.cancela_stop_loss(symbol)
-    time.sleep(1.5)
+    logger.warning(f"❌ - pedido para cancelar ordem: {symbol}")
+    broker.cancela_order(symbol=symbol)
+    time.sleep(1.1)
+    logger.warning(f"❌ - pedido para cancelar SL: {symbol}")
+    broker.cancela_stop_loss(symbol=symbol)
+    time.sleep(1.1)
+    logger.warning(f"❌ - Pedido para fechar todas as ordens abertas: {symbol}")
     broker.fechar_todas_ordens_abertas(symbol=symbol)
-    response = broker.obter_todas_ordens_abertas(symbol=symbol)
-    return {"status": "cancelei as ordens residuais após TP4"}
+    time.sleep(1.1)
+    database.db.ordem_concluir(symbol=symbol)
+
+
 # Inicializa a thread do executor e o servidor REST
 
 def reprocessa_sinais_breakeven_perdidos():
