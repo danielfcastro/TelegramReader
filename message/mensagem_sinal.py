@@ -1,19 +1,15 @@
-from typing import Optional
-
-
 class MensagemSinal:
     def __init__(
         self,
         symbol: str,
-        tipo_ordem: Optional[str] = None,
-        stoploss: Optional[float] = None,
-        tp1: Optional[float] = None,
-        tp2: Optional[float] = None,
-        tp3: Optional[float] = None,
-        tp4: Optional[float] = None,
-        margem: Optional[str] = None,
-        alavancagem: Optional[str] = None,
-        tp_monitorado: Optional[str] = None,
+        tipo_ordem: str,
+        stoploss: float,
+        tp1: float,
+        tp2: float,
+        tp3: float,
+        tp4: float,
+        margem: str,
+        alavancagem: str,
     ):
         self.symbol = symbol
         self.tipo_ordem = tipo_ordem
@@ -24,13 +20,6 @@ class MensagemSinal:
         self.tp4 = tp4
         self.margem = margem
         self.alavancagem = alavancagem
-        self.tp_monitorado = tp_monitorado
-
-    def is_trade(self):
-        return self.tipo_ordem is not None and self.stoploss is not None
-
-    def is_monitoramento(self):
-        return self.tp_monitorado is not None
 
     def to_dict(self):
         return {
@@ -43,5 +32,4 @@ class MensagemSinal:
             "tp4": self.tp4,
             "margin": self.margem,
             "leverage": self.alavancagem,
-            "tp": self.tp_monitorado,
         }

@@ -150,6 +150,11 @@ async def main():
         logger.info("🚦 - Mensagem recebida - ainda não classificada entre sinal ou monitoramento.")
         resultado = classificar_mensagem(mensagem)
         tipo = resultado["tipo"]
+
+        if tipo == "invalida":
+            logger.warning(f"🚫 - Mensagem inválida ignorada: {resultado.get('erro')}")
+            return None
+
         dados = resultado["dados"]
 
         if tipo == TRADE:

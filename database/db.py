@@ -431,7 +431,7 @@ def take_profits_atualizar(symbol, numero_tp, novo_status=3, sinal_id=None):
         query = """
             UPDATE take_profits
             SET tp_status_id = %(status)s
-            WHERE id_sinal = %(sinal_id)s
+            WHERE sinal_id = %(sinal_id)s
               AND numero = %(numero)s
         """
         params = {"sinal_id": sinal_id, "numero": numero_tp, "status": novo_status}
@@ -440,7 +440,7 @@ def take_profits_atualizar(symbol, numero_tp, novo_status=3, sinal_id=None):
         query = """
             UPDATE take_profits
             SET tp_status_id = %(status)s
-            WHERE id_sinal IN (
+            WHERE sinal_id IN (
                 SELECT id FROM sinais
                 WHERE symbol = %(symbol)s AND ordem_status_id = 1
             )
@@ -449,6 +449,7 @@ def take_profits_atualizar(symbol, numero_tp, novo_status=3, sinal_id=None):
         params = {"symbol": symbol, "numero": numero_tp, "status": novo_status}
 
     executar_update(query, params)
+
 
 
 def take_profits_por_sinal(sinal_id):
