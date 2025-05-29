@@ -75,14 +75,20 @@ def extrair_dados_mensagem(mensagem):
     if type_match:
         dados["type"] = type_match.group(1).upper()
     if sl_match:
-        dados["stoploss"] = float(sl_match.group(1))
+        stop = float(sl_match.group(1))
+        if stop <= 0:
+            raise ValueError(f"❌ Stop Loss inválido: {stop}")
+        dados["stoploss"] = stop
     if margin_match:
         dados["margin"] = margin_match.group(1).capitalize()
         dados["leverage"] = margin_match.group(2) + "X"
     if target_done:
         dados["tp"] = f"TP{target_done.group(1)}"
     for i, alvo in enumerate(targets[:4], start=1):
-        dados[f"tp{i}"] = float(alvo)
+        valor = float(alvo)
+        if valor <= 0:
+            raise ValueError(f"❌ Valor inválido para TP{i}: {valor}")
+        dados[f"tp{i}"] = valor
 
     logger.debug("🔎 - Par: %s", symbol.group(1) if symbol else "N/A")
     logger.debug("🔎 - Tipo: %s", type_match.group(1) if type_match else "N/A")
@@ -104,7 +110,11 @@ def classificar_mensagem(mensagem):
     Returns:
         dict: Dicionário com chave 'tipo' e os 'dados' extraídos.
     """
-    dados = extrair_dados_mensagem(mensagem)
+    try:
+        dados = extrair_dados_mensagem(mensagem)
+    except ValueError as e:
+        logger.error(f"❌ Erro ao extrair mensagem: {e}")
+        return {"tipo": "invalida", "erro": str(e), "dados": {}}
     _msg = {}
 
     if "type" in dados and "stoploss" in dados:

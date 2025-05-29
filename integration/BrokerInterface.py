@@ -35,3 +35,14 @@ class BrokerInterface(ABC):
     @abstractmethod
     def obter_todas_ordens_abertas(self, symbol):
         pass
+    @abstractmethod
+    def fechar_todas_ordens_abertas(self, symbol):
+        pass
+
+    @abstractmethod
+    def verificar_tipo_margem(self, symbol):
+        pass
+
+    @abstractmethod
+    def mudar_tipo_margem(self, symbol):
+        pass

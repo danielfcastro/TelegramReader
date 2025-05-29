@@ -18,3 +18,4 @@ types-requests
 types-psycopg2
 types-PyYAML
 types-ujson
+mypy

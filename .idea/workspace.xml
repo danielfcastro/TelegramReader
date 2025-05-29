@@ -4,19 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Configuração para Linux Alpine">
+    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Fix de atualização de ordens">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TelegramReader.py" beforeDir="false" afterPath="$PROJECT_DIR$/TelegramReader.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TradeExecutor.py" beforeDir="false" afterPath="$PROJECT_DIR$/TradeExecutor.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/db.py" beforeDir="false" afterPath="$PROJECT_DIR$/database/db.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/scripts/sinais.sql" beforeDir="false" afterPath="$PROJECT_DIR$/database/scripts/sinais.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/integration/BingXBroker.py" beforeDir="false" afterPath="$PROJECT_DIR$/integration/BingXBroker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/integration/BrokerInterface.py" beforeDir="false" afterPath="$PROJECT_DIR$/integration/BrokerInterface.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/message/mensagem_sinal.py" beforeDir="false" afterPath="$PROJECT_DIR$/message/mensagem_sinal.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tools/testar_monitoramento_be.py" beforeDir="false" afterPath="$PROJECT_DIR$/tools/testar_monitoramento_be.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web_dashboard/templates/dashboard.html" beforeDir="false" afterPath="$PROJECT_DIR$/web_dashboard/templates/dashboard.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,7 +28,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="feature/oo" />
+        <entry key="$PROJECT_DIR$" value="main" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -79,31 +70,31 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python.TradeExecutor.executor": "Run",
-    "Python.start_all.executor": "Debug",
-    "Python.testar_insercao_sinal.executor": "Run",
-    "Python.testar_monitoramento_be.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "main",
-    "ignore.virus.scanning.warn.message": "true",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.TradeExecutor.executor&quot;: &quot;Run&quot;,
+    &quot;Python.start_all.executor&quot;: &quot;Debug&quot;,
+    &quot;Python.testar_insercao_sinal.executor&quot;: &quot;Run&quot;,
+    &quot;Python.testar_monitoramento_be.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;release/v.1.1.0&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "DatabaseDriversLRU": [
-      "postgresql"
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;postgresql&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="Python.start_all">
     <configuration name="TradeExecutor" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="ProjetoTelegram" />
@@ -203,7 +194,7 @@
         <item itemvalue="Python.testar_monitoramento_be" />
         <item itemvalue="Python.testar_insercao_sinal" />
         <item itemvalue="Python.start_all" />
-        <item itemvalue="Python.start_all" />
+        <item itemvalue="Python.TradeExecutor" />
       </list>
     </recent_temporary>
   </component>
@@ -226,6 +217,7 @@
       <workItem from="1746492082110" duration="50414000" />
       <workItem from="1746665220865" duration="362000" />
       <workItem from="1746665594501" duration="65981000" />
+      <workItem from="1748532199558" duration="3196000" />
     </task>
     <task id="LOCAL-00001" summary="Fix para insert de sinais e monitoramento em banco">
       <option name="closed" value="true" />
@@ -419,7 +411,71 @@
       <option name="project" value="LOCAL" />
       <updated>1746923167305</updated>
     </task>
-    <option name="localTasksCounter" value="25" />
+    <task id="LOCAL-00025" summary="- Fechamento">
+      <option name="closed" value="true" />
+      <created>1748209905378</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1748209905378</updated>
+    </task>
+    <task id="LOCAL-00026" summary="- Fechamento">
+      <option name="closed" value="true" />
+      <created>1748247637285</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1748247637285</updated>
+    </task>
+    <task id="LOCAL-00027" summary="- Tentativa de fix para o SL">
+      <option name="closed" value="true" />
+      <created>1748297653340</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1748297653340</updated>
+    </task>
+    <task id="LOCAL-00028" summary="- Tentativa de fix para o SL">
+      <option name="closed" value="true" />
+      <created>1748346593974</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1748346593974</updated>
+    </task>
+    <task id="LOCAL-00029" summary="- Mudança na configuração do serviço">
+      <option name="closed" value="true" />
+      <created>1748346943002</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1748346943002</updated>
+    </task>
+    <task id="LOCAL-00030" summary="- Fix de fechamento, cancela_order">
+      <option name="closed" value="true" />
+      <created>1748381188043</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1748381188043</updated>
+    </task>
+    <task id="LOCAL-00031" summary="- Fix de fechamento, cancela_order">
+      <option name="closed" value="true" />
+      <created>1748381818993</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1748381818993</updated>
+    </task>
+    <task id="LOCAL-00032" summary="- Fix de atualização de ordens">
+      <option name="closed" value="true" />
+      <created>1748548624022</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1748548624022</updated>
+    </task>
+    <option name="localTasksCounter" value="33" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -467,20 +523,30 @@
     <MESSAGE value="- introdução da divisão do trade em 5 proporções&#10;- break even para TP2 e TP4&#10;- ajuste no modelo de dados para mais clareza&#10;- correção das queries&#10;novo conteúdo do README.md" />
     <MESSAGE value="- Correção do README.md e remoção de parâmetros não usados mais" />
     <MESSAGE value="- Configuração para Linux Alpine" />
-    <option name="LAST_COMMIT_MESSAGE" value="- Configuração para Linux Alpine" />
+    <MESSAGE value="- Fechamento" />
+    <MESSAGE value="- Tentativa de fix para o SL" />
+    <MESSAGE value="- Mudança na configuração do serviço" />
+    <MESSAGE value="- Fix de fechamento, cancela_order" />
+    <MESSAGE value="- Fix de atualização de ordens" />
+    <option name="LAST_COMMIT_MESSAGE" value="- Fix de atualização de ordens" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/TelegramReader.py</url>
-          <line>175</line>
+          <line>180</line>
           <option name="timeStamp" value="84" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/TradeExecutor.py</url>
-          <line>195</line>
-          <option name="timeStamp" value="85" />
+          <url>file://$PROJECT_DIR$/integration/BingXBroker.py</url>
+          <line>240</line>
+          <option name="timeStamp" value="88" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/integration/BingXBroker.py</url>
+          <line>318</line>
+          <option name="timeStamp" value="89" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -495,7 +561,7 @@
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/ProjetoTelegram$testar_monitoramento_be.coverage" NAME="testar_monitoramento_be Coverage Results" MODIFIED="1746316630390" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tools" />
     <SUITE FILE_PATH="coverage/ProjetoTelegram$testar_insercao_sinal.coverage" NAME="testar_insercao_sinal Coverage Results" MODIFIED="1746316087789" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tools" />
-    <SUITE FILE_PATH="coverage/TelegramReader$start_all.coverage" NAME="start_all Coverage Results" MODIFIED="1748170737562" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/TelegramReader$start_all.coverage" NAME="start_all Coverage Results" MODIFIED="1748173521487" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/ProjetoTelegram$start_all.coverage" NAME="start_all Coverage Results" MODIFIED="1746918623277" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/ProjetoTelegram$TradeExecutor.coverage" NAME="TradeExecutor Coverage Results" MODIFIED="1746666069586" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
