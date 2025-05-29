@@ -425,3 +425,33 @@ class BingXBroker(BrokerInterface):
         except Exception as e:
             logger.exception(f"❌ - Erro ao fechar ordens para o simbolo {symbol}: {e}")
             return {}
+
+
+    def verificar_tipo_margem(self, symbol):
+        try:
+            path = "/openApi/swap/v2/trade/marginType"
+            body = {
+                "symbol": symbol
+            }
+            logger.debug(f"✅ - Verificando tipo de margem de simbolo: {body}")
+            response = self._send_request("GET", path, body)
+            logger.debug(f"✅ - Tipo de margem: {response}")
+            return response["data"]["marginType"]
+        except Exception as e:
+            logger.exception(f"❌ - Erro ao verificar tipo de margem para o simbolo: {symbol}: {e}")
+            return {}
+
+    def mudar_tipo_margem(self, symbol):
+        try:
+            path = "/openApi/swap/v2/trade/marginType"
+            body = {
+                "symbol": symbol,
+                "marginType": "CROSSED"
+            }
+            logger.debug(f"✅ - Mudando tipo de margem de ordem: {body}")
+            response = self._send_request("POST", path, body)
+            logger.debug(f"✅ - Novo tipo de margem: {response}")
+            return response
+        except Exception as e:
+            logger.exception(f"❌ - Erro ao mudar tipo de margem para o simbolo: {symbol}: {e}")
+            return {}

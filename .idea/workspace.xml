@@ -4,11 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Fix de fechamento, cancela_order">
+    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Fix de atualização de ordens">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/db.py" beforeDir="false" afterPath="$PROJECT_DIR$/database/db.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TradeExecutor.py" beforeDir="false" afterPath="$PROJECT_DIR$/TradeExecutor.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/integration/BingXBroker.py" beforeDir="false" afterPath="$PROJECT_DIR$/integration/BingXBroker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/integration/BrokerInterface.py" beforeDir="false" afterPath="$PROJECT_DIR$/integration/BrokerInterface.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -218,7 +218,7 @@
       <workItem from="1746492082110" duration="50414000" />
       <workItem from="1746665220865" duration="362000" />
       <workItem from="1746665594501" duration="65981000" />
-      <workItem from="1748532199558" duration="2583000" />
+      <workItem from="1748532199558" duration="3196000" />
     </task>
     <task id="LOCAL-00001" summary="Fix para insert de sinais e monitoramento em banco">
       <option name="closed" value="true" />
@@ -468,7 +468,15 @@
       <option name="project" value="LOCAL" />
       <updated>1748381818993</updated>
     </task>
-    <option name="localTasksCounter" value="32" />
+    <task id="LOCAL-00032" summary="- Fix de atualização de ordens">
+      <option name="closed" value="true" />
+      <created>1748548624022</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1748548624022</updated>
+    </task>
+    <option name="localTasksCounter" value="33" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -520,7 +528,8 @@
     <MESSAGE value="- Tentativa de fix para o SL" />
     <MESSAGE value="- Mudança na configuração do serviço" />
     <MESSAGE value="- Fix de fechamento, cancela_order" />
-    <option name="LAST_COMMIT_MESSAGE" value="- Fix de fechamento, cancela_order" />
+    <MESSAGE value="- Fix de atualização de ordens" />
+    <option name="LAST_COMMIT_MESSAGE" value="- Fix de atualização de ordens" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

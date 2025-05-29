@@ -62,7 +62,9 @@ async def receber_sinal_ordem(request: Request):
             trade_percentage = float(os.getenv("TRADE_PERCENTAGE", "3"))
             valor_trade = saldo * (trade_percentage / 100)
             quantidade = ajustar_quantidade( valor_trade  / preco_mercado, step=0.0001)
-            symbol = utils.normalizar_symbol(sinal["symbol"])
+            margin_type = broker.verificar_tipo_margem(symbol=symbol)
+            if margin_type != "CROSSED":
+                broker.mudar_tipo_margem(symbol=symbol)
             logger.debug(f"⚠️ - symbol: {symbol} - saldo: {saldo} - trade_percentage: {trade_percentage} - quantidade: {quantidade} - preco_mercado: {preco_mercado} - valor_trade: {valor_trade} - tipo_ordem: {tipo_ordem}")
             try:
                 sucesso, entry_price_retorno, order_id, quantidade = broker.enviar_ordem_tp_sl(
