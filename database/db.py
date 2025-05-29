@@ -12,7 +12,7 @@ logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 
 debug_update=True
 debug_select=False
-debug_insert=True
+debug_insert=False
 
 # Inicializa o pool globalmente
 DB_POOL = pool.SimpleConnectionPool(
@@ -416,27 +416,40 @@ def stop_loss_fire():
     resultado = executar_select(query)
     return resultado if resultado is not None else []
 
-def take_profits_atualizar(symbol, numero_tp, novo_status=3):
+def take_profits_atualizar(symbol, numero_tp, novo_status=3, sinal_id=None):
     """
-    Atualiza o status de um Take Profit específico de um symbol.
+    Atualiza o status de um Take Profit específico de um symbol ou de um sinal_id diretamente.
 
     Args:
         symbol (str): symbol do sinal (ex: "BTC/USDT").
         numero_tp (int): Número do TP (1 a 5).
         novo_status (int): Novo status (ex: 3 = atingido).
+        sinal_id (int or None): ID específico do sinal (opcional).
     """
 
-    query = """
-        UPDATE take_profits
-        SET tp_status_id = %(status)s
-        WHERE sinal_id IN (
-            SELECT id FROM sinais
-            WHERE symbol = %(symbol)s AND ordem_status_id = 1
-        )
-        AND numero = %(numero)s
-    """
-    params = {"symbol": symbol, "numero": numero_tp, "status": novo_status}
+    if sinal_id is not None:
+        query = """
+            UPDATE take_profits
+            SET tp_status_id = %(status)s
+            WHERE id_sinal = %(sinal_id)s
+              AND numero = %(numero)s
+        """
+        params = {"sinal_id": sinal_id, "numero": numero_tp, "status": novo_status}
+
+    else:
+        query = """
+            UPDATE take_profits
+            SET tp_status_id = %(status)s
+            WHERE id_sinal IN (
+                SELECT id FROM sinais
+                WHERE symbol = %(symbol)s AND ordem_status_id = 1
+            )
+            AND numero = %(numero)s
+        """
+        params = {"symbol": symbol, "numero": numero_tp, "status": novo_status}
+
     executar_update(query, params)
+
 
 def take_profits_por_sinal(sinal_id):
     """

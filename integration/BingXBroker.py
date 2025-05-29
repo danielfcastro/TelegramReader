@@ -249,6 +249,7 @@ class BingXBroker(BrokerInterface):
         try:
             self.cancela_stop_loss(symbol)
             ordem = self.get_open_order_info(symbol, order_id)
+            banco_ordem = database.db.ordem_info(symbol=symbol, exigir_break_even_inativo=False)
             if not ordem:
                 logger.warning(f"⚠️ - Nenhuma ordem encontrada para {symbol}")
                 return {"status": "no_order"}
@@ -296,8 +297,19 @@ class BingXBroker(BrokerInterface):
                         logger.error(f"❌ - Mesmo após ajuste, falhou SL para {symbol}: {response2}")
                 else:
                     logger.error(f"❌ - Erro 110424 sem número detectável em: {msg}")
+            elif response.get("code") == 80017:
+                database.db.ordem_desabilitar(id_sinal=banco_ordem['id'])
+                database.db.take_profits_atualizar(symbol=symbol, numero_tp=1, novo_status=4,
+                                                   sinal_id=banco_ordem['id'])
+                database.db.take_profits_atualizar(symbol=symbol, numero_tp=2, novo_status=4,
+                                                   sinal_id=banco_ordem['id'])
+                database.db.take_profits_atualizar(symbol=symbol, numero_tp=3, novo_status=4,
+                                                   sinal_id=banco_ordem['id'])
+                database.db.take_profits_atualizar(symbol=symbol, numero_tp=4, novo_status=4,
+                                                   sinal_id=banco_ordem['id'])
             else:
                 logger.error(f"❌ - Erro ao ajustar SL para {symbol}: {response}")
+
 
         except Exception as e:
             logger.exception(f"❌ - Exceção ao ajustar SL para {symbol}: {e}")
