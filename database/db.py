@@ -84,7 +84,7 @@ def executar_update(query, params=None):
                 cur.execute(query, params)
                 conn.commit()
     except OperationalError as e:
-        logger.warning("⚠️ - Conexão perdida com o banco. Tentando nova conexão...")
+        logger.warning(f"⚠️ - Conexão perdida com o banco. Tentando nova conexão...: Exception: {e}")
         DB_POOL.putconn(conn, close=True)  # fecha a antiga
         conn = DB_POOL.getconn()
         with conn.cursor() as cur:
@@ -121,55 +121,3 @@ def fechar_pool():
     if DB_POOL and not DB_POOL.closed:
         DB_POOL.closeall()
         logger.info("✅ - Pool de conexões fechado.")
-
-
-#MÉTODOS DE DISPARO DE TRADE
-# Busca de sinais registrados no banco a partir da recepção das mensagens de Telegram
-# chamados de TradeExecutor
-def trade_fire():
-    """
-    Busca sinais pendentes de execução
-    ordem_status_id = 0 - RECEBIDA
-    Returns:
-        list[dict]: Lista de sinais prontos para envio de ordem.
-    """
-    query = """
-        SELECT * FROM sinais
-        WHERE ordem_status_id = 0
-        ORDER BY id DESC
-        FOR UPDATE SKIP LOCKED
-    """
-    resultado = executar_select(query)
-    return resultado if resultado is not None else []
-
-
-def ordem_info(par, exigir_break_even_inativo=False):
-    """
-    Busca a última ordem enviada para um determinado par.
-
-    Se `exigir_break_even_inativo` for True, filtra apenas ordens com break_even_status_id = 0.
-
-    Args:
-        par (str): Par de negociação, ex: 'BTC/USDT'.
-        exigir_break_even_inativo (bool): Se True, filtra por break_even_status_id = 0.
-
-    Returns:
-        dict | None: Registro mais recente da ordem, ou None.
-    """
-    condicoes = [
-        "par = %(par)s",
-        "ordem_status_id = 1",
-        "order_id != 0"
-    ]
-
-    if exigir_break_even_inativo:
-        condicoes.append("break_even_status_id = 0")
-
-    query = f"""
-        SELECT * FROM sinais
-        WHERE {' AND '.join(condicoes)}
-        ORDER BY id DESC
-        LIMIT 1
-    """
-    resultado = executar_select(query, {"par": par})
-    return resultado[0] if resultado else None
