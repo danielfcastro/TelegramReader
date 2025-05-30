@@ -10,7 +10,7 @@ def stop_loss_update(symbol, novo_sl):
         :param symbol: Par de trading (ex: "BTC/USDT").
     """
     query = """
-        UPDATE sinais
+        UPDATE v2.ordem
         SET sl = %s
         WHERE symbol = %s AND ordem_status_id = 1
     """
@@ -20,7 +20,7 @@ def stop_loss_update(symbol, novo_sl):
     except Exception as e:
         logger.exception(f"❌ - Falha ao atualizar SL para {symbol}: {e}")
 
-def stop_loss_soma_quantidade(symbol):
+def stop_loss_soma_quantidade(order_id):
     """
     Soma a quantidade total de sinais com break-even pendente para o par.
     break_even_status_id = 1 - ATIVAR
@@ -33,12 +33,11 @@ def stop_loss_soma_quantidade(symbol):
     """
     sql = """
     SELECT SUM(quantidade) AS total
-    FROM sinais
-    WHERE symbol = %(symbol)s 
-      AND break_even_status_id = 1
-      AND ordem_status_id = 1
+    FROM v2.take_profits
+    WHERE order_id = %(order_id)s 
+      AND tp_status_id = 1
     """
-    resultado = executar_select(sql, {"symbol": symbol})
+    resultado = executar_select(sql, {"order_id": order_id})
     if resultado and resultado[0]["total"] is not None:
         return resultado[0]["total"]
     return 0.0

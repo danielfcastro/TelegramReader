@@ -34,7 +34,7 @@ def ordem_inserir(dados_dict, order_id, entry_price, quantidade):
     }
 
     query_sinal = """
-        INSERT INTO sinais (
+        INSERT INTO v2.ordem (
             data_hora,
             symbol,
             tipo_ordem,
@@ -88,7 +88,7 @@ def ordem_info(par, exigir_break_even_inativo=False):
         condicoes.append("break_even_status_id = 0")
 
     query = f"""
-        SELECT * FROM sinais
+        SELECT * FROM v2.ordem
         WHERE {' AND '.join(condicoes)}
         ORDER BY id DESC
         LIMIT 1

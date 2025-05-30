@@ -58,11 +58,11 @@ def iniciar_telegram_reader():
 
 def iniciar_executor_sinal():
     logger.info("📤 - Iniciando TradeExecutorSinal...")
-    os.system("python fila/subscriber/TradeExecutorSinal.py")
+    os.system("python TradeExecutorSinal.py")
 
 def iniciar_executor_tp():
     logger.info("📈 - Iniciando TradeExecutorTP...")
-    os.system("python fila/subscriber/TradeExecutorTP.py")
+    os.system("python TradeExecutorTP.py")
 
 def iniciar_componentes():
     t1 = threading.Thread(target=iniciar_telegram_reader, daemon=True)

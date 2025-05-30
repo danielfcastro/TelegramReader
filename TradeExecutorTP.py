@@ -23,7 +23,7 @@ def consumir_monitoramentos():
             numero_tp = int(msg.tp_monitorado)
 
             # Enriquecer a mensagem com order_id mais recente
-            order_id = tp_ordem_id_mais_nova(symbol)
+            order_id = database.take_profit.tp_ordem_id_mais_nova(symbol)
             if order_id != 0:
                 logger.warning(f"⚠️ Nenhuma ordem executada encontrada para {symbol}")
                 continue
@@ -31,7 +31,7 @@ def consumir_monitoramentos():
             msg.order_id = order_id
 
             # Atualiza status do TP no banco
-            tp_atualizar(order_id=msg.order_id, numero_tp=msg.tp_monitorado, novo_status=3)
+            database.take_profit.tp_atualizar(order_id=msg.order_id, numero_tp=msg.tp_monitorado, novo_status=3)
 
             # Buscar informações da ordem principal
             response = broker.get_open_order_info(symbol=symbol, order_id=order_id)
@@ -54,7 +54,7 @@ def consumir_monitoramentos():
 
             # Lógica para ajustar Stop Loss após TP
             if numero_tp <4:
-                quantidade = database.stop_loss.stop_loss_soma_quantidade(symbol)
+                quantidade = database.stop_loss.stop_loss_soma_quantidade(order_id)
                 sucesso = broker.ajustar_stop_loss(
                     symbol=symbol,
                     position_side="BOTH",
@@ -66,7 +66,6 @@ def consumir_monitoramentos():
                 if sucesso:
                     database.take_profit.tp_atualizar(order_id=order_id, numero_tp=numero_tp, novo_status=3)
             else:
-                response = broker.get_open_order_info(symbol=symbol, order_id=order_id)
                 database.take_profit.tp_atualizar(order_id=order_id, numero_tp=4, novo_status=3)
                 if not response:
                     logger.warning(f"⚠️ - Nenhuma ordem encontrada para {symbol}")
