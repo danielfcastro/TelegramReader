@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
 
+from message.mensagem_sinal import MensagemSinal
+
+
 class BrokerInterface(ABC):
     @abstractmethod
-    def enviar_ordem_tp_sl(self, symbol, side, leverage, side_leverage, tp, sl, quantidade, preco_mercado, id_sinal):
+    def enviar_ordem_tp_sl(self, mensagem: MensagemSinal, quantidade):
         pass
 
     @abstractmethod
@@ -14,7 +17,7 @@ class BrokerInterface(ABC):
         pass
 
     @abstractmethod
-    def ajustar_take_profit(self, symbol, position_side, quantity, stop_price, numero, order_id):
+    def ajustar_take_profit(self, symbol, position_side, quantity, stop_price, order_id, numero):
         pass
 
     @abstractmethod
@@ -32,11 +35,9 @@ class BrokerInterface(ABC):
     @abstractmethod
     def cancela_order(self, symbol, order_id=None):
         pass
+
     @abstractmethod
     def obter_todas_ordens_abertas(self, symbol):
-        pass
-    @abstractmethod
-    def fechar_todas_ordens_abertas(self, symbol):
         pass
 
     @abstractmethod
@@ -45,4 +46,16 @@ class BrokerInterface(ABC):
 
     @abstractmethod
     def mudar_tipo_margem(self, symbol):
+        pass
+
+    @abstractmethod
+    def fecha_ordem_mercado(self, symbol):
+        pass
+
+    @abstractmethod
+    def cancela_ordem_tp(self, symbol):
+        pass
+
+    @abstractmethod
+    def cancela_ordem_sl(self, symbol):
         pass

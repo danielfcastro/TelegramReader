@@ -5,9 +5,23 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Fix de atualização de ordens">
+      <change afterPath="$PROJECT_DIR$/database/sinal.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/database/stop_loss.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/database/take_profit.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/fila/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/fila/publisher/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/fila/subscriber/TradeExecutorSinal.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/fila/subscriber/TradeExecutorTP.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/fila/subscriber/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TelegramReader.py" beforeDir="false" afterPath="$PROJECT_DIR$/TelegramReader.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TelegramReader.py" beforeDir="false" afterPath="$PROJECT_DIR$/fila/publisher/TelegramReader.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TradeExecutor.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/db.py" beforeDir="false" afterPath="$PROJECT_DIR$/database/db.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/integration/BingXBroker.py" beforeDir="false" afterPath="$PROJECT_DIR$/integration/BingXBroker.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/integration/BrokerInterface.py" beforeDir="false" afterPath="$PROJECT_DIR$/integration/BrokerInterface.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/message/mensagem_sinal.py" beforeDir="false" afterPath="$PROJECT_DIR$/message/mensagem_sinal.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/message/mensagem_tp.py" beforeDir="false" afterPath="$PROJECT_DIR$/message/mensagem_tp.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/start_all.py" beforeDir="false" afterPath="$PROJECT_DIR$/start_all.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -28,7 +42,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="main" />
+        <entry key="$PROJECT_DIR$" value="development" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -70,31 +84,43 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;Python.TradeExecutor.executor&quot;: &quot;Run&quot;,
-    &quot;Python.start_all.executor&quot;: &quot;Debug&quot;,
-    &quot;Python.testar_insercao_sinal.executor&quot;: &quot;Run&quot;,
-    &quot;Python.testar_monitoramento_be.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;release/v.1.1.0&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.TradeExecutor.executor": "Run",
+    "Python.start_all.executor": "Debug",
+    "Python.testar_insercao_sinal.executor": "Run",
+    "Python.testar_monitoramento_be.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "release/v1.2.0",
+    "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "C:/Varios/TelegramReader/queue/subscriber",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;DatabaseDriversLRU&quot;: [
-      &quot;postgresql&quot;
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "postgresql"
     ]
   }
-}</component>
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Varios\TelegramReader\queue\subscriber" />
+      <recent name="C:\Varios\TelegramReader\queue\publisher" />
+      <recent name="C:\Varios\TelegramReader\queue" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Varios\TelegramReader\fila\publisher" />
+      <recent name="C:\Varios\TelegramReader\database" />
+    </key>
+  </component>
   <component name="RunManager" selected="Python.start_all">
     <configuration name="TradeExecutor" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="ProjetoTelegram" />
@@ -534,19 +560,14 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/TelegramReader.py</url>
-          <line>180</line>
-          <option name="timeStamp" value="84" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/integration/BingXBroker.py</url>
-          <line>240</line>
+          <line>223</line>
           <option name="timeStamp" value="88" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/integration/BingXBroker.py</url>
-          <line>318</line>
-          <option name="timeStamp" value="89" />
+          <line>385</line>
+          <option name="timeStamp" value="90" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>

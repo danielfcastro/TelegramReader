@@ -6,30 +6,18 @@ import sys
 import threading
 import signal
 
-from TradeExecutor import iniciar_executor
 from database import db
 from log.logger_config import configurar_logging
 from utils import carregar_config
 
-# Diretório de logs
 LOG_DIR = "logs"
 os.makedirs(LOG_DIR, exist_ok=True)
 atexit.register(db.fechar_pool)
 
-# Configuração global de logging
 configurar_logging()
-
-# Silenciar logs detalhados de utils, mostrando apenas WARNING ou mais graves
-#logging.getLogger("utils").setLevel(logging.WARNING)
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 
 def salvar_env_com_base_no_config(is_testnet):
-    """
-    Gera um arquivo `.env` com base nas configurações do `config.properties` para uso pelo restante da aplicação.
-
-    Args:
-        is_testnet (bool): Se `True`, configura para rede de testes; caso contrário, para rede principal.
-    """
     config = carregar_config()
     is_testnet_str = "true" if is_testnet else "false"
     env_lines = [
@@ -37,18 +25,11 @@ def salvar_env_com_base_no_config(is_testnet):
         f"BROKER=BingX",
         f"IS_TESTNET={is_testnet_str}",
         f"",
-    ]
-    env_lines.append(f"broker_api_key={config['bingx_api_key']}")
-    env_lines.append(f"broker_api_secret={config['bingx_secret_key']}")
-
-    if is_testnet:
-        env_lines.append(f"broker_api_url={config['bingx_api_url_testnet']}")
-    else:
-        env_lines.append(f"broker_api_url={config['bingx_api_url']}")
-
-    env_lines.extend([
+        f"broker_api_key={config['bingx_api_key']}",
+        f"broker_api_secret={config['bingx_secret_key']}",
+        f"broker_api_url={config['bingx_api_url_testnet'] if is_testnet else config['bingx_api_url']}",
         "",
-        "#db configuration",
+        f"#db configuration",
         f"db_type={config['db_type']}",
         f"db_host={config['db_host']}",
         f"db_port={config['db_port']}",
@@ -56,65 +37,52 @@ def salvar_env_com_base_no_config(is_testnet):
         f"db_user={config['db_user']}",
         f"db_password={config['db_password']}",
         "",
-        "#telegram configuration",
+        f"#telegram configuration",
         f"api_id={config['api_id']}",
         f"api_hash={config['api_hash']}",
         f"group_id={config['group_id']}",
         f"session_name={config['session_name']}",
         "",
-        "#trade configuration",
+        f"#trade configuration",
         f"trade_percentage={config['trade_percentage']}"
-    ])
+    ]
 
     with open(".env", "w") as f:
         f.write("\n".join(env_lines) + "\n")
 
-    logger.debug("📄 - Variáveis de ambiente definidas:")
-    for linha in env_lines:
-        logger.debug("  %s", linha)
+    logger.debug("📄 - Variáveis de ambiente definidas.")
 
 def iniciar_telegram_reader():
-    """
-    Inicia o componente de leitura de mensagens do Telegram, executando o script `TelegramReader.py`
-    em uma thread separada.
-    """
     logger.info("🚦 - Iniciando Telegram Reader...")
     os.system("python TelegramReader.py")
 
-def iniciar_trade_executor():
-    """
-    Inicia o componente de execução de ordens com base nos sinais salvos, em uma thread separada.
+def iniciar_executor_sinal():
+    logger.info("📤 - Iniciando TradeExecutorSinal...")
+    os.system("python fila/subscriber/TradeExecutorSinal.py")
 
-    Args:
-        _broker (BrokerInterface): Instância do broker (ex: BingXBroker) para enviar ordens.
-    """
-    executor_loop = iniciar_executor()
-    executor_loop()
+def iniciar_executor_tp():
+    logger.info("📈 - Iniciando TradeExecutorTP...")
+    os.system("python fila/subscriber/TradeExecutorTP.py")
 
-def iniciar_com_broker():
-    """
-    Inicializa os dois componentes principais:
-      - Leitor de sinais do Telegram
-      - Executor de ordens na corretora
-
-    Ambos são iniciados em threads daemonizadas.
-
-    """
-
+def iniciar_componentes():
     t1 = threading.Thread(target=iniciar_telegram_reader, daemon=True)
-    t2 = threading.Thread(target=iniciar_trade_executor, daemon=True)
+    t2 = threading.Thread(target=iniciar_executor_sinal, daemon=True)
+    t3 = threading.Thread(target=iniciar_executor_tp, daemon=True)
 
     t1.start()
     t2.start()
+    t3.start()
+
     try:
-        while t1.is_alive() and t2.is_alive():
+        while t1.is_alive() or t2.is_alive() or t3.is_alive():
             t1.join(timeout=1)
             t2.join(timeout=1)
+            t3.join(timeout=1)
     except KeyboardInterrupt:
-        logger.warning("🛑 - Execução do bot interrompida pelo usuário.")
+        logger.warning("🛑 - Execução interrompida pelo usuário.")
         sys.exit(0)
 
-def finalizar_programa(signal_received, frame):
+def finalizar_programa(*_):
     logger.info("⚠️ - Encerrando aplicação por sinal do sistema...")
     db.fechar_pool()
     sys.exit(0)
@@ -136,11 +104,10 @@ if __name__ == "__main__":
         ),
         epilog=(
             "\033[94m💡 EXEMPLOS DE USO:\033[0m\n"
-            "   \033[97mpython seu_arquivo.py --testnet\033[0m     \033[90m# Executa em ambiente de testes\033[0m\n"
-            "   \033[97mpython seu_arquivo.py --mainnet\033[0m     \033[90m# Executa em ambiente de produção\033[0m"
+            "   \033[97mpython start_all.py --testnet\033[0m     \033[90m# Executa em ambiente de testes\033[0m\n"
+            "   \033[97mpython start_all.py --mainnet\033[0m     \033[90m# Executa em ambiente de produção\033[0m"
         ),
         formatter_class=argparse.RawTextHelpFormatter
-
     )
 
     group = parser.add_mutually_exclusive_group(required=True)
@@ -148,10 +115,7 @@ if __name__ == "__main__":
     group.add_argument("--mainnet", action="store_true", help="Usar ambiente de produção (mainnet)")
 
     args = parser.parse_args()
-
-    testnet = args.testnet
-
-    salvar_env_com_base_no_config(testnet)
+    salvar_env_com_base_no_config(args.testnet)
 
     logger.info("🚦 - Iniciando componentes...")
-    iniciar_com_broker()
+    iniciar_componentes()
