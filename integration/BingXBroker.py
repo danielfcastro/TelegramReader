@@ -186,8 +186,10 @@ class BingXBroker(BrokerInterface, ABC):
             codigo = response.get("code", "sem_codigo")
             if codigo == 0:
                 order_id = response["data"]["order"]["orderId"]
+                average_price = response["data"]["order"]["avgPrice"]
+                quantidade = response["data"]["order"]["quantity"]
                 logger.info(f"✅ - Ordem enviada com sucesso - order_id: {order_id}")
-                return {"sucesso": True, "order_id": order_id, "quantidade": quantidade}
+                return {"sucesso": True, "order_id": order_id, "quantidade": quantidade, "average_price":average_price}
             else:
                 mensagem_erro = response.get("msg", "Erro desconhecido")
                 logger.error(f"❌ - Falha ao enviar ordem: [{codigo}] {mensagem_erro}")
@@ -220,7 +222,7 @@ class BingXBroker(BrokerInterface, ABC):
             logger.exception(f"❌ - Erro ao cancelar SL para {symbol}: {e}")
             return {}
 
-    def ajustar_stop_loss(self, symbol, position_side, quantity, stop_price, order_id):
+    def ajustar_stop_loss(self, symbol, position_side, quantity, stop_price, order_id, current_order_side):
         """
         Ajusta o Stop Loss de uma posição para o ponto de Break Even (sem lucro ou prejuízo).
         Tenta novamente com a quantidade sugerida pela BingX se a original for rejeitada.
@@ -230,6 +232,7 @@ class BingXBroker(BrokerInterface, ABC):
         """
         try:
             path="/openApi/swap/v2/trade/order"
+            side = "SELL" if current_order_side == "BUY" else "SELL"
             def enviar_sl(qtd):
                 body = {
                     "symbol": symbol,
@@ -251,7 +254,7 @@ class BingXBroker(BrokerInterface, ABC):
 
 
             logger.debug(
-                f"🛡️ - Tentando SL - symbol: {symbol}, side: {side}, position_side: {side}, stop_price: {stop_price_final}, quantidade: {quantity}")
+                f"🛡️ - Tentando SL - symbol: {symbol}, side: {side}, position_side: {side}, stop_price: {stop_price}, quantidade: {quantity}")
             response = enviar_sl(quantity)
 
             # Verifica sucesso
@@ -404,7 +407,7 @@ class BingXBroker(BrokerInterface, ABC):
             logger.debug(f"✅ - Pedido de verificação de tipo de margem: body: {body}")
             response = self._send_request("GET ", path, body)
             logger.debug(f"✅ - Resposta do pedido de verificação de tipo de margem: {response}")
-            return response
+            return response["code"]["marginType"]
         except Exception as e:
             logger.exception(f"❌ - Erro {symbol}: {e}")
             return {}

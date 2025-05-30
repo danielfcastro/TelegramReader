@@ -1,7 +1,5 @@
 import queue
 
-from database.stop_loss import stop_loss_updatee, stop_loss_soma_quantidade
-from database.take_profit import tp_ordem_id_mais_nova, tp_atualizar
 from message.mensagem_tp import MensagemTP
 from integration.BingXBroker import BingXBroker
 import database.db
@@ -46,6 +44,7 @@ def consumir_monitoramentos():
             commission = response["data"]["order"]["commission"]
             order_id = response["data"]["order"]["orderId"]
             current_stop_price = response["data"]["order"]["stopLoss"]["stopPrice"]
+            current_order_side = response["data"]["order"]["stopLoss"]["side"]
             # Se TP2, atualiza o SL para ser o entry_price
             if numero_tp == 2:
                 database.stop_loss.stop_loss_update(symbol, entry_price)
@@ -61,13 +60,14 @@ def consumir_monitoramentos():
                     position_side="BOTH",
                     quantity=quantidade,
                     stop_price=stop_price,
-                    order_id=order_id
+                    order_id=order_id,
+                    current_order_side=current_order_side
                 )
                 if sucesso:
-                    tp_atualizar(order_id=order_id, numero_tp=numero_tp, novo_status=3)
+                    database.take_profit.tp_atualizar(order_id=order_id, numero_tp=numero_tp, novo_status=3)
             else:
                 response = broker.get_open_order_info(symbol=symbol, order_id=order_id)
-                tp_atualizar(order_id=order_id, numero_tp=4, novo_status=3)
+                database.take_profit.tp_atualizar(order_id=order_id, numero_tp=4, novo_status=3)
                 if not response:
                     logger.warning(f"⚠️ - Nenhuma ordem encontrada para {symbol}")
                     continue

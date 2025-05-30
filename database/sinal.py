@@ -1,26 +1,38 @@
 from database.db import executar_insert, executar_select
 
 
-def ordem_inserir(dados):
+def ordem_inserir(dados_dict, order_id, entry_price, quantidade):
     """
-    Insere uma nova ordem na tabela `sinais`.
+    Insere uma nova ordem na tabela `sinais` com dados provenientes da ordem real enviada ao broker.
 
     Args:
-        dados (dict): Dados do sinal com os seguintes campos obrigatórios:
+        dados_dict (dict): Dados do sinal com os seguintes campos obrigatórios:
             - symbol (str)
             - tipo_ordem (str)
             - margem (str)
             - alavancagem (int)
             - sl (float)
-            - quantidade (float)
-            - ordem_status_id (int) [opcional, default=2]
-            - break_even_status_id (int) [opcional, default=1]
-            - order_id (str) [opcional]
-            - entry_price (float) [opcional]
+
+        order_id (str): ID da ordem retornado pelo broker.
+        entry_price (float): Preço médio da ordem executada.
+        quantidade (float): Quantidade executada na ordem.
 
     Returns:
         int: ID do sinal inserido.
     """
+    dados = {
+        "symbol": dados_dict["symbol"],
+        "tipo_ordem": dados_dict["tipo_ordem"],
+        "margem": dados_dict["margem"],
+        "alavancagem": dados_dict["alavancagem"],
+        "sl": dados_dict["sl"],
+        "quantidade": quantidade,
+        "ordem_status_id": 2,
+        "break_even_status_id": 1,
+        "order_id": order_id,
+        "entry_price": entry_price
+    }
+
     query_sinal = """
         INSERT INTO sinais (
             data_hora,
@@ -48,12 +60,6 @@ def ordem_inserir(dados):
             %(entry_price)s
         ) RETURNING id
     """
-
-    # Defaults caso não sejam passados
-    dados.setdefault("ordem_status_id", 2)
-    dados.setdefault("break_even_status_id", 1)
-    dados.setdefault("order_id", None)
-    dados.setdefault("entry_price", None)
 
     sinal_id = executar_insert(query_sinal, dados)
     return sinal_id

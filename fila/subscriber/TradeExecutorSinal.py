@@ -3,13 +3,14 @@ import os
 import database
 import queue
 
-from database.sinal import ordem_inserir
 from message.mensagem_sinal import MensagemSinal
 from integration.BingXBroker import BingXBroker
 from utils import ajustar_quantidade
 
 fila_sinal = queue.Queue()
 proporcoes = [0.1, 0.2, 0.5, 0.2]
+REQUIRED_MARGIN_TYPE = "CROSSED"
+
 def consumir_sinais():
     print("🚀 TradeExecutorSinal iniciado.")
 
@@ -23,24 +24,38 @@ def consumir_sinais():
 
         try:
             msg = MensagemSinal(**mensagem)
+            #Recupera preço de mercado
             preco_mercado = broker.obter_preco_mercado(msg.symbol)
+            #Verifica o tipo de margem
+            margin_type = broker.verificar_tipo_margem(msg.symbol)
+            #Se for diferente de crossed configura para crossed
+            if margin_type != REQUIRED_MARGIN_TYPE:
+                broker.mudar_tipo_margem(msg.symbol)
+
+            #Recupera saldo disponível
             saldo = broker.obter_saldo_disponivel()
+            #Recupera se é BUY ou SELL
             tipo_ordem = msg.tipo_ordem.upper()
+            #Recupera o risco do trade na forma de percentagem do saldo
             trade_percentage = float(os.getenv("TRADE_PERCENTAGE", "3"))
+            #Calcula o valor monetário da trade
             valor_trade = saldo * (trade_percentage / 100)
+            #Calcula a quantidade de moedas para o trade
             quantidade_total = ajustar_quantidade(valor_trade / preco_mercado, step=0.0001)
+            #Envia a ordem
+            #"sucesso": True, "order_id": order_id, "quantidade": quantidade, "average_price":average_price
+            sucesso, order_id, quantidade, average_price = broker.enviar_ordem_tp_sl(msg, quantidade_total)
 
-            resultado, response = broker.enviar_ordem_tp_sl(msg, quantidade_total)
-
-            if resultado.get("sucesso"):
-                ordem_inserir(msg.to_dict(), order_id, )
+            if sucesso:
+                #Insere a ordem no banco com o id da ordem e o preço de envio
+                database.sinal.ordem_inserir(msg.to_dict(), order_id, average_price, quantidade)
 
                 side = "SELL" if tipo_ordem.upper() == "BUY" else "BUY"
                 tps = [msg.tp1, msg.tp2, msg.tp3, msg.tp4]
 
                 objetos_tp = []
                 for i, proporcao in enumerate(proporcoes):
-                    qtd_tp = ajustar_quantidade(quantidade_total * proporcao, step=0.0001)
+                    qtd_tp = ajustar_quantidade(quantidade * proporcao, step=0.0001)
                     preco_tp = tps[i]
                     sucesso = broker.ajustar_take_profit(
                         symbol=msg.symbol,
