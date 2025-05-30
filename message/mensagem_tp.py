@@ -7,6 +7,6 @@ class MensagemTP:
     def to_dict(self):
         return {
             "symbol": self.symbol,
-            "tp": self.tp_monitorado
+            "tp": self.tp_monitorado,
             "order_id": self.order_id
         }

@@ -33,7 +33,7 @@ def consumir_monitoramentos():
             msg.order_id = order_id
 
             # Atualiza status do TP no banco
-            tp_atualizar(order_id=msg.order_id, numero_tp=msg.numero_tp, novo_status=3)
+            tp_atualizar(order_id=msg.order_id, numero_tp=msg.tp_monitorado, novo_status=3)
 
             # Buscar informações da ordem principal
             response = broker.get_open_order_info(symbol=symbol, order_id=order_id)
@@ -48,14 +48,14 @@ def consumir_monitoramentos():
             current_stop_price = response["data"]["order"]["stopLoss"]["stopPrice"]
             # Se TP2, atualiza o SL para ser o entry_price
             if numero_tp == 2:
-                stop_loss_update(symbol, entry_price)
+                database.stop_loss.stop_loss_update(symbol, entry_price)
 
             # Decide o novo stop_price com base no TP monitorado
             stop_price = current_stop_price if numero_tp == 1 else entry_price
 
             # Lógica para ajustar Stop Loss após TP
             if numero_tp <4:
-                quantidade = stop_loss_soma_quantidade(symbol)
+                quantidade = database.stop_loss.stop_loss_soma_quantidade(symbol)
                 sucesso = broker.ajustar_stop_loss(
                     symbol=symbol,
                     position_side="BOTH",

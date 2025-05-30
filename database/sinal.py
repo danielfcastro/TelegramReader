@@ -1,31 +1,63 @@
-from database.db import executar_insert
+from database.db import executar_insert, executar_select
 
 
-def ordem_inserir(dados, take_profits):
+def ordem_inserir(dados):
     """
-    Insere um novo sinal na tabela `sinais` e os TPs correspondentes,
-    mas sem definir a quantidade dos TPs neste momento.
+    Insere uma nova ordem na tabela `sinais`.
 
     Args:
-        dados (dict): Dados do sinal (par, tipo_ordem, margem, alavancagem, sl, quantidade, etc.).
-        take_profits (list): Lista de dicionários com {numero, valor, proporcao}.
+        dados (dict): Dados do sinal com os seguintes campos obrigatórios:
+            - symbol (str)
+            - tipo_ordem (str)
+            - margem (str)
+            - alavancagem (int)
+            - sl (float)
+            - quantidade (float)
+            - ordem_status_id (int) [opcional, default=2]
+            - break_even_status_id (int) [opcional, default=1]
+            - order_id (str) [opcional]
+            - entry_price (float) [opcional]
 
     Returns:
         int: ID do sinal inserido.
     """
     query_sinal = """
         INSERT INTO sinais (
-            data_hora, par, tipo_ordem, margem, alavancagem,
-            sl, quantidade
+            data_hora,
+            symbol,
+            tipo_ordem,
+            margem,
+            alavancagem,
+            sl,
+            quantidade,
+            ordem_status_id,
+            break_even_status_id,
+            order_id,
+            entry_price
         ) VALUES (
-            %(data_hora)s, %(par)s, %(tipo_ordem)s, %(margem)s, %(alavancagem)s,
-            %(sl)s, %(quantidade)s
+            NOW(),
+            %(symbol)s,
+            %(tipo_ordem)s,
+            %(margem)s,
+            %(alavancagem)s,
+            %(sl)s,
+            %(quantidade)s,
+            %(ordem_status_id)s,
+            %(break_even_status_id)s,
+            %(order_id)s,
+            %(entry_price)s
         ) RETURNING id
     """
 
-    # Insere o sinal e obtém o ID
+    # Defaults caso não sejam passados
+    dados.setdefault("ordem_status_id", 2)
+    dados.setdefault("break_even_status_id", 1)
+    dados.setdefault("order_id", None)
+    dados.setdefault("entry_price", None)
+
     sinal_id = executar_insert(query_sinal, dados)
     return sinal_id
+
 
 def ordem_info(par, exigir_break_even_inativo=False):
     """

@@ -30,10 +30,10 @@ def consumir_sinais():
             valor_trade = saldo * (trade_percentage / 100)
             quantidade_total = ajustar_quantidade(valor_trade / preco_mercado, step=0.0001)
 
-            resultado, order_id, quantidade_usada = broker.enviar_ordem_tp_sl(msg, quantidade_total)
+            resultado, response = broker.enviar_ordem_tp_sl(msg, quantidade_total)
 
             if resultado.get("sucesso"):
-                ordem_inserir(msg.to_dict(), resultado)
+                ordem_inserir(msg.to_dict(), order_id, )
 
                 side = "SELL" if tipo_ordem.upper() == "BUY" else "BUY"
                 tps = [msg.tp1, msg.tp2, msg.tp3, msg.tp4]

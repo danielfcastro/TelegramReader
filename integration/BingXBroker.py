@@ -229,31 +229,29 @@ class BingXBroker(BrokerInterface, ABC):
             bool: True se o SL foi ajustado com sucesso.
         """
         try:
-            self.cancela_stop_loss(symbol)
-            ordem = self.get_open_order_info(symbol, order_id)
-            if not ordem:
-                logger.warning(f"⚠️ - Nenhuma ordem encontrada para {symbol}")
-                return {"status": "no_order"}
-            position_side = position_side.upper()
-            current_order_side = ordem["data"]["order"]["side"]
-            side = "SELL" if current_order_side == "BUY" else "SELL"
-
-            stop_price_final = float(ordem['data']['order']['avgPrice'])
-
+            path="/openApi/swap/v2/trade/order"
             def enviar_sl(qtd):
                 body = {
                     "symbol": symbol,
                     "side": side,
                     "type": "STOP_MARKET",
-                    "stopPrice": stop_price_final,
+                    "stopPrice": stop_price,
                     "positionSide": "BOTH",
                     "quantity": qtd,
-                    "recvWindow": "10000"
+                    "orderId": order_id
                 }
-                return self._send_request("POST", "/openApi/swap/v2/trade/order", body)
+                return self._send_request("POST", path, body)
+
+            ordem = self.get_open_order_info(symbol, order_id)
+            if not ordem:
+                logger.warning(f"⚠️ - Nenhuma ordem encontrada para {symbol}")
+                return {"status": "no_order"}
+
+            self.cancela_stop_loss(symbol)
+
 
             logger.debug(
-                f"🛡️ - Tentando SL - symbol: {symbol}, side: {side}, position_side: {position_side}, stop_price: {stop_price_final}, quantidade: {quantity}")
+                f"🛡️ - Tentando SL - symbol: {symbol}, side: {side}, position_side: {side}, stop_price: {stop_price_final}, quantidade: {quantity}")
             response = enviar_sl(quantity)
 
             # Verifica sucesso
