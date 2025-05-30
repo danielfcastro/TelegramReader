@@ -120,7 +120,7 @@ class BingXBroker(BrokerInterface, ABC):
             path = "/openApi/swap/v3/user/balance"
             params = {}
             response = self._send_request("GET", path, params)
-            print("✅ - Resposta da API:", response)
+            logger.info("✅ - Resposta da API:", response)
 
             if response["code"] == 0 and response.get("data"):
                 for item in response["data"]:

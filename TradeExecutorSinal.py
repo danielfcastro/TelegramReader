@@ -14,14 +14,14 @@ proporcoes = [0.1, 0.2, 0.5, 0.2]
 REQUIRED_MARGIN_TYPE = "CROSSED"
 configurar_logging()
 def consumir_sinais():
-    print("🚀 TradeExecutorSinal iniciado.")
-
+    logger.info("✅ - TradeExecutorSinal iniciado.")
+    logger.debug(f"📦 - Tamanho inicial da fila Sinal: {fila_sinal.qsize()}")
     broker = BingXBroker()
     while True:
         mensagem = fila_sinal.get()
 
         if not isinstance(mensagem, dict):
-            print("❌ Mensagem inválida recebida na fila de sinais.")
+            logger.info("❌ - Mensagem inválida recebida na fila de sinais.")
             continue
 
         try:
@@ -79,10 +79,13 @@ def consumir_sinais():
                         logger.warning(f"⚠️ - Falha ao configurar TP{i + 1} para {msg.symbol}")
 
                 database.take_profit.tp_inserir(objetos_tp)
-                print(f"✅ Ordem enviada e TPs configurados com sucesso: {msg.symbol}")
+                logger.info(f"✅ - Ordem enviada e TPs configurados com sucesso: {msg.symbol}")
             else:
-                print(f"❌ Erro ao enviar ordem para {msg.symbol}: {mensagem_erro}")
+                logger.info(f"❌ - Erro ao enviar ordem para {msg.symbol}: {mensagem_erro}")
 
         except Exception as e:
-            print(f"❌ Erro ao processar mensagem de sinal: {e}")
+            logger.error(f"❌ Erro ao processar mensagem de sinal: {e}")
             logger.error(f"❌ - Erro completo: {e}")
+
+if __name__ == "__main__":
+    consumir_sinais()

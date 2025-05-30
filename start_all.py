@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 import threading
+import subprocess
 import signal
 
 from database import db
@@ -52,38 +53,44 @@ def salvar_env_com_base_no_config(is_testnet):
 
     logger.debug("📄 - Variáveis de ambiente definidas.")
 
+# Substitua essas funções:
 def iniciar_telegram_reader():
     logger.info("🚦 - Iniciando Telegram Reader...")
-    os.system("python TelegramReader.py")
+    return subprocess.Popen([sys.executable, "TelegramReader.py"])
 
 def iniciar_executor_sinal():
-    logger.info("📤 - Iniciando TradeExecutorSinal...")
-    os.system("python TradeExecutorSinal.py")
+    logger.info("📈 - Iniciando TradeExecutorSinal...")
+    return subprocess.Popen([sys.executable, "TradeExecutorSinal.py"])
 
 def iniciar_executor_tp():
     logger.info("📈 - Iniciando TradeExecutorTP...")
-    os.system("python TradeExecutorTP.py")
+    return subprocess.Popen([sys.executable, "TradeExecutorTP.py"])
+
+
+processos = []
 
 def iniciar_componentes():
-    t1 = threading.Thread(target=iniciar_telegram_reader, daemon=True)
-    t2 = threading.Thread(target=iniciar_executor_sinal, daemon=True)
-    t3 = threading.Thread(target=iniciar_executor_tp, daemon=True)
-
-    t1.start()
-    t2.start()
-    t3.start()
+    global processos
+    processos = [
+        iniciar_telegram_reader(),
+        iniciar_executor_sinal(),
+        iniciar_executor_tp()
+    ]
 
     try:
-        while t1.is_alive() or t2.is_alive() or t3.is_alive():
-            t1.join(timeout=1)
-            t2.join(timeout=1)
-            t3.join(timeout=1)
+        for p in processos:
+            p.wait()
     except KeyboardInterrupt:
         logger.warning("🛑 - Execução interrompida pelo usuário.")
-        sys.exit(0)
+        finalizar_programa()
+
 
 def finalizar_programa(*_):
     logger.info("⚠️ - Encerrando aplicação por sinal do sistema...")
+    for p in processos:
+        if p.poll() is None:  # ainda está rodando
+            logger.warning(f"🔪 - Matando processo PID {p.pid}")
+            p.terminate()
     db.fechar_pool()
     sys.exit(0)
 

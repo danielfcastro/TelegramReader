@@ -8,7 +8,7 @@ from flask import Flask, render_template
 def carregar_config(path):
     config = {}
     if not os.path.exists(path):
-        print(f"Arquivo de configuração {path} não encontrado.")
+        logger.info(f"Arquivo de configuração {path} não encontrado.")
         exit(1)
     with open(path, 'r', encoding='utf-8') as f:
         for linha in f:

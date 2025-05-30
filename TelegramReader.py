@@ -1,6 +1,5 @@
 import logging
 import os
-import psycopg2
 from dotenv import load_dotenv
 from telethon import TelegramClient, events
 
@@ -65,7 +64,7 @@ async def main():
         """
 
         mensagem = event.text
-        logger.info("📩 Mensagem recebida. Classificando...")
+        logger.info("📩 - Mensagem recebida. Classificando...")
         resultado = utils.classificar_mensagem(mensagem)
         tipo = resultado["tipo"]
         dados = resultado["dados"]
@@ -84,7 +83,7 @@ async def main():
             try:
                 msg = MensagemTP(**dados)
                 fila_tp.put(msg.to_dict())
-                logger.info(f"✅ TP enfileirado: {msg.symbol} - TP{msg.tp}")
+                logger.info(f"✅ - TP enfileirado: {msg.symbol} - TP{msg.tp}")
             except Exception as e:
                 logger.exception(f"❌ Erro ao processar monitoramento: {e}")
                 return None
@@ -99,4 +98,4 @@ if __name__ == "__main__":
         with client:
             client.loop.run_until_complete(main())
     except KeyboardInterrupt:
-        print("🚩 - Execução do TelegramReader interrompida pelo usuário.")
+        logger.info("🚩 - Execução do TelegramReader interrompida pelo usuário.")

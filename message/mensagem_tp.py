@@ -1,7 +1,7 @@
 class MensagemTP:
-    def __init__(self, symbol: str, tp_monitorado: str):
+    def __init__(self, symbol: str, tp: str):
         self.symbol = symbol
-        self.tp = tp_monitorado
+        self.tp = tp
         self.order_id = None
 
     def to_dict(self):

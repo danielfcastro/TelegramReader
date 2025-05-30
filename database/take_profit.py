@@ -18,7 +18,7 @@ def tp_inserir(take_profits):
         )
     """
 
-    for tp in v2.take_profits:
+    for tp in take_profits:
         tp_dados = {
             "numero": tp["numero"],
             "valor": tp["valor"],
@@ -27,6 +27,7 @@ def tp_inserir(take_profits):
             "status": tp["status"]
         }
         executar_insert(query_tp, tp_dados)
+
 
 def tp_atualizar(order_id, numero_tp, novo_status=1):
     """

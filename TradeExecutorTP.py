@@ -12,9 +12,9 @@ logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 configurar_logging()
 
 def consumir_monitoramentos():
-    print("📡 TradeExecutorTP iniciado.")
+    logger.info("✅ - TradeExecutorTP iniciado.")
     broker = BingXBroker()
-
+    logger.debug(f"📦 - Tamanho inicial da fila TP: {fila_tp.qsize()}")
     while True:
         mensagem = fila_tp.get()
 
@@ -30,7 +30,7 @@ def consumir_monitoramentos():
             # Enriquecer a mensagem com order_id mais recente
             order_id = database.take_profit.tp_ordem_id_mais_nova(symbol)
             if order_id != 0:
-                logger.warning(f"⚠️ Nenhuma ordem executada encontrada para {symbol}")
+                logger.warning(f"⚠️ - Nenhuma ordem executada encontrada para {symbol}")
                 continue
 
             msg.order_id = order_id
@@ -83,3 +83,6 @@ def consumir_monitoramentos():
 
         except Exception as e:
             logger.exception(f"❌ Erro ao processar TP para {mensagem}: {e}")
+
+if __name__ == "__main__":
+    consumir_monitoramentos()

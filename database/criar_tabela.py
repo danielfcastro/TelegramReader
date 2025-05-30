@@ -20,7 +20,7 @@ def criar_e_popular_banco():
     )
     cursor = conn.cursor()
 
-    print("🛠️ - Criando estrutura de tabelas e populando dados...")
+    logger.info("🛠️ - Criando estrutura de tabelas e populando dados...")
 
     base_dir = os.path.join(os.path.dirname(__file__), "scripts")
     arquivos_ordem = [
@@ -36,13 +36,13 @@ def criar_e_popular_banco():
 
     for arquivo in arquivos_ordem:
         caminho_completo = os.path.join(base_dir, arquivo)
-        print(f"📄 Executando {arquivo}...")
+        logger.info(f"📄 Executando {arquivo}...")
         executar_sql_de_arquivo(cursor, caminho_completo)
 
     conn.commit()
     cursor.close()
     conn.close()
-    print("✅ Setup finalizado com sucesso.")
+    logger.info("✅ Setup finalizado com sucesso.")
 
 if __name__ == "__main__":
     criar_e_popular_banco()

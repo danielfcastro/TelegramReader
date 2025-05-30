@@ -17,7 +17,6 @@ class BrokerInterface(ABC):
         pass
 
     @abstractmethod
-
     def ajustar_take_profit(self, symbol, position_side, quantity, stop_price, order_id, numero):
         pass
 
@@ -31,14 +30,6 @@ class BrokerInterface(ABC):
 
     @abstractmethod
     def get_open_order_info(self, symbol, order_id):
-        pass
-
-    @abstractmethod
-    def cancela_order(self, symbol, order_id=None):
-        pass
-
-    @abstractmethod
-    def obter_todas_ordens_abertas(self, symbol):
         pass
 
     @abstractmethod
