@@ -12,14 +12,14 @@ logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 configurar_logging()
 
 def consumir_monitoramentos():
-    logger.info("✅ - TradeExecutorTP iniciado.")
+    logger.info(f"✅ - TradeExecutorTP iniciado.")
     broker = BingXBroker()
     logger.debug(f"📦 - Tamanho inicial da fila TP: {fila_tp.qsize()}")
     while True:
         mensagem = fila_tp.get()
 
         if not isinstance(mensagem, dict):
-            logger.warning("❌ Mensagem inválida recebida na fila TP.")
+            logger.warning(f"⚠️ -Mensagem inválida recebida na fila TP.")
             continue
 
         try:
@@ -79,10 +79,10 @@ def consumir_monitoramentos():
                 broker.cancela_ordem_tp(symbol=symbol)
                 broker.cancela_ordem_sl(symbol=symbol)
 
-            logger.info(f"✅ TP{numero_tp} processado com sucesso para {symbol}.")
+            logger.info(f"✅ - TP{numero_tp} processado com sucesso para {symbol}.")
 
         except Exception as e:
-            logger.exception(f"❌ Erro ao processar TP para {mensagem}: {e}")
+            logger.exception(f"❌ - Erro ao processar TP para {mensagem}: {e}")
 
 if __name__ == "__main__":
     consumir_monitoramentos()

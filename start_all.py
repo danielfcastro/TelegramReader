@@ -86,7 +86,7 @@ def iniciar_componentes():
 
 
 def finalizar_programa(*_):
-    logger.info("⚠️ - Encerrando aplicação por sinal do sistema...")
+    logger.info("🛑 - Encerrando aplicação por sinal do sistema...")
     for p in processos:
         if p.poll() is None:  # ainda está rodando
             logger.warning(f"🔪 - Matando processo PID {p.pid}")

@@ -71,10 +71,14 @@ def configurar_logging(log_level=logging.DEBUG, log_dir='logs', log_file='app.lo
     # Ajuste para loggers
     logging.getLogger("start_all").setLevel(logging.INFO)
     logging.getLogger("TelegramReader").setLevel(logging.DEBUG)
-    logging.getLogger("TradeExecutor").setLevel(logging.DEBUG)
+    logging.getLogger("TradeExecutorSinal").setLevel(logging.DEBUG)
+    logging.getLogger("TradeExecutorTP").setLevel(logging.DEBUG)
     logging.getLogger("BingXBroker").setLevel(logging.DEBUG)
     logging.getLogger("utils").setLevel(logging.DEBUG)
     logging.getLogger("db").setLevel(logging.DEBUG)
+    logging.getLogger("sinal").setLevel(logging.DEBUG)
+    logging.getLogger("stop_loss").setLevel(logging.DEBUG)
+    logging.getLogger("take_profit").setLevel(logging.DEBUG)
 
     logging.getLogger("telethon").setLevel(logging.INFO)
     logging.getLogger("telethon.network.mtprotosender").setLevel(logging.WARNING)

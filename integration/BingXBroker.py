@@ -100,9 +100,13 @@ class BingXBroker(BrokerInterface, ABC):
             Exception: Se a API falhar ou não retornar dados.
         """
         path = "/openApi/swap/v2/quote/premiumIndex"
-        response = self._send_request("GET", path, {"symbol": symbol})
+        body = {
+            "symbol": symbol
+        }
+        logger.debug(f"✅️ - Pedido de preço de mercado: path: {path} - body {body}")
+        response = self._send_request("GET", path, body)
+        logger.debug(f"✅ - Resposta do pedido de preço de mercado: {response}")
         if response["code"] == 0 and response.get("data"):
-            logger.debug(f"preço de mercado: {response['data'].get('markPrice')}")
             return float(response["data"]["markPrice"])
         raise Exception(f"❌ - Erro ao obter preço de mercado de {symbol}")
 
@@ -118,14 +122,15 @@ class BingXBroker(BrokerInterface, ABC):
         """
         try:
             path = "/openApi/swap/v3/user/balance"
-            params = {}
-            response = self._send_request("GET", path, params)
-            logger.info("✅ - Resposta da API:", response)
+            body = {}
+            logger.debug(f"✅️ - Pedido de saldo: path: {path} - body {body}")
+            response = self._send_request("GET", path, body)
+            logger.debug(f"✅ - Resposta do pedido de alavancagem: {response}")
 
             if response["code"] == 0 and response.get("data"):
                 for item in response["data"]:
                     if item["asset"] in ["USDT", "VST"]:
-                        logger.debug(f"saldo disponivel: {item['asset']}")
+                        logger.debug(f"🚦 - saldo disponivel: {item['asset']}")
                         return float(item.get("availableMargin", 0.0))
         except Exception as e:
             logger.exception(f"❌ - Exceção ao consular saldo disponível: {e}")
@@ -142,18 +147,16 @@ class BingXBroker(BrokerInterface, ABC):
         """
 
         path = "/openApi/swap/v2/trade/leverage"
-        params = {
+        body = {
             "symbol": symbol,
             "side": side,
             "leverage": str(leverage)
         }
-        query = self._build_query(params)
-        sign = self._get_sign(query)
-        url = f"{self.API_URL}{path}?{query}&signature={sign}"
 
         try:
-            response = requests.post(url, headers={'X-BX-APIKEY': self.API_KEY}).json()
-            logger.debug("✅ - Leverage configurado:", response)
+            logger.debug(f"✅️ - Pedido de envio de alavancagem: path: {path} - body {body}")
+            response = self._send_request("POST", path, body)
+            logger.debug(f"✅ - Resposta do pedido de alavancagem: {response}")
         except Exception as e:
             logger.exception(f"❌ - Exceção ao ajustar leverage para {symbol}: {e}")
 
@@ -180,9 +183,10 @@ class BingXBroker(BrokerInterface, ABC):
             }
 
             path = "/openApi/swap/v2/trade/order"
+            logger.debug(f"✅️ - Pedido de envio de ordem: path: {path} - body {body}")
             response = self._send_request("POST", path, body)
+            logger.debug(f"✅ - Resposta do pedido de ordem: {response}")
 
-            logger.debug(f"response: {response} - body: {body} - path: {path} - POST")
             codigo = response.get("code", "sem_codigo")
             mensagem_erro = response.get("msg", "Erro desconhecido")
             if codigo == 0:
@@ -246,6 +250,11 @@ class BingXBroker(BrokerInterface, ABC):
             bool: True se o SL foi ajustado com sucesso.
         """
         try:
+            ordem = self.get_open_order_info(symbol, order_id)
+            if not ordem:
+                logger.warning(f"⚠️ - Nenhuma ordem encontrada para {symbol}")
+                return {"status": "no_order"}
+
             path="/openApi/swap/v2/trade/order"
             side = "SELL" if current_order_side == "BUY" else "SELL"
             def enviar_sl(qtd):
@@ -258,18 +267,12 @@ class BingXBroker(BrokerInterface, ABC):
                     "quantity": qtd,
                     "orderId": order_id
                 }
-                return self._send_request("POST", path, body)
-
-            ordem = self.get_open_order_info(symbol, order_id)
-            if not ordem:
-                logger.warning(f"⚠️ - Nenhuma ordem encontrada para {symbol}")
-                return {"status": "no_order"}
+                logger.debug(f"✅️ - Pedido de envio de SL: path: {path} - body {body}")
+                _response = self._send_request("POST", path, body)
+                logger.debug(f"✅ - Resposta do pedido de SL: {_response}")
+                return response
 
             self.cancela_stop_loss(symbol)
-
-
-            logger.debug(
-                f"🛡️ - Tentando SL - symbol: {symbol}, side: {side}, position_side: {side}, stop_price: {stop_price}, quantidade: {quantity}")
             response = enviar_sl(quantity)
 
             # Verifica sucesso
@@ -329,9 +332,9 @@ class BingXBroker(BrokerInterface, ABC):
                 "workingType": "MARK_PRICE",
                 "orderId": order_id
             }
-            logger.debug(f"🎯 - body={body} - path={path}")
+            logger.debug(f"✅ - Pedido de TP: path: {path} - body {body}")
             response = self._send_request("POST", path, body)
-            logger.debug(f"📩 Resposta para TP{numero}: {response} - body: {body}")
+            logger.debug(f"✅ - Resposta do pedido de TP: {response}")
 
             if response["code"] == 0:
                 logger.info(f"✅ - TP{numero} configurado com sucesso para {symbol} a {stop_price}")
@@ -361,8 +364,9 @@ class BingXBroker(BrokerInterface, ABC):
                 "symbol": symbol,
                 "orderId": order_id
             }
+            logger.debug(f"✅ - Pedido de detalhe de ordem: path: {path} - body {body}")
             response = self._send_request("GET", path, body)
-            logger.debug(f"✅ - Detalhe de ordem: {response}")
+            logger.debug(f"✅ - Resposta do pedido de detalhe de ordem: {response}")
             return response
         except Exception as e:
             logger.exception(f"❌ - Erro ao boter detalhe de ordem {symbol}: {e}")
@@ -375,7 +379,7 @@ class BingXBroker(BrokerInterface, ABC):
                 "symbol": symbol,
                 "type": "MARKET"
             }
-            logger.debug(f"✅ - Pedido de fechamento de ordem de mercado: body: {body}")
+            logger.debug(f"✅ - Pedido de fechamento de ordem de mercado: path: {path} - body {body}")
             response = self._send_request("POST ", path, body)
             logger.debug(f"✅ - Resposta do pedido de fechamento de ordem de mercado: {response}")
             return response
@@ -390,7 +394,7 @@ class BingXBroker(BrokerInterface, ABC):
                 "symbol": symbol,
                 "type": "TAKE_PROFIT_MARKET"
             }
-            logger.debug(f"✅ - Pedido de cancelamento de ordem de TP: body: {body}")
+            logger.debug(f"✅ - Pedido de cancelamento de ordem de TP: path: {path} - body {body}")
             response = self._send_request("DELETE", path, body)
             logger.debug(f"✅ - Resposta do pedido de cancelamento de ordem de TP: {response}")
             return response
@@ -405,7 +409,7 @@ class BingXBroker(BrokerInterface, ABC):
                 "symbol": symbol,
                 "type": "STOP_MARKET"
             }
-            logger.debug(f"✅ - Pedido de cancelamento de ordem de SL: body: {body}")
+            logger.debug(f"✅ - Pedido de cancelamento de ordem de SL: path: {path} - body {body}")
             response = self._send_request("DELETE", path, body)
             logger.debug(f"✅ - Resposta do pedido de cancelamento de ordem de SL: {response}")
             return response
@@ -419,7 +423,7 @@ class BingXBroker(BrokerInterface, ABC):
             body = {
                 "symbol": symbol
             }
-            logger.debug(f"✅ - Pedido de verificação de tipo de margem: body: {body}")
+            logger.debug(f"✅ - Pedido de verificação de tipo de margem: path: {path} - body {body}")
             response = self._send_request("GET ", path, body)
             logger.debug(f"✅ - Resposta do pedido de verificação de tipo de margem: {response}")
             return response["code"]["marginType"]
@@ -434,7 +438,7 @@ class BingXBroker(BrokerInterface, ABC):
                 "symbol": symbol,
                 "marginType": "CROSSED"
             }
-            logger.debug(f"✅ - Pedido de configuração de tipo de margem: body: {body}")
+            logger.debug(f"✅ - Pedido de configuração de tipo de margem: path: {path} - body {body}")
             response = self._send_request("POST ", path, body)
             logger.debug(f"✅ - Resposta do pedido de configuração de tipo de margem: {response}")
             return response
