@@ -1,16 +1,18 @@
-import os
-
-import database
 import queue
+import logging
+import os
+import database
 
 from message.mensagem_sinal import MensagemSinal
 from integration.BingXBroker import BingXBroker
 from utils import ajustar_quantidade
+from log.logger_config import configurar_logging
 
+logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 fila_sinal = queue.Queue()
 proporcoes = [0.1, 0.2, 0.5, 0.2]
 REQUIRED_MARGIN_TYPE = "CROSSED"
-
+configurar_logging()
 def consumir_sinais():
     print("🚀 TradeExecutorSinal iniciado.")
 
@@ -43,8 +45,7 @@ def consumir_sinais():
             #Calcula a quantidade de moedas para o trade
             quantidade_total = ajustar_quantidade(valor_trade / preco_mercado, step=0.0001)
             #Envia a ordem
-            #"sucesso": True, "order_id": order_id, "quantidade": quantidade, "average_price":average_price
-            sucesso, order_id, quantidade, average_price = broker.enviar_ordem_tp_sl(msg, quantidade_total)
+            sucesso, order_id, quantidade, average_price, codigo, mensagem_erro = broker.enviar_ordem_tp_sl(msg, quantidade_total)
 
             if sucesso:
                 #Insere a ordem no banco com o id da ordem e o preço de envio
@@ -77,10 +78,10 @@ def consumir_sinais():
                     else:
                         logger.warning(f"⚠️ - Falha ao configurar TP{i + 1} para {msg.symbol}")
 
-                tp_inserir(objetos_tp)
+                database.take_profit.tp_inserir(objetos_tp)
                 print(f"✅ Ordem enviada e TPs configurados com sucesso: {msg.symbol}")
             else:
-                print(f"❌ Erro ao enviar ordem para {msg.symbol}: {resultado.get('erro')}")
+                print(f"❌ Erro ao enviar ordem para {msg.symbol}: {mensagem_erro}")
 
         except Exception as e:
             print(f"❌ Erro ao processar mensagem de sinal: {e}")

@@ -184,16 +184,31 @@ class BingXBroker(BrokerInterface, ABC):
 
             logger.debug(f"response: {response} - body: {body} - path: {path} - POST")
             codigo = response.get("code", "sem_codigo")
+            mensagem_erro = response.get("msg", "Erro desconhecido")
             if codigo == 0:
                 order_id = response["data"]["order"]["orderId"]
                 average_price = response["data"]["order"]["avgPrice"]
                 quantidade = response["data"]["order"]["quantity"]
                 logger.info(f"✅ - Ordem enviada com sucesso - order_id: {order_id}")
-                return {"sucesso": True, "order_id": order_id, "quantidade": quantidade, "average_price":average_price}
+                return {
+                    "sucesso": True,
+                    "order_id": order_id,
+                    "quantidade": quantidade,
+                    "average_price":average_price,
+                    "erro":codigo,
+                    "msg":mensagem_erro
+                }
             else:
                 mensagem_erro = response.get("msg", "Erro desconhecido")
                 logger.error(f"❌ - Falha ao enviar ordem: [{codigo}] {mensagem_erro}")
-                return {"sucesso": False, "erro": f"[{codigo}] {mensagem_erro}"}
+                return {
+                    "sucesso": False,
+                    "order_id": 0,
+                    "quantidade": 0,
+                    "average_price":0,
+                    "erro":codigo,
+                    "msg":mensagem_erro
+                }
         except Exception as e:
             logger.exception(f"❌ - Erro ao enviar ordem BingX: {e}")
             return {"sucesso": False, "erro": str(e)}

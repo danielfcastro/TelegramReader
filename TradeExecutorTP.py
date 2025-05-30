@@ -1,10 +1,15 @@
 import queue
+import logging
+import os
 
+from log.logger_config import configurar_logging
 from message.mensagem_tp import MensagemTP
 from integration.BingXBroker import BingXBroker
 import database.db
 
 fila_tp = queue.Queue()  # Essa fila será populada pelo TelegramReader
+logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
+configurar_logging()
 
 def consumir_monitoramentos():
     print("📡 TradeExecutorTP iniciado.")
@@ -20,7 +25,7 @@ def consumir_monitoramentos():
         try:
             msg = MensagemTP(**mensagem)
             symbol = msg.symbol
-            numero_tp = int(msg.tp_monitorado)
+            numero_tp = int(msg.tp)
 
             # Enriquecer a mensagem com order_id mais recente
             order_id = database.take_profit.tp_ordem_id_mais_nova(symbol)
@@ -31,7 +36,7 @@ def consumir_monitoramentos():
             msg.order_id = order_id
 
             # Atualiza status do TP no banco
-            database.take_profit.tp_atualizar(order_id=msg.order_id, numero_tp=msg.tp_monitorado, novo_status=3)
+            database.take_profit.tp_atualizar(order_id=msg.order_id, numero_tp=msg.tp, novo_status=3)
 
             # Buscar informações da ordem principal
             response = broker.get_open_order_info(symbol=symbol, order_id=order_id)

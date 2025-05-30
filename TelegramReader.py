@@ -26,25 +26,6 @@ api_hash = os.getenv("api_hash")
 session_name = os.getenv("session_name")
 group_id = int(os.getenv("group_id"))
 
-ENDPOINT_SINAL = "http://127.0.0.1:8000/sinal"
-ENDPOINT_MONITORAMENTO = "http://127.0.0.1:8000/monitoramento"
-ENDPOINT_FECHAMENTO = "http://127.0.0.1:8000/fechamento"
-
-db_params = {
-    "host": os.getenv("db_host"),
-    "port": os.getenv("db_port"),
-    "dbname": os.getenv("db_name"),
-    "user": os.getenv("db_user"),
-    "password": os.getenv("db_password")
-}
-
-from utils import (
-    classificar_mensagem
-)
-
-conn = psycopg2.connect(**db_params)
-cur = conn.cursor()
-
 client = TelegramClient(session_name, api_id, api_hash)
 
 async def main():
@@ -85,7 +66,7 @@ async def main():
 
         mensagem = event.text
         logger.info("📩 Mensagem recebida. Classificando...")
-        resultado = classificar_mensagem(mensagem)
+        resultado = utils.classificar_mensagem(mensagem)
         tipo = resultado["tipo"]
         dados = resultado["dados"]
 
@@ -103,7 +84,7 @@ async def main():
             try:
                 msg = MensagemTP(**dados)
                 fila_tp.put(msg.to_dict())
-                logger.info(f"✅ TP enfileirado: {msg.symbol} - TP{msg.tp_monitorado}")
+                logger.info(f"✅ TP enfileirado: {msg.symbol} - TP{msg.tp}")
             except Exception as e:
                 logger.exception(f"❌ Erro ao processar monitoramento: {e}")
                 return None
