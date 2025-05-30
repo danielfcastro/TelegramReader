@@ -6,11 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.0 - para teste">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/sinal.py" beforeDir="false" afterPath="$PROJECT_DIR$/database/sinal.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/fila/subscriber/TradeExecutorSinal.py" beforeDir="false" afterPath="$PROJECT_DIR$/fila/subscriber/TradeExecutorSinal.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/integration/BingXBroker.py" beforeDir="false" afterPath="$PROJECT_DIR$/integration/BingXBroker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tools/testar_insercao_sinal.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tools/testar_monitoramento_be.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -506,7 +501,15 @@
       <option name="project" value="LOCAL" />
       <updated>1748564030045</updated>
     </task>
-    <option name="localTasksCounter" value="35" />
+    <task id="LOCAL-00035" summary="- Versão 1.2.0 - para teste">
+      <option name="closed" value="true" />
+      <created>1748604525477</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1748604525477</updated>
+    </task>
+    <option name="localTasksCounter" value="36" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -572,13 +575,8 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/integration/BingXBroker.py</url>
-          <line>384</line>
+          <line>385</line>
           <option name="timeStamp" value="90" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/database/stop_loss.py</url>
-          <line>3</line>
-          <option name="timeStamp" value="91" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>

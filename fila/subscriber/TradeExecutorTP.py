@@ -24,7 +24,7 @@ def consumir_monitoramentos():
 
             # Enriquecer a mensagem com order_id mais recente
             order_id = tp_ordem_id_mais_nova(symbol)
-            if not order_id:
+            if order_id != 0:
                 logger.warning(f"⚠️ Nenhuma ordem executada encontrada para {symbol}")
                 continue
 

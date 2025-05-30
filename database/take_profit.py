@@ -1,4 +1,4 @@
-from database.db import executar_insert, executar_update
+from database.db import executar_insert, executar_update, executar_select
 
 
 def tp_inserir(take_profits):
@@ -64,8 +64,8 @@ def tp_ordem_id_mais_nova(symbol):
         ORDER BY janela_5min DESC
         LIMIT 1
     """
-    resultado = executar_select_um(query, {"symbol": symbol})
-    return resultado["order_id"] if resultado else None
+    resultado = executar_select(query, {"symbol": symbol})
+    return resultado["order_id"] if resultado else 0
 
 
 
