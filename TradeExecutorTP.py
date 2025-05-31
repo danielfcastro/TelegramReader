@@ -35,7 +35,7 @@ def consumir_monitoramentos():
                 # Enriquecer a mensagem com order_id mais recente
                 order_id = database.take_profit.tp_ordem_id_mais_nova(symbol)
                 if order_id == 0:
-                    logger.warning(f"⚠️ - Nenhuma ordem executada encontrada para {symbol}")
+                    logger.info(f"⚠️ - Nenhuma ordem executada encontrada para {symbol}")
                     continue
 
                 msg.order_id = order_id

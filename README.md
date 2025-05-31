@@ -214,55 +214,90 @@ sequenceDiagram
 
 ## 🧾 Dicionário de Dados
 
-### Tabela `sinais`
+### 🧾 Tabela `ordem` (v2.ordem)
 
-| Campo                   | Tipo      | Descrição                   |
-| ----------------------- | --------- | --------------------------- |
-| id                      | serial    | Identificador único         |
-| data\_hora              | timestamp | Momento do sinal            |
-| par                     | text      | Par de negociação           |
-| tipo\_ordem             | text      | BUY ou SELL                 |
-| margem                  | text      | Tipo de margem (ex: CROSS)  |
-| alavancagem             | text      | Alavancagem usada (ex: 20X) |
-| sl                      | real      | Valor do Stop Loss          |
-| quantidade              | real      | Quantidade da ordem         |
-| break\_even\_status\_id | smallint  | Controle de BE              |
-| ordem\_status\_id       | smallint  | Status da ordem             |
-| order\_id               | bigint    | ID externo da corretora     |
-| entry\_price            | real      | Preço de execução           |
-| janela\_5min            | timestamp | Janela anti-duplicação      |
+Registra cada ordem de trade identificada e processada.
 
-### Tabela `take_profits`
+| Campo                | Tipo        | Descrição |
+|---------------------|-------------|-----------|
+| id                  | `serial`    | Identificador interno da ordem |
+| data_hora           | `timestamp` | Momento em que a ordem foi criada |
+| symbol              | `text`      | Par de negociação (ex: BTC-USDT) |
+| tipo_ordem          | `text`      | Direção da ordem (BUY / SELL) |
+| margem              | `text`      | Tipo de margem (ex: Cross) |
+| alavancagem         | `text`      | Alavancagem usada (ex: 20X) |
+| sl                  | `real`      | Stop loss da ordem |
+| ordem_status_id     | `smallint`  | Status geral da ordem (FK) |
+| break_even_status_id| `smallint`  | Status do break even (FK) |
+| order_id            | `bigint`    | ID da ordem na corretora (único) |
+| entry_price         | `real`      | Preço de entrada efetivo |
+| quantidade          | `real`      | Quantidade total da ordem |
 
-| Campo          | Tipo     | Descrição            |
-| -------------- | -------- | -------------------- |
-| sinal\_id      | integer  | FK para `sinais`     |
-| numero         | smallint | TP1 a TP4            |
-| valor          | real     | Preço alvo           |
-| quantidade     | real     | Quantidade associada |
-| tp\_status\_id | smallint | Status do TP         |
-| proporcao      | real     | Proporção da ordem   |
+🔗 **Chaves estrangeiras:**
+- `ordem_status_id → ordem_status.id`
+- `break_even_status_id → break_even_status.id`
 
-### Tabela `ordem_status`
+🔐 **Índices sugeridos:**
+```sql
+CREATE INDEX idx_sinais_par_status
+  ON v2.ordem(symbol, ordem_status_id);
+```
 
-| ID | Descrição    |
-| -- | ------------ |
-| 0  | RECEBIDA     |
-| 1  | ENVIADA      |
-| 2  | DESABILITADA |
-| 3  | CONCLUÍDA    |
+---
 
-### Tabela `break_even_status`
+### 🎯 Tabela `take_profits` (v2.take_profits)
 
-| ID | Descrição |
-| -- | --------- |
-| 0  | INATIVO   |
-| 1  | ATIVAR    |
+Armazena os múltiplos alvos de lucro (TPs) associados a uma ordem.
 
-### Tabela `take_profit_status`
+| Campo       | Tipo       | Descrição                               |
+|-------------|------------|-----------------------------------------|
+| order_id    | `bigint`   | ID da ordem principal (FK para `ordem`) |
+| numero      | `smallint` | Número do TP (1 a 4)                    |
+| valor       | `real`     | Valor do TP                             |
+| quantidade  | `real`     | Quantidade associada a este TP          |
+| tp_status_id| `smallint` | Status do TP (FK)                       |
+| proporcao   | `real`     | Proporção do total da ordem nesse TP    |
 
-| ID | Descrição   |
-| -- | ----------- |
-| 1  | PENDENTE    |
-| 2  | CONFIGURADO |
-| 3  | ATINGIDO    |
+🔗 **PK:** (order_id, numero)  
+🔗 **FK:** order_id → ordem.order_id  
+🔗 **Índice sugerido:**
+```sql
+CREATE INDEX idx_take_profits_order
+  ON v2.take_profits(order_id, numero);
+```
+
+---
+
+### ⚙️ Tabela `ordem_status` (v2.ordem_status)
+
+Define os estados possíveis para a ordem principal.
+
+| ID | Descrição              |
+|----|------------------------|
+| 0  | ENVIADA PARA CORRETORA |
+| 1  | CONCLUÍDA              |
+| 2  | IGNORADA               |
+
+
+---
+
+### ⚙️ Tabela `break_even_status` (v2.break_even_status)
+
+Define os estados para controle de break-even.
+
+| ID | Descrição             |
+|----|-----------------------|
+| 0  | INATIVO               |
+| 1  | AGUARDANDO BREAK EVEN |
+| 2  | BREAK EVEN AJUSTADO   |
+
+---
+
+### ⚙️ Tabela `take_profit_status` (v2.take_profit_status)
+
+Define os estados para cada TP.
+
+| ID | Descrição     |
+|----|----------------|
+| 1  | CONFIGURADO    |
+| 2  | ATINGIDO       |
