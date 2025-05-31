@@ -1,8 +1,8 @@
 class MensagemTP:
-    def __init__(self, symbol: str, tp: str):
+    def __init__(self, symbol: str, tp: str, order_id: int = None):
         self.symbol = symbol
         self.tp = tp
-        self.order_id = None
+        self.order_id = order_id
 
     def to_dict(self):
         return {

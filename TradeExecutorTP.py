@@ -30,11 +30,11 @@ def consumir_monitoramentos():
 
                 msg = MensagemTP(**mensagem)
                 symbol = msg.symbol
-                numero_tp = int(msg.tp)
+                numero_tp = int(msg.tp.replace("TP", ""))
 
                 # Enriquecer a mensagem com order_id mais recente
                 order_id = database.take_profit.tp_ordem_id_mais_nova(symbol)
-                if order_id != 0:
+                if order_id == 0:
                     logger.warning(f"⚠️ - Nenhuma ordem executada encontrada para {symbol}")
                     continue
 

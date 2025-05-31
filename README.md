@@ -4,11 +4,11 @@
 
 Este projeto é dividido em **dois serviços independentes**:
 
-- **TelegramSignalReader**: Monitora mensagens de sinais de trading em grupos ou canais do Telegram e grava em um banco de dados.
-- **TradeExecutor**: Monitora o banco de dados, identifica sinais pendentes e envia ordens automáticas para a BingX Testnet.
+* **TelegramSignalReader**: Monitora mensagens de sinais de trading em grupos ou canais do Telegram e grava em um banco de dados.
+* **TradeExecutor**: Monitora o banco de dados, identifica sinais pendentes e envia ordens automáticas para a BingX Testnet.
 
-✅ Arquitetura desacoplada, modular e escalável.  
-✅ Configuração fácil para ambiente de testes e produção.  
+✅ Arquitetura desacoplada, modular e escalável.
+✅ Configuração fácil para ambiente de testes e produção.
 ✅ Pronto para migrar de SQLite para PostgreSQL.
 
 ---
@@ -16,24 +16,42 @@ Este projeto é dividido em **dois serviços independentes**:
 ## 🛠️ Estrutura do Projeto
 
 ```
-ProjetoTelegramTradeBot/
+TelegramReader/
+├── .venv/
 ├── database/
+│   ├── scripts/
+│   │   ├── break_even_status.sql
+│   │   ├── inser_break_even_status.sql
+│   │   ├── inser_ordem_status.sql
+│   │   ├── inser_take_profit_status.sql
+│   │   ├── ordem_status.sql
+│   │   ├── sinais.sql
+│   │   ├── take_profit_status.sql
+│   │   └── take_profits.sql
+│   ├── __init__.py
 │   ├── criar_tabela.py
-│   └── upgrade_database.py
+│   ├── db.py
+│   ├── sinal.py
+│   ├── stop_loss.py
+│   └── take_profit.py
+├── docs/
+├── fila/
 ├── integration/
+│   ├── __init__.py
 │   ├── BingXBroker.py
 │   └── BrokerInterface.py
 ├── log/
-│   └── log_config.py
+│   ├── __init__.py
+│   └── logger_config.py
 ├── logs/
-├── venv/
-├── web_dashboard/
-│   ├── templates/
-│   │   ├── apdashboardp.html
-│   └── app.py
+│   └── app.log
+├── message/
+│   ├── mensagem_sinal.py
+│   └── mensagem_tp.py
 ├── .env
 ├── .gitignore
 ├── config.properties
+├── estrutura.txt
 ├── minha_sessao.session
 ├── README.md
 ├── requirements.txt
@@ -41,7 +59,8 @@ ProjetoTelegramTradeBot/
 ├── start_bot.bat
 ├── start_bot.sh
 ├── TelegramReader.py
-├── TradeExecutor.py
+├── TradeExecutorSinal.py
+├── TradeExecutorTP.py
 └── utils.py
 ```
 
@@ -49,359 +68,201 @@ ProjetoTelegramTradeBot/
 
 ## 📦 Instalação
 
-1. Clone ou copie este projeto para sua máquina.
-
-2. Crie o ambiente virtual Python:
-
-```bash
-python -m venv venv
-```
-
-3. Ative o ambiente virtual:
-
-- **Windows**:
-
-```bash
-venv\Scripts\activate
-```
-
-- **Linux/macOS**:
-
-```bash
-source venv/bin/activate
-```
-
-4. Instale as dependências:
-
-```bash
-pip install -r requirements.txt
-```
+\[sem mudanças]
 
 ---
 
 ## ⚙️ Configuração
 
-Edite o arquivo `config.properties`:
-
-```ini
-# Telegram API
-api_id=API ID
-api_hash=API HASH
-group_id=ID DO GRUPO QUE SE DESEJA MONITORAR MENSAGENS
-session_name=NOME DO ARQUIVO DE SESSÃO CRIADO AO LOGAR NO TELEGRAM
-
-#BingX API
-bingx_apy_key=BING X API KEY
-bingx_secret_key=BING X SECRET
-
-bingx_api_url_testnet=https://open-api-vst.bingx.com
-bingx_api_url=#https://open-api.bingx.com
-
-# Trading Strategy
-trade_percentage=3
-
-db_type=postgres
-db_host=IP ONDE O POSTGRES ESTÁ
-db_port=5432
-db_name=tradebotdb
-db_user=tradebot
-db_password=tradebot
-```
+\[sem mudanças]
 
 ---
 
 ## 🏁 Primeiro Uso
 
-1. Crie o banco de dados:
-
-```bash
-python database/criar_tabela.py
-```
-
-2. Inicie o sistema (duas formas):
-
-### Forma 1: Script start_all.py
-
-```bash
-python start_all.py --testnet
-```
-
-### Forma 2: Clique duplo no `start_bot.bat` (Windows)
-
-> Crie um arquivo `start_bot.bat` com o seguinte conteúdo:
-
-```bat
-@echo off
-cd /d %~dp0
-python start_all.py --testnet
-pause
-```
-### Forma 2: Executar `start_bot.sh` (Linux Alpine)
-
-> Crie um arquivo `start_bot.sh` com o seguinte conteúdo:
-> 
-```shell
-#!/bin/sh
-cd /root/TelegramReader
-. venv/bin/activate
-python3 start_all.py --mainnet >> /var/log/tradebot.log 2>&1
-```
-> Dê Permissão de execução
-```shell
-chmod +x /root/TelegramReader/start_bot.sh
-```
-
-### Crie um script para inicialização automática
-> Crie um arquivo `/etc/init.d/tradebot` com o seguinte conteúdo:
-```
-#!/sbin/openrc-run
-
-name="tradebot"
-description="Bot de sinais para BingX executando no TelegramReader"
-
-command="/root/TelegramReader/start_bot.sh"
-command_background=true
-pidfile="/run/tradebot.pid"
-
-depend() {
-    need net
-}
-```
-#### Configure o serviço
-```
-rc-update add tradebot default
-```
-
-#### Comandos disponíveis
-```
-rc-service tradebot start
-rc-service tradebot stop
-rc-service tradebot restart
-rc-service tradebot status
-```
-
-#### Acompanhar log
-```
-tail -f /var/log/tradebot.log
-```
-
----
-
-
+\[sem mudanças]
 
 ---
 
 ## 📋 Logs
 
-- Log da aplicação: `logs/app.log`
+\[sem mudanças]
 
 ---
 
 ## 🧠 Observações
 
-- Este projeto usa **BingX Testnet** — perfeito para treinar sem risco financeiro para testar.
-- Este projeto usa **BingX** para trades reasis.
-- A escolha se dá por meio de parâmetro fornecido ao start_all.py
-- O projeto já está preparado para usar **PostgreSQL**
+* Projeto utiliza **fila persistente** com `persistqueue`, permitindo reinício seguro mesmo após falhas.
+* Threads separadas para leitura do Telegram, envio de ordens e configuração de TP/SL.
+* Pode rodar como serviço em ambientes Linux.
+* Suporte a múltiplos Take Profits com proporções configuráveis.
 
 ---
 
-3. Resumo Técnico
-# 📊 Resumo Técnico - Projeto Telegram Trade Bot (BingX Testnet)
+## 📊 Resumo Técnico - Projeto Telegram Trade Bot (BingX Testnet)
 
-Este projeto integra sinais de trade recebidos via Telegram com execução automática de ordens na corretora BingX podendo ser configurado para a rede teste ou produção. 
+Este projeto integra sinais de trade recebidos via Telegram com execução automática de ordens na corretora BingX podendo ser configurado para a rede de teste ou produção.
 
-## ✅ Funcionalidades Implementadas
+### ✅ Funcionalidades Implementadas
 
-### 1. Leitura de Sinais do Telegram
-- Monitoramento de mensagens com sinais de trade (entrada, TPs e SL).
-- Extração dos dados relevantes (par, tipo, entrada, take profits, stop loss).
-- Armazenamento estruturado no banco.
+#### TelegramReader
 
-### 2. Controle de Configuração
-- Arquivo `config.properties` centraliza todas as chaves da BingX, e parâmetros de trade.
-- Geração automática do arquivo `.env` com base nas escolhas feitas ao iniciar o bot.
-- Suporte a testnet e mainnet.
+* Escuta mensagens em grupos do Telegram.
+* Classifica mensagens como sinais de entrada ou monitoramento.
+* Armazena sinais estruturados com múltiplos TP em filas persistentes.
 
-### 3. Logs e Erros
-- Logs detalhados das chamadas à API.
-- Tratamento de erros de envio de ordens e TP.
+#### TradeExecutorSinal
+
+* Consome sinais da fila `sinais`.
+* Calcula saldo, margem, alavancagem, e quantidade proporcional.
+* Envia ordem para BingX e configura múltiplos Take Profits (TPs).
+* Atualiza banco com ordem enviada e configurações feitas.
+
+#### TradeExecutorTP
+
+* Consome sinais da fila `monitoramentos`.
+* Identifica atingimento de TP2 ou TP4.
+* Realiza operação de Break Even ajustando SL via BingX.
+* Marca no banco como break even executado.
+
+#### Fila Persistente
+
+* Utiliza `persistqueue.SQLiteQueue` para garantir robustez.
+* Resistente a falhas de energia ou reinicializações inesperadas.
+
+---
 
 ## 🔍 Documentação dos Arquivos-Chave
 
-- `TelegramReader.py`: leitor de mensagens Telegram e sinalizador para TradeExecutor
-- `TradeExecutor.py`: executor de ordens baseado nos sinais oriundos de TelegramReader
-- `BingXBroker.py`: interface com a API da corretora BingX
-- `db.py`: camada de persistência com PostgreSQL
-- `utils.py`: funções auxiliares (parser, arredondamento, config)
-- `start_all.py`: script principal para iniciar os serviços
-- `criar_tabela.py`: script para criação de banco de dados
+* `TelegramReader.py`: Leitor principal de mensagens do Telegram.
+* `TradeExecutorSinal.py`: Envia ordens e configura TPs.
+* `TradeExecutorTP.py`: Monitora e executa Break Even.
+* `BingXBroker.py`: Wrapper da API BingX.
+* `db.py`: Funções auxiliares de acesso ao banco.
+* `utils.py`: Helpers de arredondamento, configuração e parser.
+* `mensagem_sinal.py`: Modelo e validação de mensagens de trade.
 
-## Diagrama de Sequência
+---
+
+## 📈 Diagrama de Sequência
 
 ```mermaid
-%%{ init : { "theme" : "neutral" } }%%
 sequenceDiagram
     participant Telegram
-    participant TelegramReader
-    participant DB
-    participant TradeExecutor
+    participant Reader
+    participant Fila
+    participant Executor
     participant BingX
+    participant DB
 
-    rect rgba(220, 248, 255, 0.4)
-        Telegram->>TelegramReader: 📩 Mensagem recebida
-        TelegramReader->>TelegramReader: classificar_mensagem
-        alt tipo = trade
-            TelegramReader->>DB: inserir_sinal_com_multiplos_tps
-        else tipo = monitoramento
-            TelegramReader->>DB: buscar_info_apos_sinal_de_monitoramento
-            alt TP2 ou TP4
-                DB-->>TelegramReader: info encontrado
-                TelegramReader->>DB: ativar_break_even
-            else outro TP
-                TelegramReader-->>TelegramReader: ignorar
-            end
-        end
+    Telegram->>Reader: Nova mensagem recebida
+    Reader->>Reader: classificar_mensagem()
+    alt tipo == sinal
+        Reader->>Fila: put(sinal)
+    else tipo == monitoramento
+        Reader->>Fila: put(monitoramento)
     end
 
-    rect rgba(220, 255, 220, 0.4)
-        TradeExecutor->>DB: buscar_sinal_execucao
-        TradeExecutor->>BingX: enviar_ordem_tp_sl
-        BingX-->>TradeExecutor: sucesso/falha
-        TradeExecutor->>DB: marcar_ordem_enviada / incrementar_retry
-    end
+    Executor->>Fila: get(sinal)
+    Executor->>BingX: enviar_ordem_tp_sl
+    BingX-->>Executor: resposta
+    Executor->>DB: ordem_inserir + tp_inserir
 
-    rect rgba(240, 240, 255, 0.4)
-        TradeExecutor->>DB: buscar_sinal_para_break_even
-        TradeExecutor->>BingX: cancelar SL + ajustar BE
-        BingX-->>TradeExecutor: sucesso/falha
-        TradeExecutor->>DB: marcar_ordem_para_be_executado / retry
+    Executor->>Fila: get(monitoramento)
+    Executor->>DB: buscar ordem
+    alt TP2 ou TP4
+        Executor->>BingX: ajustar_para_break_even
+        BingX-->>Executor: sucesso
+        Executor->>DB: marcar BE executado
     end
-
 ```
+
+---
+
 ## 📚 Sequência de Chamadas Explicada
 
-### 📥 Parte 1: Recebimento e Processamento da Mensagem (TelegramReader)
+### 📥 TelegramReader
 
-1. **Mensagem recebida do Telegram**  
-   O `TelegramReader` escuta mensagens no grupo configurado via Telethon.
+1. Escuta mensagens usando `Telethon`.
+2. `classificar_mensagem()` determina se é sinal ou monitoramento.
+3. Armazena a mensagem na fila apropriada (`sinais` ou `monitoramentos`).
 
-2. **`classificar_mensagem(mensagem)`**  
-   Determina se a mensagem recebida é:
-   - um **sinal de trade** (entrada nova), ou
-   - uma **mensagem de monitoramento** (ex: TARGET #2 DONE ou #4 DONE).
+### ⚙️ TradeExecutorSinal
 
-3. **Se for sinal de trade → `inserir_sinal_com_multiplos_tps(dados)`**  
-   - Extrai os TPs (`tp1` a `tp4`) e o SL.
-   - Divide o trade em 5 ordens com proporções: 10%, 20%, 50%, 10%, 10%.
-   - Insere cada ordem na tabela `sinais`. A última não possui TP.
+1. Consome sinais da fila `sinais`.
+2. Valida e transforma a mensagem via `MensagemSinal`.
+3. Calcula quantidade com base em saldo e `trade_percentage`.
+4. Envia ordem com múltiplos TPs usando proporções \[0.1, 0.2, 0.5, 0.2].
+5. Atualiza banco com `ordem_inserir` e `tp_inserir`.
 
-4. **Se for mensagem de monitoramento:**
-   - Se for **TP2 ou TP4**:
-     - `buscar_info_apos_sinal_de_monitoramento(par)`  
-     - Se encontrar ordem, chama `ativar_break_even(id)` para sinalizar que o SL pode ser movido.
-   - Outros TPs são atualmente ignorados.
+### 📈 TradeExecutorTP
 
+1. Consome mensagens de `monitoramentos`.
+2. Se for TP2 ou TP4:
 
-### 🧠 Parte 2: Executor (TradeExecutor)
+   * Busca ordem ativa relacionada.
+   * Cancela SL atual e envia novo SL para preço de entrada (Break Even).
+   * Atualiza banco com status de Break Even aplicado.
 
-5. **Loop contínuo → `buscar_sinal_execucao()`**  
-   - Busca ordens com `ordem_status_id = 0` e `tentativas < 3`.
+---
 
-6. **Para cada sinal encontrado:**
-   - Obtém saldo → `broker.obter_saldo_disponivel()`
-   - Obtém preço de mercado → `broker.obter_preco_mercado(symbol)`
-   - Calcula a quantidade com base na proporção (ex: 0.2 para 20%).
-   - Envia ordem de entrada com SL e TP → `broker.enviar_ordem_tp_sl(...)`
-   - Se sucesso:
-     - `marcar_ordem_enviada(...)`
-   - Se falha:
-     - `incrementar_retry_order(...)` ou `desabilitar_sinal(...)` se erro de símbolo.
+## 📖 Geração de documentação
 
+\[sem mudanças]
 
-### 🔁 Parte 3: Monitoramento de Break Even
+---
 
-7. **Se não há sinais novos, busca → `buscar_sinal_para_break_even()`**
-   - Encontra sinais que já atingiram TP2 ou TP4 e estão prontos para mover o SL.
+## 🧾 Dicionário de Dados
 
-8. **Executa ajuste de SL para preço de entrada:**
-   - Chama `broker.ajustar_para_break_even(...)` (cancela SL antigo e envia novo SL)
-   - Se sucesso → `marcar_ordem_para_be_executado(par)`
-   - Se falha → `incrementar_retry_be(id)`
+### Tabela `sinais`
 
-### Parte 4 - Geração de documentação
+| Campo                   | Tipo      | Descrição                   |
+| ----------------------- | --------- | --------------------------- |
+| id                      | serial    | Identificador único         |
+| data\_hora              | timestamp | Momento do sinal            |
+| par                     | text      | Par de negociação           |
+| tipo\_ordem             | text      | BUY ou SELL                 |
+| margem                  | text      | Tipo de margem (ex: CROSS)  |
+| alavancagem             | text      | Alavancagem usada (ex: 20X) |
+| sl                      | real      | Valor do Stop Loss          |
+| quantidade              | real      | Quantidade da ordem         |
+| break\_even\_status\_id | smallint  | Controle de BE              |
+| ordem\_status\_id       | smallint  | Status da ordem             |
+| order\_id               | bigint    | ID externo da corretora     |
+| entry\_price            | real      | Preço de execução           |
+| janela\_5min            | timestamp | Janela anti-duplicação      |
 
-> Navegue até a pasta docs
-- **Linux**
-```shell
-make html
-```
-- **Windows**:
-```bash
-make.bat html
-```
+### Tabela `take_profits`
 
-## 📚 Dicionário de Dados
+| Campo          | Tipo     | Descrição            |
+| -------------- | -------- | -------------------- |
+| sinal\_id      | integer  | FK para `sinais`     |
+| numero         | smallint | TP1 a TP4            |
+| valor          | real     | Preço alvo           |
+| quantidade     | real     | Quantidade associada |
+| tp\_status\_id | smallint | Status do TP         |
+| proporcao      | real     | Proporção da ordem   |
 
-### 🧾 Tabela `sinais`
+### Tabela `ordem_status`
 
-Registra cada sinal de trade detectado e processado.
+| ID | Descrição    |
+| -- | ------------ |
+| 0  | RECEBIDA     |
+| 1  | ENVIADA      |
+| 2  | DESABILITADA |
+| 3  | CONCLUÍDA    |
 
-| Campo             | Tipo       | Descrição |
-|------------------|------------|-----------|
-| id               | `serial`   | Identificador único do sinal |
-| data_hora        | `timestamp with time zone` | Momento em que o sinal foi capturado |
-| par              | `text`     | Par de negociação (ex: BTC/USDT) |
-| tipo_ordem       | `text`     | Direção da ordem (BUY / SELL) |
-| margem           | `text`     | Tipo de margem (ex: Cross) |
-| alavancagem      | `text`     | Alavancagem usada (ex: 20X) |
-| sl               | `real`     | Stop loss configurado |
-| quantidade       | `real`     | Quantidade total da ordem |
-| break_even_status_id | `smallint` | Status do break even (FK) |
-| ordem_status_id  | `smallint` | Status geral da ordem (FK) |
-| order_id         | `bigint`   | ID da ordem na corretora |
-| entry_price      | `real`     | Preço de entrada efetivo |
-| janela_5min      | `timestamp`| Janela de tempo usada para evitar duplicação |
+### Tabela `break_even_status`
 
-### 🎯 Tabela `take_profits`
+| ID | Descrição |
+| -- | --------- |
+| 0  | INATIVO   |
+| 1  | ATIVAR    |
 
-Armazena os múltiplos alvos de lucro para cada sinal.
+### Tabela `take_profit_status`
 
-| Campo       | Tipo       | Descrição |
-|-------------|------------|-----------|
-| sinal_id    | `integer`  | ID do sinal (FK para `sinais`) |
-| numero      | `smallint` | Número do TP (1 a 4) |
-| valor       | `real`     | Valor do TP em preço |
-| quantidade  | `real`     | Quantidade associada a este TP |
-| tp_status_id| `smallint` | Status do TP (FK) |
-| proporcao   | `real`     | Proporção da ordem total alocada neste TP |
-
-### ⚙️ Tabela `ordem_status`
-
-Define os estados possíveis para a ordem principal (`sinais.ordem_status_id`).
-
-| ID | Descrição       |
-|----|------------------|
-| 0  | RECEBIDA         |
-| 1  | ENVIADA          |
-| 2  | DESABILITADA     |
-| 3  | CONCLUÍDA        |
-
-### ⚙️ Tabela `break_even_status`
-
-Define os estados do controle de break-even (`sinais.break_even_status_id`).
-
-| ID | Descrição  |
-|----|------------|
-| 0  | INATIVO    |
-| 1  | ATIVAR     |
-
-### ⚙️ Tabela `take_profit_status`
-
-Define os estados para cada TP (`take_profits.tp_status_id`).
-
-| ID | Descrição     |
-|----|----------------|
-| 1  | PENDENTE       |
-| 2  | CONFIGURADO    |
-| 3  | ATINGIDO       |
+| ID | Descrição   |
+| -- | ----------- |
+| 1  | PENDENTE    |
+| 2  | CONFIGURADO |
+| 3  | ATINGIDO    |
