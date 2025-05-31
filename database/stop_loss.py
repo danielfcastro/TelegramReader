@@ -1,5 +1,4 @@
-from database.db import executar_update
-
+from database.db import executar_update, executar_select
 
 def stop_loss_update(symbol, novo_sl):
     """
@@ -14,18 +13,14 @@ def stop_loss_update(symbol, novo_sl):
         SET sl = %s
         WHERE symbol = %s AND ordem_status_id = 1
     """
-    try:
-        executar_update(query, (novo_sl, symbol))
-        logger.debug(f"✅ - SL atualizado para {symbol}: {novo_sl}")
-    except Exception as e:
-        logger.exception(f"❌ - Falha ao atualizar SL para {symbol}: {e}")
+    executar_update(query, (novo_sl, symbol))
 
 def stop_loss_soma_quantidade(order_id):
     """
     Soma a quantidade total de sinais com break-even pendente para o par.
     break_even_status_id = 1 - ATIVAR
     Args:
-        :param symbol: Par a ser analisado.
+        :param order_id: Order ID retornado pelo broker após uma ordem enviada com sucesso
 
     Returns:
         float: Soma das quantidades.

@@ -1,4 +1,10 @@
+import logging
+import os
 from database.db import executar_insert, executar_update, executar_select
+
+logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
+
+
 
 
 def tp_inserir(take_profits):
@@ -27,7 +33,6 @@ def tp_inserir(take_profits):
             "status": tp["status"]
         }
         executar_insert(query_tp, tp_dados)
-
 
 def tp_atualizar(order_id, numero_tp, novo_status=1):
     """
@@ -61,7 +66,7 @@ def tp_ordem_id_mais_nova(symbol):
     """
     query = """
         SELECT order_id FROM v2.ordem
-        WHERE symbol = %(symbol)s AND v2.ordem_status_id = 1
+        WHERE symbol = %(symbol)s AND ordem_status_id = 1
         ORDER BY data_hora DESC
         LIMIT 1
     """

@@ -1,6 +1,5 @@
 from database.db import executar_insert, executar_select
 
-
 def ordem_inserir(dados_dict, order_id, entry_price, quantidade):
     """
     Insere uma nova ordem na tabela `sinais` com dados provenientes da ordem real enviada ao broker.

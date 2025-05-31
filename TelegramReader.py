@@ -1,20 +1,20 @@
 import logging
 import os
+import utils
+
 from dotenv import load_dotenv
 from telethon import TelegramClient, events
-
-import utils
 from log.logger_config import configurar_logging
 from message.mensagem_sinal import MensagemSinal
 from message.mensagem_tp import MensagemTP
-from queue import Queue
+from persistqueue import SQLiteQueue
 
 TRADE = "trade"
 MONITORAMENTO = "monitoramento"
 
 # Filas (substituíveis por filas externas)
-fila_sinal = Queue()
-fila_tp = Queue()
+fila_sinal = SQLiteQueue(os.path.join("fila", "sinais"), auto_commit=False)
+fila_tp = SQLiteQueue(os.path.join("fila", "monitoramentos"), auto_commit=False)
 
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 configurar_logging()

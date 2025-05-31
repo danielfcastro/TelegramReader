@@ -3,7 +3,6 @@ import atexit
 import logging
 import os
 import sys
-import threading
 import subprocess
 import signal
 
@@ -17,6 +16,9 @@ atexit.register(db.fechar_pool)
 
 configurar_logging()
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
+os.makedirs("fila/sinais", exist_ok=True)
+os.makedirs("fila/monitoramentos", exist_ok=True)
+
 
 def salvar_env_com_base_no_config(is_testnet):
     config = carregar_config()

@@ -74,7 +74,7 @@ def configurar_logging(log_level=logging.DEBUG, log_dir='logs', log_file='app.lo
     logging.getLogger("TradeExecutorSinal").setLevel(logging.DEBUG)
     logging.getLogger("TradeExecutorTP").setLevel(logging.DEBUG)
     logging.getLogger("BingXBroker").setLevel(logging.DEBUG)
-    logging.getLogger("utils").setLevel(logging.DEBUG)
+    logging.getLogger("utils").setLevel(logging.INFO)
     logging.getLogger("db").setLevel(logging.DEBUG)
     logging.getLogger("sinal").setLevel(logging.DEBUG)
     logging.getLogger("stop_loss").setLevel(logging.DEBUG)
