@@ -29,17 +29,17 @@ client = TelegramClient(session_name, api_id, api_hash)
 
 async def main():
     """
-    Função principal assíncrona que:
+    Função principal assíncrona que inicia a escuta de mensagens no grupo Telegram definido no `.env`.
 
-    1. Obtém a entidade do grupo configurado no Telegram.
-    2. Registra o handler de mensagens recebidas.
-    3. Classifica mensagens como sinal de trade ou monitoramento.
-    4. Executa a lógica correspondente de inserção ou ajuste de stop loss.
-    5. Envia payloads para os endpoints /sinal e /monitoramento.
-
-    Inicia a escuta assíncrona do cliente Telegram.
+    Etapas principais:
+    1. Obtém a entidade do grupo a partir do ID.
+    2. Registra um handler para eventos de novas mensagens no grupo.
+    3. Cada mensagem recebida é classificada como:
+       - Sinal de trade (tipo "trade"): convertida em `MensagemSinal` e adicionada à fila `fila_sinal`.
+       - Monitoramento (tipo "monitoramento"): convertida em `MensagemTP` e adicionada à fila `fila_tp`.
+       - Outro tipo: descartado com log de aviso.
+    4. As filas `fila_sinal` e `fila_tp` serão processadas por componentes consumidores posteriores.
     """
-
     grupo_entidade = await utils.obter_entidade(client, group_id)
     grupo_nome = getattr(grupo_entidade, 'title', f"grupo_{group_id}")
     grupo_id = grupo_entidade.id
@@ -48,19 +48,18 @@ async def main():
     @client.on(events.NewMessage(chats=grupo_entidade))
     async def handler(event):
         """
-        Handler que processa novas mensagens do Telegram.
+        Handler assíncrono de mensagens novas recebidas no grupo monitorado do Telegram.
 
-        - Se for um sinal de trade:
-            - Insere no banco (se não for duplicado).
-            - Dispara o processo de execução via /sinal.
+        Etapas:
+        - Lê o conteúdo da mensagem recebida.
+        - Usa a função `classificar_mensagem` do módulo `utils` para determinar o tipo.
+        - Com base no tipo:
+            - Se for `trade`: instancia `MensagemSinal`, enfileira na `fila_sinal` e registra log.
+            - Se for `monitoramento`: instancia `MensagemTP`, enfileira na `fila_tp` e registra log.
+            - Se não reconhecido: ignora e registra log de advertência.
 
-        - Se for um monitoramento (TP1–TP4):
-            - Marca TP como concluído.
-            - Se for TP2 ou TP4, prepara ajuste de SL para break-even.
-            - Envia evento para /monitoramento.
-
-        Args:
-            event (telethon.events.NewMessage.Event): Evento de nova mensagem recebida.
+        :param event: Objeto de evento do Telethon que representa a nova mensagem.
+        :type event: telethon.events.NewMessage.Event
         """
 
         mensagem = event.text
@@ -68,6 +67,7 @@ async def main():
         resultado = utils.classificar_mensagem(mensagem)
         tipo = resultado["tipo"]
         dados = resultado["dados"]
+        logger.debug(f"tipo: {tipo} - dados: {dados} - resultado: {resultado}")
 
         if tipo == TRADE:
             try:
@@ -94,6 +94,12 @@ async def main():
     await client.run_until_disconnected()
 
 if __name__ == "__main__":
+    """
+    Bloco principal que inicia a execução do cliente Telegram com `main()`.
+
+    - Usa `client.loop.run_until_complete(main())` para iniciar o loop assíncrono.
+    - Captura interrupções com `KeyboardInterrupt` para encerrar o processo com segurança.
+    """
     try:
         with client:
             client.loop.run_until_complete(main())

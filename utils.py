@@ -10,15 +10,12 @@ logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 
 def ajustar_quantidade(qty, step):
     """
-        Ajusta a quantidade `qty` para que seja múltipla do `step`, conforme exigência da corretora.
+    Ajusta a quantidade `qty` para que seja múltipla do `step`, conforme exigência da corretora.
 
-        Args:
-            qty (float): Quantidade original desejada.
-            step (float): Incremento mínimo aceito (ex: 0.01 ou 0.0001).
-
-        Returns:
-            float: Quantidade ajustada e arredondada.
-        """
+    :param qty: Quantidade original desejada.
+    :param step: Incremento mínimo aceito (ex: 0.01 ou 0.0001).
+    :return: Quantidade ajustada e arredondada.
+    """
     step = float(step)
     qty_ajustada = math.floor(qty / step) * step
     return round(qty_ajustada, str(step)[::-1].find('.'))
@@ -27,11 +24,8 @@ def carregar_config(path='config.properties'):
     """
     Carrega variáveis de configuração de um arquivo `.properties`.
 
-    Args:
-        path (str): Caminho do arquivo de configuração. Default: 'config.properties'.
-
-    Returns:
-        dict: Dicionário com as configurações carregadas.
+    :param path: Caminho do arquivo de configuração. Default: 'config.properties'.
+    :return: Dicionário com as configurações carregadas.
     """
     logger.info("🔧 - Carregando configuração do arquivo: %s", path)
     config = {}
@@ -51,11 +45,8 @@ def extrair_dados_mensagem(mensagem):
     """
     Extrai dados estruturados de uma mensagem de sinal do Telegram.
 
-    Args:
-        mensagem (str): Texto da mensagem contendo sinal de trade.
-
-    Returns:
-        dict: Dicionário com dados como symbol, tipo de ordem, SL, TP1..TP4, margem e alavancagem.
+    :param mensagem: Texto da mensagem contendo sinal de trade.
+    :return: Dicionário com dados como symbol, tipo de ordem, SL, TP1..TP4, margem e alavancagem.
     """
     logger.debug("📩 - Analisando mensagem completa:")
     logger.debug(f"\n{mensagem}")
@@ -73,7 +64,7 @@ def extrair_dados_mensagem(mensagem):
     if symbol:
         dados["symbol"] = normalizar_symbol(symbol.group(1).upper())
     if type_match:
-        dados["type"] = type_match.group(1).upper()
+        dados["tipo_ordem"] = type_match.group(1).upper()
     if sl_match:
         stop = float(sl_match.group(1))
         if stop <= 0:
@@ -104,11 +95,8 @@ def classificar_mensagem(mensagem):
     """
     Classifica a mensagem como 'trade', 'monitoramento' ou 'desconhecido'.
 
-    Args:
-        mensagem (str): Texto da mensagem.
-
-    Returns:
-        dict: Dicionário com chave 'tipo' e os 'dados' extraídos.
+    :param mensagem: Texto da mensagem.
+    :return: Dicionário com chave 'tipo' e os 'dados' extraídos.
     """
     try:
         dados = extrair_dados_mensagem(mensagem)
@@ -117,7 +105,7 @@ def classificar_mensagem(mensagem):
         return {"tipo": "invalida", "erro": str(e), "dados": {}}
     _msg = {}
 
-    if "type" in dados and "stoploss" in dados:
+    if "tipo_ordem" in dados and "stoploss" in dados:
         _msg = {"tipo": "trade", "dados": dados}
     elif "tp" in dados:
         _msg = {"tipo": "monitoramento", "dados": {
@@ -134,9 +122,8 @@ def normalizar_symbol(symbol: str) -> str:
     Normaliza o símbolo de trading para o formato esperado pela API: BTC-USDT.
     Substitui '/' por '-', e garante caixa alta.
 
-    Ex:
-        BTC/USDT -> BTC-USDT
-        eth-usdt -> ETH-USDT
+    :param symbol: Símbolo original (ex: BTC/USDT).
+    :return: Símbolo normalizado (ex: BTC-USDT).
     """
     return symbol.upper().replace("/", "-")
 
@@ -144,11 +131,8 @@ def limpar_nome(nome):
     """
     Limpa e formata um nome de arquivo ou pasta removendo caracteres inválidos.
 
-    Args:
-        nome (str): Nome original.
-
-    Returns:
-        str: Nome formatado com apenas letras, números, hífens e underscores.
+    :param nome: Nome original.
+    :return: Nome formatado com apenas letras, números, hífens e underscores.
     """
     nome = nome.replace(' ', '_')
     nome = re.sub(r'[^A-Za-z0-9_\-]', '', nome)
@@ -158,8 +142,7 @@ def criar_pasta(path):
     """
     Cria uma pasta se ela ainda não existir.
 
-    Args:
-        path (str): Caminho da pasta a ser criada.
+    :param path: Caminho da pasta a ser criada.
     """
     if not os.path.exists(path):
         os.makedirs(path)
@@ -168,12 +151,9 @@ async def obter_entidade(client, id_input):
     """
     Obtém uma entidade de grupo ou canal do Telegram, tratando diferentes tipos de ID.
 
-    Args:
-        client (TelegramClient): Cliente ativo do Telethon.
-        id_input (int | str): ID do grupo ou canal.
-
-    Returns:
-        telethon.tl.custom.chat.Chat | None: Entidade correspondente, ou None se não encontrada.
+    :param client: Cliente ativo do Telethon.
+    :param id_input: ID do grupo ou canal (int ou str).
+    :return: Entidade correspondente (PeerChannel ou PeerChat) ou None.
     """
     try:
         return await client.get_entity(PeerChannel(int(id_input)))
@@ -202,11 +182,8 @@ def extrair_limite_usdt(mensagem):
     """
     Extrai o valor máximo de exposição (em USDT) a partir de uma mensagem de erro da corretora.
 
-    Args:
-        mensagem (str): Texto da mensagem de erro.
-
-    Returns:
-        float | None: Valor do limite em USDT se encontrado, ou None.
+    :param mensagem: Texto da mensagem de erro.
+    :return: Valor do limite em USDT se encontrado, ou None.
     """
     match = re.search(r'position limit of (\d+(?:\.\d+)?)\s*USDT', mensagem)
     if match:

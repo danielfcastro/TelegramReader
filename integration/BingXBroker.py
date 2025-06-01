@@ -1,3 +1,4 @@
+
 import hmac
 import json
 import logging
@@ -31,11 +32,8 @@ class BingXBroker(BrokerInterface, ABC):
         """
         Gera a assinatura HMAC SHA256 para autenticar requisições.
 
-        Args:
-            payload (str): String de consulta formatada com parâmetros ordenados.
-
-        Returns:
-            str: Assinatura em hexadecimal.
+        :param payload: String de consulta formatada com parâmetros ordenados.
+        :return: Assinatura em hexadecimal.
         """
         signature = hmac.new(
             self.SECRET_KEY.encode("utf-8"),
@@ -48,13 +46,10 @@ class BingXBroker(BrokerInterface, ABC):
         """
         Envia uma requisição autenticada para a API da BingX.
 
-        Args:
-            method (str): Método HTTP (ex: 'GET', 'POST').
-            path (str): Caminho do endpoint da API.
-            params (dict): Parâmetros da requisição (corpo ou query).
-
-        Returns:
-            dict: Resposta da API convertida em JSON.
+        :param method: Método HTTP ('GET', 'POST', etc.).
+        :param path: Caminho do endpoint.
+        :param params: Parâmetros de requisição.
+        :return: Resposta da API.
         """
 
         query = self._build_query(params)
@@ -69,13 +64,10 @@ class BingXBroker(BrokerInterface, ABC):
     @staticmethod
     def _build_query(params):
         """
-        Constrói a string de query com os parâmetros ordenados e adiciona timestamp.
+        Constrói a string de query com parâmetros ordenados e timestamp.
 
-        Args:
-            params (dict): Dicionário com os parâmetros da requisição.
-
-        Returns:
-            str: String de query formatada para autenticação.
+        :param params: Parâmetros da requisição.
+        :return: Query ordenada com timestamp.
         """
         # Sempre adiciona timestamp, mesmo que params esteja vazio
         all_params = dict(params) if params else {}
@@ -88,16 +80,11 @@ class BingXBroker(BrokerInterface, ABC):
 
     def obter_preco_mercado(self, symbol):
         """
-        Obtém o preço de marcação (mark price) do ativo fornecido.
+        Obtém o preço atual de marcação (mark price) para o ativo.
 
-        Args:
-            symbol (str): Par de negociação (ex: "BTC-USDT").
-
-        Returns:
-            float: Preço atual de marcação.
-
-        Raises:
-            Exception: Se a API falhar ou não retornar dados.
+        :param symbol: Par de negociação (ex: "BTC-USDT").
+        :return: Preço atual de mercado.
+        :raises Exception: Se a resposta da API for inválida.
         """
         path = "/openApi/swap/v2/quote/premiumIndex"
         body = {
@@ -112,13 +99,10 @@ class BingXBroker(BrokerInterface, ABC):
 
     def obter_saldo_disponivel(self):
         """
-        Consulta o saldo disponível em USDT ou VST na conta do usuário.
+        Consulta o saldo disponível em USDT ou VST.
 
-        Returns:
-            float: Valor de saldo disponível.
-
-        Raises:
-            Exception: Se a API falhar ou não houver saldo elegível.
+        :return: Saldo disponível.
+        :raises Exception: Se não for possível consultar o saldo.
         """
         try:
             path = "/openApi/swap/v3/user/balance"
@@ -138,12 +122,11 @@ class BingXBroker(BrokerInterface, ABC):
 
     def set_leverage(self, symbol, side, leverage):
         """
-        Configura a alavancagem para um determinado par na corretora BingX.
+        Define a alavancagem desejada para o símbolo.
 
-        Args:
-            symbol (str): Par de ativos (ex: 'BTC-USDT').
-            side (str): Direção da posição ('LONG', 'SHORT', 'BOTH').
-            leverage (int | str): Alavancagem desejada.
+        :param symbol: Par de ativos.
+        :param side: Direção da posição (ex: 'BOTH').
+        :param leverage: Valor da alavancagem.
         """
 
         path = "/openApi/swap/v2/trade/leverage"
@@ -161,6 +144,18 @@ class BingXBroker(BrokerInterface, ABC):
             logger.exception(f"❌ - Exceção ao ajustar leverage para {symbol}: {e}")
 
     def enviar_ordem_tp_sl(self, mensagem: MensagemSinal, quantidade):
+        """
+        Envia uma ordem de mercado com SL embutido para o par especificado.
+
+        Etapas:
+        1. Define alavancagem.
+        2. Envia ordem com `stopLoss` do tipo STOP_MARKET.
+        3. Retorna dados da ordem ou erro.
+
+        :param mensagem: Dados do sinal a ser executado.
+        :param quantidade: Quantidade do ativo a negociar.
+        :return: Resultado da operação (sucesso, order_id, preço, erros).
+        """
         side_leverage = "BOTH"
         logger.debug(f"symbol: {mensagem.symbol} - side: {mensagem.tipo_ordem} - leverage: {mensagem.alavancagem} - tp1: {mensagem.tp1} - t2: {mensagem.tp2}  - tp3: {mensagem.tp3}  - tp4: {mensagem.tp4} - sl: {mensagem.sl}")
 
@@ -219,13 +214,10 @@ class BingXBroker(BrokerInterface, ABC):
 
     def cancela_stop_loss(self, symbol):
         """
-        Cancela todas as ordens do tipo STOP_MARKET abertas para um ativo.
+        Cancela todas as ordens STOP_MARKET abertas para o símbolo.
 
-        Args:
-            symbol (str): Símbolo do par de ativos.
-
-        Returns:
-            dict: Resposta da API.
+        :param symbol: Par de negociação.
+        :return: Resposta da API.
         """
         try:
             path = "/openApi/swap/v2/trade/allOpenOrders"
@@ -243,11 +235,16 @@ class BingXBroker(BrokerInterface, ABC):
 
     def ajustar_stop_loss(self, symbol, position_side, quantity, stop_price, order_id, current_order_side):
         """
-        Ajusta o Stop Loss de uma posição para o ponto de Break Even (sem lucro ou prejuízo).
-        Tenta novamente com a quantidade sugerida pela BingX se a original for rejeitada.
+        Ajusta o Stop Loss para uma posição específica.
+        Se a corretora retornar erro de quantidade, tenta com sugestão do sistema.
 
-        Returns:
-            bool: True se o SL foi ajustado com sucesso.
+        :param symbol: Par de negociação.
+        :param position_side: Direção da posição.
+        :param quantity: Quantidade a ajustar.
+        :param stop_price: Novo preço de SL.
+        :param order_id: ID da ordem ativa.
+        :param current_order_side: Direção atual da ordem.
+        :return: True se SL foi ajustado com sucesso, False caso contrário.
         """
         try:
             ordem = self.get_open_order_info(symbol, order_id)
@@ -306,18 +303,15 @@ class BingXBroker(BrokerInterface, ABC):
 
     def ajustar_take_profit(self, symbol, position_side, quantity, stop_price, order_id, numero):
         """
-        Cria uma ordem de Take Profit para uma fração da posição.
+        Envia ordem de TAKE_PROFIT_MARKET para uma fração da posição.
 
-        Args:
-            :param numero:
-            :param order_id:
-            :param symbol: string - Par de trading (ex: "BCH-USDT").
-            :param position_side: string - Direção da posição ('LONG' ou 'SHORT').
-            :param quantity: float - Quantidade da fração.
-            :param stop_price: float - Preço alvo do TP.
-
-        Returns:
-            bool: True se a ordem foi enviada com sucesso.
+        :param symbol: Par de negociação.
+        :param position_side: Direção da posição.
+        :param quantity: Quantidade parcial a fechar.
+        :param stop_price: Preço alvo.
+        :param order_id: Ordem relacionada.
+        :param numero: Número do TP (1 a 4).
+        :return: True se a ordem for enviada com sucesso.
         """
         try:
             logger.debug(f"🎯 - Pedido para configurar TP={numero}: symbol={symbol} | side={position_side} | quantity={quantity} | stop_price={stop_price} | order_id={order_id}")
@@ -349,14 +343,11 @@ class BingXBroker(BrokerInterface, ABC):
 
     def get_open_order_info(self, symbol, order_id):
         """
-        Obtém informações de uma ordem aberta.
+        Obtém detalhes da ordem aberta.
 
-        Args:
-            symbol (str): Símbolo do par de ativos.
-            order_id (str): ID da ordem.
-
-        Returns:
-            dict: Dados detalhados da ordem retornados pela API.
+        :param symbol: Par de negociação.
+        :param order_id: ID da ordem.
+        :return: Dados da ordem, se existirem.
         """
         try:
             path = "/openApi/swap/v2/trade/order"
@@ -373,6 +364,12 @@ class BingXBroker(BrokerInterface, ABC):
             return {}
 
     def fecha_ordem_mercado(self, symbol):
+        """
+        Fecha todas as posições de mercado abertas para o ativo.
+
+        :param symbol: Par de negociação.
+        :return: Resposta da API.
+        """
         try:
             path = "/openApi/swap/v2/trade/closeAllPositions"
             body = {
@@ -388,6 +385,12 @@ class BingXBroker(BrokerInterface, ABC):
             return {}
 
     def cancela_ordem_tp(self, symbol):
+        """
+        Cancela todas as ordens TAKE_PROFIT_MARKET abertas para o ativo.
+
+        :param symbol: Par de negociação.
+        :return: Resposta da API.
+        """
         try:
             path = "/openApi/swap/v2/trade/allOpenOrders"
             body = {
@@ -403,6 +406,12 @@ class BingXBroker(BrokerInterface, ABC):
             return {}
 
     def cancela_ordem_sl(self, symbol):
+        """
+        Cancela todas as ordens STOP_MARKET abertas para o ativo.
+
+        :param symbol: Par de negociação.
+        :return: Resposta da API.
+        """
         try:
             path = "/openApi/swap/v2/trade/allOpenOrders"
             body = {
@@ -418,6 +427,12 @@ class BingXBroker(BrokerInterface, ABC):
             return {}
 
     def verificar_tipo_margem(self, symbol):
+        """
+        Consulta o tipo de margem (CROSSED ou ISOLATED) do ativo.
+
+        :param symbol: Par de negociação.
+        :return: Tipo de margem ou vazio em caso de erro.
+        """
         try:
             path = "/openApi/swap/v2/trade/marginType"
             body = {
@@ -432,6 +447,12 @@ class BingXBroker(BrokerInterface, ABC):
             return {}
 
     def mudar_tipo_margem(self, symbol):
+        """
+        Altera o tipo de margem do ativo para CROSSED.
+
+        :param symbol: Par de negociação.
+        :return: Resposta da API.
+        """
         try:
             path = "/openApi/swap/v2/trade/marginType"
             body = {

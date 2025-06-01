@@ -9,11 +9,15 @@ logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 
 def tp_inserir(take_profits):
     """
-    Insere múltiplos TPs na tabela `take_profits`.
+    Insere múltiplos registros de Take Profit (TP) na tabela `take_profits`.
 
-    Args:
-        take_profits (list): Lista de dicionários com:
-            numero, valor, quantidade, order_id, status
+    :param take_profits: Lista de dicionários representando TPs a serem inseridos.
+                         Cada dicionário deve conter:
+                         - numero (int): número do TP (ex: 1, 2, 3, 4).
+                         - valor (float): valor de disparo do TP.
+                         - quantidade (float): quantidade da posição correspondente.
+                         - order_id (str): identificador da ordem associada.
+                         - status (int): status do TP (ex: 1 = configurado).
     """
 
     query_tp = """
@@ -36,12 +40,12 @@ def tp_inserir(take_profits):
 
 def tp_atualizar(order_id, numero_tp, novo_status=1):
     """
-    Atualiza o status de um Take Profit específico de um par.
+    Atualiza o status de um Take Profit específico associado a uma ordem.
 
-    Args:
-        :param novo_status: Novo status (ex: 1 - CONFIGURADO, 2 - ATINGIDO).
-        :param numero_tp: ordem ou cardinalidade do TP, cada ordem abre 4 TPs
-        :param order_id: id da ordem enviada
+    :param order_id: ID da ordem à qual o TP está vinculado.
+    :param numero_tp: Número do TP a ser atualizado (ex: 1, 2, 3, 4).
+    :param novo_status: Novo status a ser definido para o TP.
+                        (1 = configurado, 2 = atingido, 3 = em execução, etc.)
     """
 
     query = """
@@ -55,14 +59,10 @@ def tp_atualizar(order_id, numero_tp, novo_status=1):
 
 def tp_ordem_id_mais_nova(symbol):
     """
-    Retorna o order_id mais recente para um determinado symbol,
-    com ordem_status_id = 1.
+    Retorna o `order_id` mais recente de uma ordem ativa (status 1) para um determinado par (symbol).
 
-    Args:
-        :param symbol: Símbolo do par (ex: BTCUSDT)
-
-    Returns:
-        str | None: order_id mais recente ou None se não encontrado
+    :param symbol: Símbolo do par (ex: 'BTCUSDT').
+    :return: `order_id` da ordem mais recente com `ordem_status_id = 1`, ou 0 se não encontrado.
     """
     query = """
         SELECT order_id FROM v2.ordem

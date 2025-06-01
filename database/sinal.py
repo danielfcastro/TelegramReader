@@ -4,20 +4,16 @@ def ordem_inserir(dados_dict, order_id, entry_price, quantidade):
     """
     Insere uma nova ordem na tabela `sinais` com dados provenientes da ordem real enviada ao broker.
 
-    Args:
-        dados_dict (dict): Dados do sinal com os seguintes campos obrigatórios:
-            - symbol (str)
-            - tipo_ordem (str)
-            - margem (str)
-            - alavancagem (int)
-            - sl (float)
-
-        order_id (str): ID da ordem retornado pelo broker.
-        entry_price (float): Preço médio da ordem executada.
-        quantidade (float): Quantidade executada na ordem.
-
-    Returns:
-        int: ID do sinal inserido.
+    :param dados_dict: Dicionário com os dados do sinal. Deve conter:
+        - symbol (str): Par de negociação (ex: 'BTC-USDT').
+        - tipo_ordem (str): Tipo da ordem (ex: 'buy', 'sell').
+        - margem (str): Tipo de margem utilizada (ex: 'isolated', 'cross').
+        - alavancagem (int): Fator de alavancagem aplicado.
+        - sl (float): Valor de Stop Loss.
+    :param order_id: ID da ordem retornado pela corretora.
+    :param entry_price: Preço médio de execução da ordem.
+    :param quantidade: Quantidade executada na ordem.
+    :return: ID do sinal inserido na tabela.
     """
     dados = {
         "symbol": dados_dict["symbol"],
@@ -66,16 +62,13 @@ def ordem_inserir(dados_dict, order_id, entry_price, quantidade):
 
 def ordem_info(par, exigir_break_even_inativo=False):
     """
-    Busca a última ordem enviada para um determinado par.
+    Retorna a ordem ativa mais recente para o par fornecido.
 
-    Se `exigir_break_even_inativo` for True, filtra apenas ordens com break_even_status_id = 0.
+    Pode aplicar filtro adicional para retornar apenas ordens sem break-even ativo.
 
-    Args:
-        par (str): Par de negociação, ex: 'BTC/USDT'.
-        exigir_break_even_inativo (bool): Se True, filtra por break_even_status_id = 0.
-
-    Returns:
-        dict | None: Registro mais recente da ordem, ou None.
+    :param par: Par de negociação (ex: 'BTC-USDT').
+    :param exigir_break_even_inativo: Se True, restringe a busca a ordens com break_even_status_id = 0.
+    :return: Dicionário com os dados da ordem encontrada, ou None se não houver.
     """
     condicoes = [
         "par = %(par)s",

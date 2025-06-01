@@ -24,7 +24,7 @@ class MensagemSinal:
     def to_dict(self):
         return {
             "symbol": self.symbol,
-            "type": self.tipo_ordem,
+            "tipo_ordem": self.tipo_ordem,
             "sl": self.sl,
             "tp1": self.tp1,
             "tp2": self.tp2,

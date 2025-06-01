@@ -2,11 +2,10 @@ from database.db import executar_update, executar_select
 
 def stop_loss_update(symbol, novo_sl):
     """
-    Atualiza o Stop Loss da ordem principal de um determinado par.
+    Atualiza o valor do Stop Loss da ordem principal (em execução) associada a um determinado par de trading.
 
-    Args:
-        :param novo_sl: (float): Novo valor de Stop Loss.
-        :param symbol: Par de trading (ex: "BTC/USDT").
+    :param symbol: (str) Par de trading (ex: "BTC/USDT").
+    :param novo_sl: (float) Novo valor de Stop Loss a ser definido.
     """
     query = """
         UPDATE v2.ordem
@@ -17,14 +16,13 @@ def stop_loss_update(symbol, novo_sl):
 
 def stop_loss_soma_quantidade(order_id):
     """
-    Soma a quantidade total de sinais com break-even pendente para o par.
-    break_even_status_id = 1 - ATIVAR
-    Args:
-        :param order_id: Order ID retornado pelo broker após uma ordem enviada com sucesso
+    Calcula a soma total da quantidade de sinais com break-even pendente
+    (ou seja, que ainda não foram executados) para uma determinada ordem.
 
-    Returns:
-        float: Soma das quantidades.
+    Considera apenas os registros na tabela `take_profits` cujo `tp_status_id = 1`.
 
+    :param order_id: (str|int) Identificador da ordem no broker (retornado no momento do envio da ordem).
+    :return: (float) Soma total da quantidade pendente de execução para break-even. Retorna 0.0 se nenhum registro encontrado.
     """
     sql = """
     SELECT SUM(quantidade) AS total
