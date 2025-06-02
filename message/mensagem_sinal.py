@@ -30,6 +30,6 @@ class MensagemSinal:
             "tp2": self.tp2,
             "tp3": self.tp3,
             "tp4": self.tp4,
-            "margin": self.margem,
+            "margem": self.margem,
             "leverage": self.alavancagem,
         }

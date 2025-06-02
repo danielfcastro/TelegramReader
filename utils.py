@@ -57,7 +57,7 @@ def extrair_dados_mensagem(mensagem):
     symbol = re.search(r"([A-Z0-9]+/USDT)", mensagem)
     type_match = re.search(r"(LONG|BUY|SHORT|SELL)", mensagem, re.IGNORECASE)
     sl_match = re.search(r"\*\*STOPLOSS:\*\*\s*\[`?([0-9\.]+)`?\]", mensagem, re.IGNORECASE)
-    margin_match = re.search(r"Margin:\s*(\w+),\s*(\d+)X", mensagem, re.IGNORECASE)
+    margem_match = re.search(r"Margin:\s*(\w+),\s*(\d+)X", mensagem, re.IGNORECASE)
     targets = re.findall(r"\[`?([0-9\.]+)`?\]", mensagem)
     target_done = re.search(r"TARGET #(\d) DONE", mensagem, re.IGNORECASE)
 
@@ -70,9 +70,9 @@ def extrair_dados_mensagem(mensagem):
         if stop <= 0:
             raise ValueError(f"❌ Stop Loss inválido: {stop}")
         dados["stoploss"] = stop
-    if margin_match:
-        dados["margin"] = margin_match.group(1).capitalize()
-        dados["leverage"] = margin_match.group(2) + "X"
+    if margem_match:
+        dados["margem"] = margem_match.group(1).capitalize()
+        dados["leverage"] = margem_match.group(2) + "X"
     if target_done:
         dados["tp"] = f"TP{target_done.group(1)}"
     for i, alvo in enumerate(targets[:4], start=1):
@@ -86,7 +86,7 @@ def extrair_dados_mensagem(mensagem):
     logger.debug("🔎 - SL: %s", sl_match.group(1) if sl_match else "N/A")
     logger.debug("🔎 - Targets extraídos: %s", ', '.join(targets) if targets else "N/A")
     logger.debug("🔎 - TARGET: %s DONE", dados.get("tp", "N/A"))
-    logger.debug("🔎 - Margem: %s", margin_match.groups() if margin_match else "N/A")
+    logger.debug("🔎 - Margem: %s", margem_match.groups() if margem_match else "N/A")
     logger.debug("🔎 - Target monitorado: %s", target_done.group(1) if target_done else "N/A")
 
     return dados
