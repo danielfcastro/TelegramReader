@@ -29,13 +29,13 @@ def criar_e_popular_banco():
 
     for arquivo in arquivos_ordem:
         caminho_completo = os.path.join(base_dir, arquivo)
-        logger.info(f"📄 Executando {arquivo}...")
+        logger.info(f"📄 - Executando {arquivo}...")
         executar_sql_de_arquivo(cursor, caminho_completo)
 
     conn.commit()
     cursor.close()
     conn.close()
-    logger.info("✅ Setup finalizado com sucesso.")
+    logger.info("✅ - Setup finalizado com sucesso.")
 
 if __name__ == "__main__":
     criar_e_popular_banco()

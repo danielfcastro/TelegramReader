@@ -4,19 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.0 - Fix para validação de mensagem">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.0 - Padronização de log e simplificação de script sql para criar a base de dados">
       <change beforePath="$PROJECT_DIR$/database/criar_tabela.py" beforeDir="false" afterPath="$PROJECT_DIR$/database/criar_tabela.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/scripts/break_even_status.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/scripts/inser_break_even_status.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/scripts/inser_ordem_status.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/scripts/inser_take_profit_status.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/scripts/ordem_stauts.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/scripts/sinais.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/scripts/take_profit_status.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/scripts/take_profits.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/sinal.py" beforeDir="false" afterPath="$PROJECT_DIR$/database/sinal.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -113,6 +102,7 @@
       <recent name="C:\Varios\TelegramReader\queue" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Varios\TelegramReader\database\scripts" />
       <recent name="C:\Varios\TelegramReader" />
       <recent name="C:\Varios\TelegramReader\fila\publisher" />
       <recent name="C:\Varios\TelegramReader\database" />
@@ -199,14 +189,6 @@
       <workItem from="1746665220865" duration="362000" />
       <workItem from="1746665594501" duration="65981000" />
       <workItem from="1748532199558" duration="3196000" />
-    </task>
-    <task id="LOCAL-00003" summary="Melhoria de logs - &quot;%(asctime)s -  %(levelname)s - %(name)s - %(funcName)s - %(message)s&quot;">
-      <option name="closed" value="true" />
-      <created>1746367946789</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1746367946789</updated>
     </task>
     <task id="LOCAL-00004" summary="Fix para alguns métodos e melhoria em log de db.py">
       <option name="closed" value="true" />
@@ -592,7 +574,15 @@
       <option name="project" value="LOCAL" />
       <updated>1748869236997</updated>
     </task>
-    <option name="localTasksCounter" value="52" />
+    <task id="LOCAL-00052" summary="- Versão 1.2.0 - Padronização de log e simplificação de script sql para criar a base de dados">
+      <option name="closed" value="true" />
+      <created>1748871999348</created>
+      <option name="number" value="00052" />
+      <option name="presentableId" value="LOCAL-00052" />
+      <option name="project" value="LOCAL" />
+      <updated>1748871999348</updated>
+    </task>
+    <option name="localTasksCounter" value="53" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -623,7 +613,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="Fix para retornar com sucesso o envio de ordem" />
     <MESSAGE value="- startup por argumento de logger_config.py" />
     <MESSAGE value="Fix com ordens gravadas com quantidade" />
     <MESSAGE value="Coluna tentativas_be escrita errada e fix da query que pega sinais para break even" />
@@ -648,7 +637,8 @@
     <MESSAGE value="- Versão 1.2.0 - Fix de mensagem de log" />
     <MESSAGE value="- Versão 1.2.0 - Fix de mensagem com elemento margem" />
     <MESSAGE value="- Versão 1.2.0 - Fix para validação de mensagem" />
-    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.0 - Fix para validação de mensagem" />
+    <MESSAGE value="- Versão 1.2.0 - Padronização de log e simplificação de script sql para criar a base de dados" />
+    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.0 - Padronização de log e simplificação de script sql para criar a base de dados" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -663,7 +653,7 @@
           <line>89</line>
           <option name="timeStamp" value="112" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+        <line-breakpoint suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/utils.py</url>
           <line>118</line>
           <option name="timeStamp" value="119" />
@@ -685,7 +675,7 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/ProjetoTelegram$testar_monitoramento_be.coverage" NAME="testar_monitoramento_be Coverage Results" MODIFIED="1746316630390" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tools" />
-    <SUITE FILE_PATH="coverage/TelegramReader$start_all__1_.coverage" NAME="start_all (1) Coverage Results" MODIFIED="1748871222399" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/TelegramReader$start_all__1_.coverage" NAME="start_all (1) Coverage Results" MODIFIED="1748871959405" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/ProjetoTelegram$testar_insercao_sinal.coverage" NAME="testar_insercao_sinal Coverage Results" MODIFIED="1746316087789" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tools" />
     <SUITE FILE_PATH="coverage/TelegramReader$start_all.coverage" NAME="start_all Coverage Results" MODIFIED="1748173521487" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/ProjetoTelegram$start_all.coverage" NAME="start_all Coverage Results" MODIFIED="1746918623277" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
