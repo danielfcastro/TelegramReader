@@ -2,7 +2,7 @@
 import logging
 import os
 
-log_format = "%(asctime)s - %(levelname)-8s - %(name)-15s - %(funcName)-35s - %(message)s"
+log_format = "%(asctime)s - %(levelname)-8s - %(name)-20s - %(funcName)-35s - %(message)s"
 
 class ColoredFormatter(logging.Formatter):
     """

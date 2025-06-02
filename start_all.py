@@ -77,7 +77,7 @@ def iniciar_telegram_reader():
     Retorna:
     - subprocess.Popen: Instância do processo iniciado.
     """
-    logger.info("🚦 - Iniciando Telegram Reader...")
+    logger.info("📈 - Iniciando Telegram Reader...")
     return subprocess.Popen([sys.executable, "TelegramReader.py"])
 
 def iniciar_executor_sinal():
@@ -179,7 +179,7 @@ if __name__ == "__main__":
     - `python start_all.py --testnet`
     - `python start_all.py --mainnet`
     """
-    logger.info("🚦 - Iniciando Telegram Signal Bot")
+    logger.info("📈 - Iniciando Telegram Signal Bot")
 
     parser = argparse.ArgumentParser(
         description=(
@@ -205,5 +205,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     salvar_env_com_base_no_config(args.testnet)
 
-    logger.info("🚦 - Iniciando componentes...")
+    logger.info("📈 - Iniciando componentes...")
     iniciar_componentes()
