@@ -158,3 +158,6 @@ logs/
 
 # session files
 minha_sessao.*
+
+#filas
+fila/

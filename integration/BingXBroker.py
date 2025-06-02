@@ -1,23 +1,25 @@
+
 import hmac
 import json
 import logging
 import os
 import time
 import re
+from abc import ABC
 
 from hashlib import sha256
 
 import requests
 from dotenv import load_dotenv
 
-import database.db
 from integration.BrokerInterface import BrokerInterface
+from message.mensagem_sinal import MensagemSinal
 
 load_dotenv()
 
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 
-class BingXBroker(BrokerInterface):
+class BingXBroker(BrokerInterface, ABC):
     def __init__(self):
         """
         Inicializa o broker da BingX carregando as credenciais da API do ambiente.
@@ -30,11 +32,8 @@ class BingXBroker(BrokerInterface):
         """
         Gera a assinatura HMAC SHA256 para autenticar requisições.
 
-        Args:
-            payload (str): String de consulta formatada com parâmetros ordenados.
-
-        Returns:
-            str: Assinatura em hexadecimal.
+        :param payload: String de consulta formatada com parâmetros ordenados.
+        :return: Assinatura em hexadecimal.
         """
         signature = hmac.new(
             self.SECRET_KEY.encode("utf-8"),
@@ -47,13 +46,10 @@ class BingXBroker(BrokerInterface):
         """
         Envia uma requisição autenticada para a API da BingX.
 
-        Args:
-            method (str): Método HTTP (ex: 'GET', 'POST').
-            path (str): Caminho do endpoint da API.
-            params (dict): Parâmetros da requisição (corpo ou query).
-
-        Returns:
-            dict: Resposta da API convertida em JSON.
+        :param method: Método HTTP ('GET', 'POST', etc.).
+        :param path: Caminho do endpoint.
+        :param params: Parâmetros de requisição.
+        :return: Resposta da API.
         """
 
         query = self._build_query(params)
@@ -68,13 +64,10 @@ class BingXBroker(BrokerInterface):
     @staticmethod
     def _build_query(params):
         """
-        Constrói a string de query com os parâmetros ordenados e adiciona timestamp.
+        Constrói a string de query com parâmetros ordenados e timestamp.
 
-        Args:
-            params (dict): Dicionário com os parâmetros da requisição.
-
-        Returns:
-            str: String de query formatada para autenticação.
+        :param params: Parâmetros da requisição.
+        :return: Query ordenada com timestamp.
         """
         # Sempre adiciona timestamp, mesmo que params esteja vazio
         all_params = dict(params) if params else {}
@@ -87,44 +80,41 @@ class BingXBroker(BrokerInterface):
 
     def obter_preco_mercado(self, symbol):
         """
-        Obtém o preço de marcação (mark price) do ativo fornecido.
+        Obtém o preço atual de marcação (mark price) para o ativo.
 
-        Args:
-            symbol (str): Par de negociação (ex: "BTC-USDT").
-
-        Returns:
-            float: Preço atual de marcação.
-
-        Raises:
-            Exception: Se a API falhar ou não retornar dados.
+        :param symbol: Par de negociação (ex: "BTC-USDT").
+        :return: Preço atual de mercado.
+        :raises Exception: Se a resposta da API for inválida.
         """
         path = "/openApi/swap/v2/quote/premiumIndex"
-        response = self._send_request("GET", path, {"symbol": symbol})
+        body = {
+            "symbol": symbol
+        }
+        logger.debug(f"✅️ - Pedido de preço de mercado: path: {path} - body {body}")
+        response = self._send_request("GET", path, body)
+        logger.debug(f"✅ - Resposta do pedido de preço de mercado: {response}")
         if response["code"] == 0 and response.get("data"):
-            logger.debug(f"preço de mercado: {response['data'].get('markPrice')}")
             return float(response["data"]["markPrice"])
         raise Exception(f"❌ - Erro ao obter preço de mercado de {symbol}")
 
     def obter_saldo_disponivel(self):
         """
-        Consulta o saldo disponível em USDT ou VST na conta do usuário.
+        Consulta o saldo disponível em USDT ou VST.
 
-        Returns:
-            float: Valor de saldo disponível.
-
-        Raises:
-            Exception: Se a API falhar ou não houver saldo elegível.
+        :return: Saldo disponível.
+        :raises Exception: Se não for possível consultar o saldo.
         """
         try:
             path = "/openApi/swap/v3/user/balance"
-            params = {}
-            response = self._send_request("GET", path, params)
-            print("✅ - Resposta da API:", response)
+            body = {}
+            logger.debug(f"✅️ - Pedido de saldo: path: {path} - body {body}")
+            response = self._send_request("GET", path, body)
+            logger.debug(f"✅ - Resposta do pedido de alavancagem: {response}")
 
             if response["code"] == 0 and response.get("data"):
                 for item in response["data"]:
                     if item["asset"] in ["USDT", "VST"]:
-                        logger.debug(f"saldo disponivel: {item['asset']}")
+                        logger.debug(f"🚦 - saldo disponivel: {item['asset']}")
                         return float(item.get("availableMargin", 0.0))
         except Exception as e:
             logger.exception(f"❌ - Exceção ao consular saldo disponível: {e}")
@@ -132,97 +122,105 @@ class BingXBroker(BrokerInterface):
 
     def set_leverage(self, symbol, side, leverage):
         """
-        Configura a alavancagem para um determinado par na corretora BingX.
+        Define a alavancagem desejada para o símbolo.
 
-        Args:
-            symbol (str): Par de ativos (ex: 'BTC-USDT').
-            side (str): Direção da posição ('LONG', 'SHORT', 'BOTH').
-            leverage (int | str): Alavancagem desejada.
+        :param symbol: Par de ativos.
+        :param side: Direção da posição (ex: 'BOTH').
+        :param leverage: Valor da alavancagem.
         """
 
         path = "/openApi/swap/v2/trade/leverage"
-        params = {
+        body = {
             "symbol": symbol,
             "side": side,
-            "leverage": str(leverage)
+            "leverage": str(leverage).replace("X", "")
         }
-        query = self._build_query(params)
-        sign = self._get_sign(query)
-        url = f"{self.API_URL}{path}?{query}&signature={sign}"
 
         try:
-            response = requests.post(url, headers={'X-BX-APIKEY': self.API_KEY}).json()
-            logger.debug("✅ - Leverage configurado:", response)
+            logger.debug(f"✅️ - Pedido de envio de alavancagem: path: {path} - body {body}")
+            response = self._send_request("POST", path, body)
+            logger.debug(f"✅ - Resposta do pedido de alavancagem: {response}")
         except Exception as e:
             logger.exception(f"❌ - Exceção ao ajustar leverage para {symbol}: {e}")
 
-    def enviar_ordem_tp_sl(self, symbol, side, leverage, side_leverage, tp, sl, quantidade, preco_mercado, id_sinal):
+    def enviar_ordem_tp_sl(self, mensagem: MensagemSinal, quantidade):
         """
-        Envia uma ordem de mercado com Take Profit e Stop Loss.
-        Se falhar por limite, tenta ajustar e reenviar com quantidade recalculada.
+        Envia uma ordem de mercado com SL embutido para o par especificado.
 
-        Returns:
-            tuple: (sucesso: bool, preco_mercado: float | None, order_id: int | None, info_extra: str | float)
+        Etapas:
+        1. Define alavancagem.
+        2. Envia ordem com `stopLoss` do tipo STOP_MARKET.
+        3. Retorna dados da ordem ou erro.
+
+        :param mensagem: Dados do sinal a ser executado.
+        :param quantidade: Quantidade do ativo a negociar.
+        :return: Resultado da operação (sucesso, order_id, preço, erros).
         """
         side_leverage = "BOTH"
-        logger.debug(
-            f"symbol: {symbol} - side: {side} - leverage: {leverage} - side_leverage: {side_leverage} - tp: {tp} - sl: {sl} - quantidade: {quantidade} - preco_mercado: {preco_mercado}")
+        logger.debug(f"✅️ - symbol: {mensagem.symbol} - side: {mensagem.tipo_ordem} - leverage: {mensagem.alavancagem} - tp1: {mensagem.tp1} - t2: {mensagem.tp2}  - tp3: {mensagem.tp3}  - tp4: {mensagem.tp4} - sl: {mensagem.sl}")
 
         try:
-            # Configura alavancagem
-            self.set_leverage(symbol=symbol, side=side_leverage, leverage=leverage)
-
+            self.set_leverage(symbol=mensagem.symbol, side=side_leverage, leverage=mensagem.alavancagem)
+            _tipo_ordem = "SELL" if mensagem.tipo_ordem == "SHORT" else "BUY"
             body = {
-                "symbol": symbol,
-                "side": side,
+                "symbol": mensagem.symbol,
+                "side": _tipo_ordem,
                 "positionSide": side_leverage,
                 "type": "MARKET",
                 "quantity": quantidade,
                 "stopGuaranteed": "true",
-                "takeProfit": json.dumps({
-                    "type": "TAKE_PROFIT_MARKET",
-                    "quantity": quantidade,
-                    "stopPrice": tp,
-                    "workingType": "MARK_PRICE"
-                }),
                 "stopLoss": json.dumps({
                     "type": "STOP_MARKET",
                     "quantity": quantidade,
-                    "stopPrice": sl,
+                    "stopPrice": mensagem.sl,
                     "workingType": "MARK_PRICE"
                 })
             }
 
             path = "/openApi/swap/v2/trade/order"
+            logger.debug(f"✅️ - Pedido de envio de ordem: path: {path} - body {body}")
             response = self._send_request("POST", path, body)
+            logger.debug(f"✅ - Resposta do pedido de ordem: {response}")
 
-            logger.debug(f"response: {response} - body: {body} - path: {path} - POST")
-
-            if response["code"] == 0:
+            codigo = response.get("code", "sem_codigo")
+            mensagem_erro = response.get("msg", "Erro desconhecido")
+            if codigo == 0:
                 order_id = response["data"]["order"]["orderId"]
-                logger.info(f"✅ - Ordens enviadas com sucesso - order_id: {order_id} - preco_mercado: {preco_mercado} - response: {response}")
-                return True, preco_mercado, order_id, quantidade
-
+                average_price = response["data"]["order"]["avgPrice"]
+                quantidade = response["data"]["order"]["quantity"]
+                logger.info(f"✅ - Ordem enviada com sucesso - order_id: {order_id}")
+                retorno =  {
+                    "sucesso": True,
+                    "order_id": order_id,
+                    "quantidade": quantidade,
+                    "average_price":average_price,
+                    "erro":codigo,
+                    "msg":mensagem_erro
+                }
+                logger.info(f"✅ - Ordem enviada: [{codigo}] {retorno}")
+                return retorno
             else:
-                codigo = response.get("code", "sem_codigo")
-                mensagem = response.get("msg", "Erro desconhecido")
-                motivo = f"[{codigo}] {mensagem}"
-                logger.error(f"❌ - Falha ao enviar ordens: {motivo} - Dados: {response}")
-                return False, None, None, motivo  # Sempre 4 valores
-
+                mensagem_erro = response.get("msg", "Erro desconhecido")
+                retorno = {
+                    "sucesso": False,
+                    "order_id": 0,
+                    "quantidade": 0,
+                    "average_price":0,
+                    "erro":codigo,
+                    "msg":mensagem_erro
+                }
+                logger.error(f"❌ - Falha ao enviar ordem: [{codigo}] {retorno}")
+                return retorno
         except Exception as e:
-            logger.exception(f"❌ - Erro ao enviar ordens BingX: {e}")
-            return False, None, None, str(e)  # Sempre 4 valores
+            logger.exception(f"❌ - Erro ao enviar ordem BingX: {e}")
+            return {"sucesso": False, "erro": str(e)}
 
     def cancela_stop_loss(self, symbol):
         """
-        Cancela todas as ordens do tipo STOP_MARKET abertas para um ativo.
+        Cancela todas as ordens STOP_MARKET abertas para o símbolo.
 
-        Args:
-            symbol (str): Símbolo do par de ativos.
-
-        Returns:
-            dict: Resposta da API.
+        :param symbol: Par de negociação.
+        :return: Resposta da API.
         """
         try:
             path = "/openApi/swap/v2/trade/allOpenOrders"
@@ -238,42 +236,44 @@ class BingXBroker(BrokerInterface):
             logger.exception(f"❌ - Erro ao cancelar SL para {symbol}: {e}")
             return {}
 
-    def ajustar_stop_loss(self, symbol, position_side, quantity, stop_price, order_id):
+    def ajustar_stop_loss(self, symbol, position_side, quantity, stop_price, order_id, current_order_side):
         """
-        Ajusta o Stop Loss de uma posição para o ponto de Break Even (sem lucro ou prejuízo).
-        Tenta novamente com a quantidade sugerida pela BingX se a original for rejeitada.
+        Ajusta o Stop Loss para uma posição específica.
+        Se a corretora retornar erro de quantidade, tenta com sugestão do sistema.
 
-        Returns:
-            bool: True se o SL foi ajustado com sucesso.
+        :param symbol: Par de negociação.
+        :param position_side: Direção da posição.
+        :param quantity: Quantidade a ajustar.
+        :param stop_price: Novo preço de SL.
+        :param order_id: ID da ordem ativa.
+        :param current_order_side: Direção atual da ordem.
+        :return: True se SL foi ajustado com sucesso, False caso contrário.
         """
         try:
-            self.cancela_stop_loss(symbol)
             ordem = self.get_open_order_info(symbol, order_id)
             if not ordem:
-                logger.warning(f"⚠️ - Nenhuma ordem encontrada para {par}")
+                logger.warning(f"⚠️ - Nenhuma ordem encontrada para {symbol}")
                 return {"status": "no_order"}
-            position_side = position_side.upper()
-            current_order_side = ordem["data"]["order"]["side"]
+
+            path="/openApi/swap/v2/trade/order"
             side = "SELL" if current_order_side == "BUY" else "SELL"
-
-            quantidade = database.db.break_even_soma_quantidade(symbol.replace("-", "/").upper())
-            stop_price_final = float(ordem['data']['order']['avgPrice'])
-
             def enviar_sl(qtd):
                 body = {
                     "symbol": symbol,
                     "side": side,
                     "type": "STOP_MARKET",
-                    "stopPrice": stop_price_final,
+                    "stopPrice": stop_price,
                     "positionSide": "BOTH",
                     "quantity": qtd,
-                    "recvWindow": "10000"
+                    "orderId": order_id
                 }
-                return self._send_request("POST", "/openApi/swap/v2/trade/order", body)
+                logger.debug(f"✅️ - Pedido de envio de SL: path: {path} - body {body}")
+                _response = self._send_request("POST", path, body)
+                logger.debug(f"✅ - Resposta do pedido de SL: {_response}")
+                return response
 
-            logger.debug(
-                f"🛡️ - Tentando SL - symbol: {symbol}, side: {side}, position_side: {position_side}, stop_price: {stop_price_final}, quantidade: {quantidade}")
-            response = enviar_sl(quantidade)
+            self.cancela_stop_loss(symbol)
+            response = enviar_sl(quantity)
 
             # Verifica sucesso
             if response["code"] == 0:
@@ -304,39 +304,34 @@ class BingXBroker(BrokerInterface):
 
         return False
 
-    def ajustar_take_profit(self, symbol, position_side, quantity, stop_price, numero, order_id):
+    def ajustar_take_profit(self, symbol, position_side, quantity, stop_price, order_id, numero):
         """
-        Cria uma ordem de Take Profit para uma fração da posição.
+        Envia ordem de TAKE_PROFIT_MARKET para uma fração da posição.
 
-        Args:
-            symbol (str): Par de trading (ex: "BCH-USDT").
-            position_side (str): Direção da posição ('LONG' ou 'SHORT').
-            quantity (float): Quantidade da fração.
-            stop_price (float): Preço alvo do TP.
-            numero (int): Número do TP (1 a 4).
-
-        Returns:
-            bool: True se a ordem foi enviada com sucesso.
+        :param symbol: Par de negociação.
+        :param position_side: Direção da posição.
+        :param quantity: Quantidade parcial a fechar.
+        :param stop_price: Preço alvo.
+        :param order_id: Ordem relacionada.
+        :param numero: Número do TP (1 a 4).
+        :return: True se a ordem for enviada com sucesso.
         """
         try:
-            side = "SELL" if position_side.upper() == "LONG" else "BUY"
-            logger.debug(
-                f"🎯 - Configurando TP{numero}: symbol={symbol}, side={side}, quantity={quantity}, stop_price={stop_price}")
-
+            logger.debug(f"🎯 - Pedido para configurar TP={numero}: symbol={symbol} | side={position_side} | quantity={quantity} | stop_price={stop_price} | order_id={order_id}")
             path = "/openApi/swap/v2/trade/order"
             body = {
                 "symbol": symbol,
                 "positionSide": "BOTH",
-                "side": side,
+                "side": position_side,
                 "type":"TAKE_PROFIT_MARKET",
                 "stopPrice": round(stop_price, 6),
                 "quantity": round(quantity, 6),
                 "workingType": "MARK_PRICE",
                 "orderId": order_id
             }
-
+            logger.debug(f"✅ - Pedido de TP: path: {path} - body {body}")
             response = self._send_request("POST", path, body)
-            logger.debug(f"📩 Resposta da ordem TP{numero}: {response} - body: {body}")
+            logger.debug(f"✅ - Resposta do pedido de TP: {response}")
 
             if response["code"] == 0:
                 logger.info(f"✅ - TP{numero} configurado com sucesso para {symbol} a {stop_price}")
@@ -351,14 +346,11 @@ class BingXBroker(BrokerInterface):
 
     def get_open_order_info(self, symbol, order_id):
         """
-        Obtém informações de uma ordem aberta.
+        Obtém detalhes da ordem aberta.
 
-        Args:
-            symbol (str): Símbolo do par de ativos.
-            order_id (str): ID da ordem.
-
-        Returns:
-            dict: Dados detalhados da ordem retornados pela API.
+        :param symbol: Par de negociação.
+        :param order_id: ID da ordem.
+        :return: Dados da ordem, se existirem.
         """
         try:
             path = "/openApi/swap/v2/trade/order"
@@ -366,67 +358,114 @@ class BingXBroker(BrokerInterface):
                 "symbol": symbol,
                 "orderId": order_id
             }
+            logger.debug(f"✅ - Pedido de detalhe de ordem: path: {path} - body {body}")
             response = self._send_request("GET", path, body)
-            logger.debug(f"✅ - Detalhe de ordem: {response}")
+            logger.debug(f"✅ - Resposta do pedido de detalhe de ordem: {response}")
             return response
         except Exception as e:
             logger.exception(f"❌ - Erro ao boter detalhe de ordem {symbol}: {e}")
             return {}
 
-    def send_order_with_constraints_adjusted(
-            self, symbol, side, leverage, side_leverage,
-            tp, sl, preco_mercado, limite_usdt, id_sinal
-    ):
+    def fecha_ordem_mercado(self, symbol):
         """
-        Recalcula e envia uma ordem com a quantidade ajustada, baseada no limite de exposição da corretora (em USDT).
+        Fecha todas as posições de mercado abertas para o ativo.
 
-        Args:
-            symbol (str): Par de negociação.
-            side (str): Direção da ordem ('BUY' ou 'SELL').
-            leverage (int): Alavancagem utilizada.
-            side_leverage (str): Posição (ex: 'BOTH').
-            tp (float): Take Profit.
-            sl (float): Stop Loss.
-            preco_mercado (float): Preço atual do ativo.
-            limite_usdt (float): Quantia máxima permitida (exposição).
-            id_sinal (int): ID do sinal relacionado no banco.
-
-        Returns:
-            bool: True se a ordem ajustada foi enviada com sucesso.
+        :param symbol: Par de negociação.
+        :return: Resposta da API.
         """
-
         try:
-            quantidade = round((limite_usdt * leverage) / preco_mercado, 6)
-            logger.info(
-                f"🔁 - Ajustando quantidade com base no limite de {limite_usdt} USDT: Nova quantidade = {quantidade}"
-            )
-
-            result = self.enviar_ordem_tp_sl(
-                symbol=symbol,
-                side=side,
-                leverage=leverage,
-                side_leverage=side_leverage,
-                tp=tp,
-                sl=sl,
-                quantidade=quantidade,
-                preco_mercado=preco_mercado,
-                id_sinal=id_sinal  # ✅ CORRIGIDO: passa o id_sinal aqui!
-            )
-
-            if isinstance(result, tuple) and len(result) == 4:
-                sucesso, preco, order_id, retorno = result
-                if sucesso:
-                    logger.info(
-                        f"✅ - Ordem ajustada enviada com sucesso - order_id: {order_id} - quantidade: {quantidade}")
-                    return True
-                else:
-                    logger.warning(f"❌ - Falha ao enviar ordem ajustada: {retorno}")
-                    return False
-            else:
-                logger.error("❌ - Formato inesperado no retorno de enviar_ordem_tp_sl (esperado 4 valores).")
-                return False
-
+            path = "/openApi/swap/v2/trade/closeAllPositions"
+            body = {
+                "symbol": symbol,
+                "type": "MARKET"
+            }
+            logger.debug(f"✅ - Pedido de fechamento de ordem de mercado: path: {path} - body {body}")
+            response = self._send_request("POST ", path, body)
+            logger.debug(f"✅ - Resposta do pedido de fechamento de ordem de mercado: {response}")
+            return response
         except Exception as e:
-            logger.exception(f"❌ - Erro ao ajustar e enviar ordem: {e}")
-            return False
+            logger.exception(f"❌ - Erro ao fechar ordem {symbol}: {e}")
+            return {}
 
+    def cancela_ordem_tp(self, symbol):
+        """
+        Cancela todas as ordens TAKE_PROFIT_MARKET abertas para o ativo.
+
+        :param symbol: Par de negociação.
+        :return: Resposta da API.
+        """
+        try:
+            path = "/openApi/swap/v2/trade/allOpenOrders"
+            body = {
+                "symbol": symbol,
+                "type": "TAKE_PROFIT_MARKET"
+            }
+            logger.debug(f"✅ - Pedido de cancelamento de ordem de TP: path: {path} - body {body}")
+            response = self._send_request("DELETE", path, body)
+            logger.debug(f"✅ - Resposta do pedido de cancelamento de ordem de TP: {response}")
+            return response
+        except Exception as e:
+            logger.exception(f"❌ - Erro ao boter detalhe de ordem {symbol}: {e}")
+            return {}
+
+    def cancela_ordem_sl(self, symbol):
+        """
+        Cancela todas as ordens STOP_MARKET abertas para o ativo.
+
+        :param symbol: Par de negociação.
+        :return: Resposta da API.
+        """
+        try:
+            path = "/openApi/swap/v2/trade/allOpenOrders"
+            body = {
+                "symbol": symbol,
+                "type": "STOP_MARKET"
+            }
+            logger.debug(f"✅ - Pedido de cancelamento de ordem de SL: path: {path} - body {body}")
+            response = self._send_request("DELETE", path, body)
+            logger.debug(f"✅ - Resposta do pedido de cancelamento de ordem de SL: {response}")
+            return response
+        except Exception as e:
+            logger.exception(f"❌ - Erro ao boter detalhe de ordem {symbol}: {e}")
+            return {}
+
+    def verificar_tipo_margem(self, symbol):
+        """
+        Consulta o tipo de margem (CROSSED ou ISOLATED) do ativo.
+
+        :param symbol: Par de negociação.
+        :return: Tipo de margem ou vazio em caso de erro.
+        """
+        try:
+            path = "/openApi/swap/v2/trade/marginType"
+            body = {
+                "symbol": symbol
+            }
+            logger.debug(f"✅ - Pedido de verificação de tipo de margem: path: {path} - body {body}")
+            response = self._send_request("GET", path, body)
+            logger.debug(f"✅ - Resposta do pedido de verificação de tipo de margem: {response}")
+            return response["data"]["marginType"]
+        except Exception as e:
+            logger.exception(f"❌ - Erro {symbol}: {e}")
+            return {}
+
+    def mudar_tipo_margem(self, symbol):
+        """
+        Altera o tipo de margem do ativo para CROSSED.
+
+        :param symbol: Par de negociação.
+        :return: Resposta da API.
+        """
+        try:
+            path = "/openApi/swap/v2/trade/marginType"
+            body = {
+                "symbol": symbol,
+                "marginType": "CROSSED"
+            }
+            logger.debug(f"✅ - Pedido de configuração de tipo de margem: path: {path} - body {body}")
+            response = self._send_request("POST", path, body)
+            logger.debug(f"✅ - Resposta do pedido de configuração de tipo de margem: {response}")
+            return response
+        except Exception as e:
+            logger.exception(f"❌ - Erro {symbol}: {e}")
+            return {}

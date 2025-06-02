@@ -4,10 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Fix de atualização de ordens">
+    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.0 - Envio de ordem funcionando">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TelegramReader.py" beforeDir="false" afterPath="$PROJECT_DIR$/TelegramReader.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TradeExecutorSinal.py" beforeDir="false" afterPath="$PROJECT_DIR$/TradeExecutorSinal.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database/take_profit.py" beforeDir="false" afterPath="$PROJECT_DIR$/database/take_profit.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/integration/BingXBroker.py" beforeDir="false" afterPath="$PROJECT_DIR$/integration/BingXBroker.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -28,7 +29,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="main" />
+        <entry key="$PROJECT_DIR$" value="release/v.1.1.0" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -70,34 +71,49 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;Python.TradeExecutor.executor&quot;: &quot;Run&quot;,
-    &quot;Python.start_all.executor&quot;: &quot;Debug&quot;,
-    &quot;Python.testar_insercao_sinal.executor&quot;: &quot;Run&quot;,
-    &quot;Python.testar_monitoramento_be.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;release/v.1.1.0&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.TradeExecutor.executor": "Run",
+    "Python.start_all (1).executor": "Debug",
+    "Python.start_all.executor": "Debug",
+    "Python.testar_insercao_sinal.executor": "Run",
+    "Python.testar_monitoramento_be.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "release/v1.2.0",
+    "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "C:/Varios/TelegramReader/queue/subscriber",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;DatabaseDriversLRU&quot;: [
-      &quot;postgresql&quot;
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "postgresql"
     ]
   }
-}</component>
-  <component name="RunManager" selected="Python.start_all">
-    <configuration name="TradeExecutor" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="ProjetoTelegram" />
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Varios\TelegramReader\queue\subscriber" />
+      <recent name="C:\Varios\TelegramReader\queue\publisher" />
+      <recent name="C:\Varios\TelegramReader\queue" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Varios\TelegramReader\database\scripts" />
+      <recent name="C:\Varios\TelegramReader" />
+      <recent name="C:\Varios\TelegramReader\fila\publisher" />
+      <recent name="C:\Varios\TelegramReader\database" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python.start_all (1)">
+    <configuration name="start_all (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="TelegramReader" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -105,31 +121,9 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
+      <option name="SDK_NAME" value="Python 3.11 (TelegramReader)" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/TradeExecutor.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="start_all" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="ProjetoTelegram" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
+      <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
@@ -142,57 +136,37 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="testar_insercao_sinal" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="start_all" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="ProjetoTelegram" />
-      <option name="ENV_FILES" value="" />
+      <option name="ENV_FILES" value="$PROJECT_DIR$/.env" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tools" />
-      <option name="IS_MODULE_SDK" value="true" />
+      <option name="SDK_NAME" value="Python 3.11 (TelegramReader)" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tools/testar_insercao_sinal.py" />
-      <option name="PARAMETERS" value="" />
+      <option name="SCRIPT_NAME" value="start_all" />
+      <option name="PARAMETERS" value="--testnet" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
+      <option name="MODULE_MODE" value="true" />
       <option name="REDIRECT_INPUT" value="false" />
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="testar_monitoramento_be" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="ProjetoTelegram" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tools" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tools/testar_monitoramento_be.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
+    <list>
+      <item itemvalue="Python.start_all (1)" />
+      <item itemvalue="Python.start_all" />
+    </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.TradeExecutor" />
-        <item itemvalue="Python.testar_monitoramento_be" />
-        <item itemvalue="Python.testar_insercao_sinal" />
+        <item itemvalue="Python.start_all (1)" />
         <item itemvalue="Python.start_all" />
         <item itemvalue="Python.TradeExecutor" />
       </list>
@@ -218,54 +192,6 @@
       <workItem from="1746665220865" duration="362000" />
       <workItem from="1746665594501" duration="65981000" />
       <workItem from="1748532199558" duration="3196000" />
-    </task>
-    <task id="LOCAL-00001" summary="Fix para insert de sinais e monitoramento em banco">
-      <option name="closed" value="true" />
-      <created>1746356607959</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1746356607960</updated>
-    </task>
-    <task id="LOCAL-00002" summary="Melhoria de logs">
-      <option name="closed" value="true" />
-      <created>1746367501786</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1746367501786</updated>
-    </task>
-    <task id="LOCAL-00003" summary="Melhoria de logs - &quot;%(asctime)s -  %(levelname)s - %(name)s - %(funcName)s - %(message)s&quot;">
-      <option name="closed" value="true" />
-      <created>1746367946789</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1746367946789</updated>
-    </task>
-    <task id="LOCAL-00004" summary="Fix para alguns métodos e melhoria em log de db.py">
-      <option name="closed" value="true" />
-      <created>1746391647302</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1746391647302</updated>
-    </task>
-    <task id="LOCAL-00005" summary="Fix para método de retorno de sinal pra break even">
-      <option name="closed" value="true" />
-      <created>1746391974829</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1746391974829</updated>
-    </task>
-    <task id="LOCAL-00006" summary="Fix para retornar com sucesso o envio de ordem">
-      <option name="closed" value="true" />
-      <created>1746447701460</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
-      <option name="project" value="LOCAL" />
-      <updated>1746447701460</updated>
     </task>
     <task id="LOCAL-00007" summary="- startup por argumento de logger_config.py">
       <option name="closed" value="true" />
@@ -475,7 +401,191 @@
       <option name="project" value="LOCAL" />
       <updated>1748548624022</updated>
     </task>
-    <option name="localTasksCounter" value="33" />
+    <task id="LOCAL-00033" summary="- Versão 1.2.0 - para teste">
+      <option name="closed" value="true" />
+      <created>1748563936872</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1748563936872</updated>
+    </task>
+    <task id="LOCAL-00034" summary="- Versão 1.2.0 - para teste">
+      <option name="closed" value="true" />
+      <created>1748564030045</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1748564030045</updated>
+    </task>
+    <task id="LOCAL-00035" summary="- Versão 1.2.0 - para teste">
+      <option name="closed" value="true" />
+      <created>1748604525477</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1748604525477</updated>
+    </task>
+    <task id="LOCAL-00036" summary="- Versão 1.2.0 - para teste">
+      <option name="closed" value="true" />
+      <created>1748604968701</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1748604968701</updated>
+    </task>
+    <task id="LOCAL-00037" summary="- Versão 1.2.0 - para teste">
+      <option name="closed" value="true" />
+      <created>1748615781961</created>
+      <option name="number" value="00037" />
+      <option name="presentableId" value="LOCAL-00037" />
+      <option name="project" value="LOCAL" />
+      <updated>1748615781961</updated>
+    </task>
+    <task id="LOCAL-00038" summary="- Versão 1.2.0 - para teste">
+      <option name="closed" value="true" />
+      <created>1748620831843</created>
+      <option name="number" value="00038" />
+      <option name="presentableId" value="LOCAL-00038" />
+      <option name="project" value="LOCAL" />
+      <updated>1748620831843</updated>
+    </task>
+    <task id="LOCAL-00039" summary="- Versão 1.2.0 - para teste">
+      <option name="closed" value="true" />
+      <created>1748623726243</created>
+      <option name="number" value="00039" />
+      <option name="presentableId" value="LOCAL-00039" />
+      <option name="project" value="LOCAL" />
+      <updated>1748623726243</updated>
+    </task>
+    <task id="LOCAL-00040" summary="- Versão 1.2.0 - para teste">
+      <option name="closed" value="true" />
+      <created>1748625310560</created>
+      <option name="number" value="00040" />
+      <option name="presentableId" value="LOCAL-00040" />
+      <option name="project" value="LOCAL" />
+      <updated>1748625310560</updated>
+    </task>
+    <task id="LOCAL-00041" summary="- Versão 1.2.0 - para teste">
+      <option name="closed" value="true" />
+      <created>1748693752239</created>
+      <option name="number" value="00041" />
+      <option name="presentableId" value="LOCAL-00041" />
+      <option name="project" value="LOCAL" />
+      <updated>1748693752239</updated>
+    </task>
+    <task id="LOCAL-00042" summary="- Versão 1.2.0 - para teste">
+      <option name="closed" value="true" />
+      <created>1748693800582</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1748693800582</updated>
+    </task>
+    <task id="LOCAL-00043" summary="- Versão 1.2.0 - Fix consumo de mensagem TP por causa de order_id">
+      <option name="closed" value="true" />
+      <created>1748696056035</created>
+      <option name="number" value="00043" />
+      <option name="presentableId" value="LOCAL-00043" />
+      <option name="project" value="LOCAL" />
+      <updated>1748696056035</updated>
+    </task>
+    <task id="LOCAL-00044" summary="- Versão 1.2.0 - Documentação e log">
+      <option name="closed" value="true" />
+      <created>1748698138299</created>
+      <option name="number" value="00044" />
+      <option name="presentableId" value="LOCAL-00044" />
+      <option name="project" value="LOCAL" />
+      <updated>1748698138299</updated>
+    </task>
+    <task id="LOCAL-00045" summary="- Versão 1.2.0 - Documentação">
+      <option name="closed" value="true" />
+      <created>1748698468947</created>
+      <option name="number" value="00045" />
+      <option name="presentableId" value="LOCAL-00045" />
+      <option name="project" value="LOCAL" />
+      <updated>1748698468947</updated>
+    </task>
+    <task id="LOCAL-00046" summary="- Versão 1.2.0 - Documentação">
+      <option name="closed" value="true" />
+      <created>1748793606380</created>
+      <option name="number" value="00046" />
+      <option name="presentableId" value="LOCAL-00046" />
+      <option name="project" value="LOCAL" />
+      <updated>1748793606380</updated>
+    </task>
+    <task id="LOCAL-00047" summary="- Versão 1.2.0 - Fix de mensagem com stoploss ao invés de sl">
+      <option name="closed" value="true" />
+      <created>1748857886274</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
+      <option name="project" value="LOCAL" />
+      <updated>1748857886274</updated>
+    </task>
+    <task id="LOCAL-00048" summary="- Versão 1.2.0 - Fix de mensagem de log">
+      <option name="closed" value="true" />
+      <created>1748859538800</created>
+      <option name="number" value="00048" />
+      <option name="presentableId" value="LOCAL-00048" />
+      <option name="project" value="LOCAL" />
+      <updated>1748859538800</updated>
+    </task>
+    <task id="LOCAL-00049" summary="- Versão 1.2.0 - Fix de mensagem com elemento margem">
+      <option name="closed" value="true" />
+      <created>1748863999087</created>
+      <option name="number" value="00049" />
+      <option name="presentableId" value="LOCAL-00049" />
+      <option name="project" value="LOCAL" />
+      <updated>1748863999087</updated>
+    </task>
+    <task id="LOCAL-00050" summary="- Versão 1.2.0 - Fix para validação de mensagem">
+      <option name="closed" value="true" />
+      <created>1748865409552</created>
+      <option name="number" value="00050" />
+      <option name="presentableId" value="LOCAL-00050" />
+      <option name="project" value="LOCAL" />
+      <updated>1748865409552</updated>
+    </task>
+    <task id="LOCAL-00051" summary="- Versão 1.2.0 - Fix para validação de mensagem">
+      <option name="closed" value="true" />
+      <created>1748869236997</created>
+      <option name="number" value="00051" />
+      <option name="presentableId" value="LOCAL-00051" />
+      <option name="project" value="LOCAL" />
+      <updated>1748869236997</updated>
+    </task>
+    <task id="LOCAL-00052" summary="- Versão 1.2.0 - Padronização de log e simplificação de script sql para criar a base de dados">
+      <option name="closed" value="true" />
+      <created>1748871999348</created>
+      <option name="number" value="00052" />
+      <option name="presentableId" value="LOCAL-00052" />
+      <option name="project" value="LOCAL" />
+      <updated>1748871999348</updated>
+    </task>
+    <task id="LOCAL-00053" summary="- Versão 1.2.0 - PAdronização de Logs">
+      <option name="closed" value="true" />
+      <created>1748872139192</created>
+      <option name="number" value="00053" />
+      <option name="presentableId" value="LOCAL-00053" />
+      <option name="project" value="LOCAL" />
+      <updated>1748872139192</updated>
+    </task>
+    <task id="LOCAL-00054" summary="- Versão 1.2.0 - Fix de mensagem de log">
+      <option name="closed" value="true" />
+      <created>1748873921940</created>
+      <option name="number" value="00054" />
+      <option name="presentableId" value="LOCAL-00054" />
+      <option name="project" value="LOCAL" />
+      <updated>1748873921941</updated>
+    </task>
+    <task id="LOCAL-00055" summary="- Versão 1.2.0 - Envio de ordem funcionando">
+      <option name="closed" value="true" />
+      <created>1748882818240</created>
+      <option name="number" value="00055" />
+      <option name="presentableId" value="LOCAL-00055" />
+      <option name="project" value="LOCAL" />
+      <updated>1748882818240</updated>
+    </task>
+    <option name="localTasksCounter" value="56" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -506,14 +616,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="Fix para insert de sinais e monitoramento em banco" />
-    <MESSAGE value="Melhoria de logs" />
-    <MESSAGE value="Melhoria de logs - &quot;%(asctime)s -  %(levelname)s - %(name)s - %(funcName)s - %(message)s&quot;" />
-    <MESSAGE value="Fix para alguns métodos e melhoria em log de db.py" />
-    <MESSAGE value="Fix para método de retorno de sinal pra break even" />
-    <MESSAGE value="Fix para retornar com sucesso o envio de ordem" />
-    <MESSAGE value="- startup por argumento de logger_config.py" />
-    <MESSAGE value="Fix com ordens gravadas com quantidade" />
     <MESSAGE value="Coluna tentativas_be escrita errada e fix da query que pega sinais para break even" />
     <MESSAGE value="Ajuste de método de Break Even adicionando o cancelamento do Stop Loss anterior e a adição de um novo SL no preço de entrada" />
     <MESSAGE value="Padronização de log" />
@@ -528,25 +630,46 @@
     <MESSAGE value="- Mudança na configuração do serviço" />
     <MESSAGE value="- Fix de fechamento, cancela_order" />
     <MESSAGE value="- Fix de atualização de ordens" />
-    <option name="LAST_COMMIT_MESSAGE" value="- Fix de atualização de ordens" />
+    <MESSAGE value="- Versão 1.2.0 - para teste" />
+    <MESSAGE value="- Versão 1.2.0 - Fix consumo de mensagem TP por causa de order_id" />
+    <MESSAGE value="- Versão 1.2.0 - Documentação e log" />
+    <MESSAGE value="- Versão 1.2.0 - Documentação" />
+    <MESSAGE value="- Versão 1.2.0 - Fix de mensagem com stoploss ao invés de sl" />
+    <MESSAGE value="- Versão 1.2.0 - Fix de mensagem com elemento margem" />
+    <MESSAGE value="- Versão 1.2.0 - Fix para validação de mensagem" />
+    <MESSAGE value="- Versão 1.2.0 - Padronização de log e simplificação de script sql para criar a base de dados" />
+    <MESSAGE value="- Versão 1.2.0 - PAdronização de Logs" />
+    <MESSAGE value="- Versão 1.2.0 - Fix de mensagem de log" />
+    <MESSAGE value="- Versão 1.2.0 - Envio de ordem funcionando" />
+    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.0 - Envio de ordem funcionando" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
+        <line-breakpoint suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/TradeExecutorSinal.py</url>
+          <line>95</line>
+          <option name="timeStamp" value="112" />
+        </line-breakpoint>
+        <line-breakpoint suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/TradeExecutorSinal.py</url>
+          <line>86</line>
+          <option name="timeStamp" value="130" />
+        </line-breakpoint>
+        <line-breakpoint suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/database/sinal.py</url>
+          <line>17</line>
+          <option name="timeStamp" value="131" />
+        </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/TelegramReader.py</url>
-          <line>180</line>
-          <option name="timeStamp" value="84" />
+          <line>75</line>
+          <option name="timeStamp" value="133" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/integration/BingXBroker.py</url>
-          <line>240</line>
-          <option name="timeStamp" value="88" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/integration/BingXBroker.py</url>
-          <line>318</line>
-          <option name="timeStamp" value="89" />
+          <url>file://$PROJECT_DIR$/TradeExecutorTP.py</url>
+          <line>64</line>
+          <option name="timeStamp" value="135" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -560,6 +683,7 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/ProjetoTelegram$testar_monitoramento_be.coverage" NAME="testar_monitoramento_be Coverage Results" MODIFIED="1746316630390" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tools" />
+    <SUITE FILE_PATH="coverage/TelegramReader$start_all__1_.coverage" NAME="start_all (1) Coverage Results" MODIFIED="1748883892111" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/ProjetoTelegram$testar_insercao_sinal.coverage" NAME="testar_insercao_sinal Coverage Results" MODIFIED="1746316087789" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tools" />
     <SUITE FILE_PATH="coverage/TelegramReader$start_all.coverage" NAME="start_all Coverage Results" MODIFIED="1748173521487" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/ProjetoTelegram$start_all.coverage" NAME="start_all Coverage Results" MODIFIED="1746918623277" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
