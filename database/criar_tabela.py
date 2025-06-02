@@ -24,14 +24,7 @@ def criar_e_popular_banco():
 
     base_dir = os.path.join(os.path.dirname(__file__), "scripts")
     arquivos_ordem = [
-        "break_even_status.sql",
-        "ordem_stauts.sql",
-        "take_profit_status.sql",
-        "sinais.sql",
-        "take_profits.sql",
-        "inser_break_even_status.sql",
-        "inser_ordem_status.sql",
-        "inser_take_profit_status.sql"
+        "v2database.sql"
     ]
 
     for arquivo in arquivos_ordem:

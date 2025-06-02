@@ -8,6 +8,13 @@ from telethon.tl.types import PeerChannel, PeerChat
 from message.mensagem_sinal import MensagemSinal
 from message.mensagem_tp import MensagemTP
 
+regex_target_done = r"TARGET #(\d) DONE"
+regex_margem = r"Margin:\s*(\w+),\s*(\d+)X"
+regex_stoploss = r"\*\*STOPLOSS:\*\*\s*\[`?([0-9\.]+)`?\]"
+regex_type = r"(LONG|BUY|SHORT|SELL)"
+regex_symbol = r"([A-Z0-9]+/USDT)"
+regex_targets = r"\[`?([0-9\.]+)`?\]"
+
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 
 def ajustar_quantidade(qty, step):
@@ -56,12 +63,12 @@ def extrair_dados_mensagem(mensagem):
     dados = {}
 
     # Extração comum
-    symbol = re.search(r"([A-Z0-9]+/USDT)", mensagem)
-    type_match = re.search(r"(LONG|BUY|SHORT|SELL)", mensagem, re.IGNORECASE)
-    sl_match = re.search(r"\*\*STOPLOSS:\*\*\s*\[`?([0-9\.]+)`?\]", mensagem, re.IGNORECASE)
-    margem_match = re.search(r"Margin:\s*(\w+),\s*(\d+)X", mensagem, re.IGNORECASE)
-    targets = re.findall(r"\[`?([0-9\.]+)`?\]", mensagem)
-    target_done = re.search(r"TARGET #(\d) DONE", mensagem, re.IGNORECASE)
+    symbol = re.search(regex_symbol, mensagem)
+    type_match = re.search(regex_type, mensagem, re.IGNORECASE)
+    sl_match = re.search(regex_stoploss, mensagem, re.IGNORECASE)
+    margem_match = re.search(regex_margem, mensagem, re.IGNORECASE)
+    targets = re.findall(regex_targets, mensagem)
+    target_done = re.search(regex_target_done, mensagem, re.IGNORECASE)
 
     if symbol:
         dados["symbol"] = normalizar_symbol(symbol.group(1).upper())

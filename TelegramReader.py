@@ -67,7 +67,7 @@ async def main():
         resultado = utils.classificar_mensagem(mensagem)
         tipo = resultado["tipo"]
         dados = resultado["dados"]
-        logger.debug(f"tipo: {tipo} - dados: {dados} - resultado: {resultado}")
+        logger.debug(f"📩 - tipo: {tipo} - dados: {dados} - resultado: {resultado}")
 
         if tipo == TRADE:
             try:
@@ -75,7 +75,7 @@ async def main():
                 fila_sinal.put(msg.to_dict())
                 logger.info(f"✅ Sinal enfileirado: {msg.symbol}")
             except Exception as e:
-                logger.exception(f"❌ Erro ao processar sinal: {e}")
+                logger.exception(f"❌ - Erro ao processar sinal: {e}")
                 return None
 
 
@@ -88,7 +88,7 @@ async def main():
                 logger.exception(f"❌ Erro ao processar monitoramento: {e}")
                 return None
         else:
-            logger.warning("❌ Mensagem não reconhecida como sinal ou TP.")
+            logger.warning("❌ - Mensagem não reconhecida como sinal ou TP.")
             return None
 
     await client.run_until_disconnected()

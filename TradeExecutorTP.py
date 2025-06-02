@@ -139,7 +139,7 @@ def consumir_monitoramentos():
             except Exception as e:
                 logger.exception(f"❌ - Erro ao processar TP para {mensagem}: {e}")
     except KeyboardInterrupt:
-        logger.info("🛑 TradeExecutorSinal interrompido pelo usuário.")
+        logger.info("🛑 - TradeExecutorSinal interrompido pelo usuário.")
 
 if __name__ == "__main__":
     """

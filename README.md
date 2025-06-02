@@ -20,14 +20,7 @@ TelegramReader/
 ├── .venv/
 ├── database/
 │   ├── scripts/
-│   │   ├── break_even_status.sql
-│   │   ├── inser_break_even_status.sql
-│   │   ├── inser_ordem_status.sql
-│   │   ├── inser_take_profit_status.sql
-│   │   ├── ordem_status.sql
-│   │   ├── sinais.sql
-│   │   ├── take_profit_status.sql
-│   │   └── take_profits.sql
+│   │   └── v2database.sql
 │   ├── __init__.py
 │   ├── criar_tabela.py
 │   ├── db.py
