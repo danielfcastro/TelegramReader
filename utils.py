@@ -5,6 +5,8 @@ import re
 
 from telethon.errors import ChannelInvalidError, ChatIdInvalidError
 from telethon.tl.types import PeerChannel, PeerChat
+from message.mensagem_sinal import MensagemSinal
+from message.mensagem_tp import MensagemTP
 
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 
@@ -69,10 +71,10 @@ def extrair_dados_mensagem(mensagem):
         stop = float(sl_match.group(1))
         if stop <= 0:
             raise ValueError(f"❌ Stop Loss inválido: {stop}")
-        dados["stoploss"] = stop
+        dados["sl"] = stop
     if margem_match:
         dados["margem"] = margem_match.group(1).capitalize()
-        dados["leverage"] = margem_match.group(2) + "X"
+        dados["alavancagem"] = margem_match.group(2) + "X"
     if target_done:
         dados["tp"] = f"TP{target_done.group(1)}"
     for i, alvo in enumerate(targets[:4], start=1):
@@ -92,30 +94,29 @@ def extrair_dados_mensagem(mensagem):
     return dados
 
 def classificar_mensagem(mensagem):
-    """
-    Classifica a mensagem como 'trade', 'monitoramento' ou 'desconhecido'.
-
-    :param mensagem: Texto da mensagem.
-    :return: Dicionário com chave 'tipo' e os 'dados' extraídos.
-    """
     try:
         dados = extrair_dados_mensagem(mensagem)
     except ValueError as e:
         logger.error(f"❌ Erro ao extrair mensagem: {e}")
         return {"tipo": "invalida", "erro": str(e), "dados": {}}
-    _msg = {}
 
-    if "tipo_ordem" in dados and "stoploss" in dados:
-        _msg = {"tipo": "trade", "dados": dados}
+    if "tipo_ordem" in dados and "sl" in dados:
+        try:
+            msg = MensagemSinal(**dados)
+            return {"tipo": "trade", "dados": msg.to_dict()}
+        except TypeError as e:
+            logger.error(f"❌ Erro ao construir MensagemSinal: {e}")
+            return {"tipo": "invalida", "erro": str(e), "dados": dados}
     elif "tp" in dados:
-        _msg = {"tipo": "monitoramento", "dados": {
-            "symbol": dados.get("symbol", "N/A"),
-            "tp": dados["tp"]
-        }}
+        try:
+            msg = MensagemTP(**dados)
+            return {"tipo": "monitoramento", "dados": msg.to_dict()}
+        except TypeError as e:
+            logger.error(f"❌ Erro ao construir MensagemTP: {e}")
+            return {"tipo": "invalida", "erro": str(e), "dados": dados}
     else:
-        _msg = {"tipo": "desconhecido", "dados": dados}
+        return {"tipo": "desconhecido", "dados": dados}
 
-    return _msg
 
 def normalizar_symbol(symbol: str) -> str:
     """
