@@ -4,9 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.0 - Fix de mensagem com elemento margem">
+    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.0 - Fix para validação de mensagem">
+      <change afterPath="$PROJECT_DIR$/tests/TestClassificaMensagem.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/message/mensagem_sinal.py" beforeDir="false" afterPath="$PROJECT_DIR$/message/mensagem_sinal.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -190,14 +190,6 @@
       <workItem from="1746665220865" duration="362000" />
       <workItem from="1746665594501" duration="65981000" />
       <workItem from="1748532199558" duration="3196000" />
-    </task>
-    <task id="LOCAL-00001" summary="Fix para insert de sinais e monitoramento em banco">
-      <option name="closed" value="true" />
-      <created>1746356607959</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1746356607960</updated>
     </task>
     <task id="LOCAL-00002" summary="Melhoria de logs">
       <option name="closed" value="true" />
@@ -583,7 +575,15 @@
       <option name="project" value="LOCAL" />
       <updated>1748863999087</updated>
     </task>
-    <option name="localTasksCounter" value="50" />
+    <task id="LOCAL-00050" summary="- Versão 1.2.0 - Fix para validação de mensagem">
+      <option name="closed" value="true" />
+      <created>1748865409552</created>
+      <option name="number" value="00050" />
+      <option name="presentableId" value="LOCAL-00050" />
+      <option name="project" value="LOCAL" />
+      <updated>1748865409552</updated>
+    </task>
+    <option name="localTasksCounter" value="51" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -614,7 +614,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="Fix para método de retorno de sinal pra break even" />
     <MESSAGE value="Fix para retornar com sucesso o envio de ordem" />
     <MESSAGE value="- startup por argumento de logger_config.py" />
     <MESSAGE value="Fix com ordens gravadas com quantidade" />
@@ -639,7 +638,8 @@
     <MESSAGE value="- Versão 1.2.0 - Fix de mensagem com stoploss ao invés de sl" />
     <MESSAGE value="- Versão 1.2.0 - Fix de mensagem de log" />
     <MESSAGE value="- Versão 1.2.0 - Fix de mensagem com elemento margem" />
-    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.0 - Fix de mensagem com elemento margem" />
+    <MESSAGE value="- Versão 1.2.0 - Fix para validação de mensagem" />
+    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.0 - Fix para validação de mensagem" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -681,7 +681,7 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/ProjetoTelegram$testar_monitoramento_be.coverage" NAME="testar_monitoramento_be Coverage Results" MODIFIED="1746316630390" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tools" />
-    <SUITE FILE_PATH="coverage/TelegramReader$start_all__1_.coverage" NAME="start_all (1) Coverage Results" MODIFIED="1748865170333" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/TelegramReader$start_all__1_.coverage" NAME="start_all (1) Coverage Results" MODIFIED="1748867156809" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/ProjetoTelegram$testar_insercao_sinal.coverage" NAME="testar_insercao_sinal Coverage Results" MODIFIED="1746316087789" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tools" />
     <SUITE FILE_PATH="coverage/TelegramReader$start_all.coverage" NAME="start_all Coverage Results" MODIFIED="1748173521487" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/ProjetoTelegram$start_all.coverage" NAME="start_all Coverage Results" MODIFIED="1746918623277" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

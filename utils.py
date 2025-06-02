@@ -178,15 +178,3 @@ def imprimir_configuracoes_ambiente():
     is_testnet = os.getenv("IS_TESTNET", "false").strip('"').lower() == "true"
     logger.info("📈- Iniciando componentes...")
     logger.info("🚀 - Executando trade no broker: %s (Testnet=%s)", os.getenv('BROKER', '').upper(), is_testnet)
-
-def extrair_limite_usdt(mensagem):
-    """
-    Extrai o valor máximo de exposição (em USDT) a partir de uma mensagem de erro da corretora.
-
-    :param mensagem: Texto da mensagem de erro.
-    :return: Valor do limite em USDT se encontrado, ou None.
-    """
-    match = re.search(r'position limit of (\d+(?:\.\d+)?)\s*USDT', mensagem)
-    if match:
-        return float(match.group(1))
-    return None
