@@ -21,12 +21,9 @@ def tp_inserir(take_profits):
     """
 
     query_tp = """
-        INSERT INTO v2.take_profits (
-            numero, valor, quantidade, order_id, tp_status_id
-        ) VALUES (
-            %(numero)s, %(valor)s, %(quantidade)s, %(order_id)s, %(status)s
-        )
-    """
+               INSERT INTO v2.take_profits (numero, valor, quantidade, order_id, tp_status_id, proporcao) \
+               VALUES (%(numero)s, %(valor)s, %(quantidade)s, %(order_id)s, %(status)s, %(proporcao)s) \
+               """
 
     for tp in take_profits:
         tp_dados = {
@@ -34,7 +31,8 @@ def tp_inserir(take_profits):
             "valor": tp["valor"],
             "quantidade": tp["quantidade"],
             "order_id": tp["order_id"],
-            "status": tp["status"]
+            "status": tp["status"],
+            "proporcao": tp["proporcao"]
         }
         executar_insert(query_tp, tp_dados)
 

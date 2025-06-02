@@ -117,7 +117,8 @@ def consumir_sinais():
                                 "valor": preco_tp,
                                 "quantidade": qtd_tp,
                                 "order_id": order_id,
-                                "status": 1
+                                "status": 1,
+                                "proporcao": proporcao
                             })
                         else:
                             logger.warning(f"⚠️ - Falha ao configurar TP{i + 1} para {msg.symbol}")

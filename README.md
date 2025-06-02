@@ -135,7 +135,7 @@ python database/criar_tabela.py
 ### Forma 1: Script start_all.py
 
 ```bash
-python start_all.py --testnet
+python start_all.py --testnet  # Recomendado para executar todos os componentes
 ```
 
 ### Forma 2: Clique duplo no `start_bot.bat` (Windows)
@@ -198,6 +198,13 @@ tail -f /var/log/tradebot.log
 ```
 ---
 
+## 🔐 Segurança das Credenciais
+
+O arquivo `.env` é gerado automaticamente e contém suas chaves da API da BingX.
+**Recomenda-se adicioná-lo ao `.gitignore`** para evitar exposição em repositórios públicos.
+
+---
+
 ## 📋 Logs
 
 - Log da aplicação: `logs/app.log`
@@ -231,6 +238,7 @@ Este projeto integra sinais de trade recebidos via Telegram com execução autom
 * Calcula saldo, margem, alavancagem, e quantidade proporcional.
 * Envia ordem para BingX e configura múltiplos Take Profits (TPs).
 * Atualiza banco com ordem enviada e configurações feitas.
+* Registra `proporcao` de cada TP no banco para análise futura e possível reentrada.
 
 #### TradeExecutorTP
 
@@ -379,6 +387,8 @@ Armazena os múltiplos alvos de lucro (TPs) associados a uma ordem.
 | quantidade  | `real`     | Quantidade associada a este TP          |
 | tp_status_id| `smallint` | Status do TP (FK)                       |
 | proporcao   | `real`     | Proporção do total da ordem nesse TP    |
+> A coluna `proporcao` representa a fração da posição total atribuída a cada TP.
+> Exemplo: proporções padrão são `[0.1, 0.2, 0.5, 0.2]`.
 
 🔗 **PK:** (order_id, numero)  
 🔗 **FK:** order_id → ordem.order_id  
