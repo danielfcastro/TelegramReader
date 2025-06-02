@@ -3,7 +3,7 @@ class MensagemSinal:
         self,
         symbol: str,
         tipo_ordem: str,
-        sl: float,
+        stoploss: float,
         tp1: float,
         tp2: float,
         tp3: float,
@@ -13,7 +13,7 @@ class MensagemSinal:
     ):
         self.symbol = symbol
         self.tipo_ordem = tipo_ordem
-        self.sl = sl
+        self.stoploss = stoploss
         self.tp1 = tp1
         self.tp2 = tp2
         self.tp3 = tp3
@@ -25,7 +25,7 @@ class MensagemSinal:
         return {
             "symbol": self.symbol,
             "tipo_ordem": self.tipo_ordem,
-            "sl": self.sl,
+            "stoploss": self.stoploss,
             "tp1": self.tp1,
             "tp2": self.tp2,
             "tp3": self.tp3,
