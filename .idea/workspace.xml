@@ -4,8 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.0 - Padronização de log e simplificação de script sql para criar a base de dados">
-      <change beforePath="$PROJECT_DIR$/database/criar_tabela.py" beforeDir="false" afterPath="$PROJECT_DIR$/database/criar_tabela.py" afterDir="false" />
+    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.0 - PAdronização de Logs">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -189,14 +189,6 @@
       <workItem from="1746665220865" duration="362000" />
       <workItem from="1746665594501" duration="65981000" />
       <workItem from="1748532199558" duration="3196000" />
-    </task>
-    <task id="LOCAL-00004" summary="Fix para alguns métodos e melhoria em log de db.py">
-      <option name="closed" value="true" />
-      <created>1746391647302</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1746391647302</updated>
     </task>
     <task id="LOCAL-00005" summary="Fix para método de retorno de sinal pra break even">
       <option name="closed" value="true" />
@@ -582,7 +574,15 @@
       <option name="project" value="LOCAL" />
       <updated>1748871999348</updated>
     </task>
-    <option name="localTasksCounter" value="53" />
+    <task id="LOCAL-00053" summary="- Versão 1.2.0 - PAdronização de Logs">
+      <option name="closed" value="true" />
+      <created>1748872139192</created>
+      <option name="number" value="00053" />
+      <option name="presentableId" value="LOCAL-00053" />
+      <option name="project" value="LOCAL" />
+      <updated>1748872139192</updated>
+    </task>
+    <option name="localTasksCounter" value="54" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -613,7 +613,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="- startup por argumento de logger_config.py" />
     <MESSAGE value="Fix com ordens gravadas com quantidade" />
     <MESSAGE value="Coluna tentativas_be escrita errada e fix da query que pega sinais para break even" />
     <MESSAGE value="Ajuste de método de Break Even adicionando o cancelamento do Stop Loss anterior e a adição de um novo SL no preço de entrada" />
@@ -638,7 +637,8 @@
     <MESSAGE value="- Versão 1.2.0 - Fix de mensagem com elemento margem" />
     <MESSAGE value="- Versão 1.2.0 - Fix para validação de mensagem" />
     <MESSAGE value="- Versão 1.2.0 - Padronização de log e simplificação de script sql para criar a base de dados" />
-    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.0 - Padronização de log e simplificação de script sql para criar a base de dados" />
+    <MESSAGE value="- Versão 1.2.0 - PAdronização de Logs" />
+    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.0 - PAdronização de Logs" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

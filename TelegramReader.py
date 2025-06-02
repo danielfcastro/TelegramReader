@@ -83,7 +83,7 @@ async def main():
             try:
                 msg = MensagemTP(**dados)
                 fila_tp.put(msg.to_dict())
-                logger.info(f"✅ - TP enfileirado: {msg.symbol} - TP{msg.tp}")
+                logger.info(f"✅ - TP enfileirado: {msg.symbol} - {msg.tp}")
             except Exception as e:
                 logger.exception(f"❌ Erro ao processar monitoramento: {e}")
                 return None
