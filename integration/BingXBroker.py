@@ -133,7 +133,7 @@ class BingXBroker(BrokerInterface, ABC):
         body = {
             "symbol": symbol,
             "side": side,
-            "leverage": str(leverage)
+            "leverage": str(leverage).replace("X", "")
         }
 
         try:
@@ -161,10 +161,10 @@ class BingXBroker(BrokerInterface, ABC):
 
         try:
             self.set_leverage(symbol=mensagem.symbol, side=side_leverage, leverage=mensagem.alavancagem)
-
+            _tipo_ordem = "SELL" if mensagem.tipo_ordem == "SHORT" else "BUY"
             body = {
                 "symbol": mensagem.symbol,
-                "side": mensagem.tipo_ordem,
+                "side": _tipo_ordem,
                 "positionSide": side_leverage,
                 "type": "MARKET",
                 "quantity": quantidade,
@@ -189,7 +189,7 @@ class BingXBroker(BrokerInterface, ABC):
                 average_price = response["data"]["order"]["avgPrice"]
                 quantidade = response["data"]["order"]["quantity"]
                 logger.info(f"✅ - Ordem enviada com sucesso - order_id: {order_id}")
-                return {
+                retorno =  {
                     "sucesso": True,
                     "order_id": order_id,
                     "quantidade": quantidade,
@@ -197,10 +197,11 @@ class BingXBroker(BrokerInterface, ABC):
                     "erro":codigo,
                     "msg":mensagem_erro
                 }
+                logger.info(f"✅ - Ordem enviada: [{codigo}] {retorno}")
+                return retorno
             else:
                 mensagem_erro = response.get("msg", "Erro desconhecido")
-                logger.error(f"❌ - Falha ao enviar ordem: [{codigo}] {mensagem_erro}")
-                return {
+                retorno = {
                     "sucesso": False,
                     "order_id": 0,
                     "quantidade": 0,
@@ -208,6 +209,8 @@ class BingXBroker(BrokerInterface, ABC):
                     "erro":codigo,
                     "msg":mensagem_erro
                 }
+                logger.error(f"❌ - Falha ao enviar ordem: [{codigo}] {retorno}")
+                return retorno
         except Exception as e:
             logger.exception(f"❌ - Erro ao enviar ordem BingX: {e}")
             return {"sucesso": False, "erro": str(e)}
@@ -439,9 +442,9 @@ class BingXBroker(BrokerInterface, ABC):
                 "symbol": symbol
             }
             logger.debug(f"✅ - Pedido de verificação de tipo de margem: path: {path} - body {body}")
-            response = self._send_request("GET ", path, body)
+            response = self._send_request("GET", path, body)
             logger.debug(f"✅ - Resposta do pedido de verificação de tipo de margem: {response}")
-            return response["code"]["marginType"]
+            return response["data"]["marginType"]
         except Exception as e:
             logger.exception(f"❌ - Erro {symbol}: {e}")
             return {}
@@ -460,7 +463,7 @@ class BingXBroker(BrokerInterface, ABC):
                 "marginType": "CROSSED"
             }
             logger.debug(f"✅ - Pedido de configuração de tipo de margem: path: {path} - body {body}")
-            response = self._send_request("POST ", path, body)
+            response = self._send_request("POST", path, body)
             logger.debug(f"✅ - Resposta do pedido de configuração de tipo de margem: {response}")
             return response
         except Exception as e:

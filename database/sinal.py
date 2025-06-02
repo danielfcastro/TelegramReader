@@ -15,12 +15,14 @@ def ordem_inserir(dados_dict, order_id, entry_price, quantidade):
     :param quantidade: Quantidade executada na ordem.
     :return: ID do sinal inserido na tabela.
     """
+    _tipo_ordem = "SELL" if dados_dict["tipo_ordem"] == "SHORT" else "BUY"
+
     dados = {
         "symbol": dados_dict["symbol"],
-        "tipo_ordem": dados_dict["tipo_ordem"],
+        "tipo_ordem": _tipo_ordem,
         "margem": dados_dict["margem"],
         "alavancagem": dados_dict["alavancagem"],
-        "sl": dados_dict["stoploss"],
+        "sl": dados_dict["sl"],
         "quantidade": quantidade,
         "ordem_status_id": 2,
         "break_even_status_id": 1,
