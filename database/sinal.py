@@ -24,7 +24,7 @@ def ordem_inserir(dados_dict, order_id, entry_price, quantidade):
         "alavancagem": dados_dict["alavancagem"],
         "sl": dados_dict["sl"],
         "quantidade": quantidade,
-        "ordem_status_id": 2,
+        "ordem_status_id": 1,
         "break_even_status_id": 1,
         "order_id": order_id,
         "entry_price": entry_price
