@@ -268,8 +268,8 @@ class BingXBroker(BrokerInterface, ABC):
                     "orderId": order_id
                 }
                 logger.debug(f"✅️ - Pedido de envio de SL: path: {path} - body {body}")
-                _response = self._send_request("POST", path, body)
-                logger.debug(f"✅ - Resposta do pedido de SL: {_response}")
+                response = self._send_request("POST", path, body)
+                logger.debug(f"✅ - Resposta do pedido de SL: {response}")
                 return response
 
             self.cancela_stop_loss(symbol)
@@ -281,23 +281,26 @@ class BingXBroker(BrokerInterface, ABC):
                 return True
 
             # Erro 110424: Tenta ajustar automaticamente
-            if response.get("code") == 110424:
+            elif response.get("code") == 110424:
                 msg = response.get("msg", "")
                 match = re.search(r'available amount of (\d+\.?\d*)', msg)
                 if match:
                     nova_quantidade = float(match.group(1))
                     nova_quantidade = round(nova_quantidade, 6)
                     logger.warning(f"⚠️ - Ajustando SL com quantidade reduzida: {nova_quantidade} para {symbol}")
-                    response2 = enviar_sl(nova_quantidade)
-                    if response2["code"] == 0:
+                    response = enviar_sl(nova_quantidade)
+                    if response["code"] == 0:
                         logger.info(f"✅ - SL ajustado com nova quantidade para {symbol}")
                         return True
                     else:
-                        logger.error(f"❌ - Mesmo após ajuste, falhou SL para {symbol}: {response2}")
+                        logger.error(f"❌ - Mesmo após ajuste, falhou SL para {symbol}: {response}")
+                        return False
                 else:
                     logger.error(f"❌ - Erro 110424 sem número detectável em: {msg}")
+                    return False
             else:
                 logger.error(f"❌ - Erro ao ajustar SL para {symbol}: {response}")
+                return False
 
         except Exception as e:
             logger.exception(f"❌ - Exceção ao ajustar SL para {symbol}: {e}")
@@ -380,7 +383,7 @@ class BingXBroker(BrokerInterface, ABC):
                 "type": "MARKET"
             }
             logger.debug(f"✅ - Pedido de fechamento de ordem de mercado: path: {path} - body {body}")
-            response = self._send_request("POST ", path, body)
+            response = self._send_request("POST", path, body)
             logger.debug(f"✅ - Resposta do pedido de fechamento de ordem de mercado: {response}")
             return response
         except Exception as e:

@@ -80,7 +80,7 @@ def consumir_monitoramentos():
                 logger.debug(f"📦 - Mensagem: {msg}")
 
                 # Atualiza status do TP no banco
-                database.take_profit.tp_atualizar(order_id=msg.order_id, numero_tp=msg.tp, novo_status=3)
+                database.take_profit.tp_atualizar(order_id=msg.order_id, numero_tp=msg.tp, novo_status=2)
 
                 # Buscar informações da ordem principal
                 response = broker.get_open_order_info(symbol=symbol, order_id=order_id)
@@ -99,7 +99,7 @@ def consumir_monitoramentos():
                 # Recupera o SL atual da ordem para futuro uso na mudança de Stop Loss
                 current_stop_price = response["data"]["order"]["stopLoss"]["stopPrice"]
                 # Recupera o lado da ordem (BUY, SELL) da ordem para futuro uso na mudança de Stop Loss
-                current_order_side = response["data"]["order"]["stopLoss"]["side"]
+                current_order_side = response["data"]["order"]["side"]
                 #Atualiza no banco o status do TP
                 database.take_profit.tp_atualizar(order_id=order_id, numero_tp=numero_tp, novo_status=2)
                 # Se TP2, atualiza o SL para ser o entry_price
@@ -107,6 +107,7 @@ def consumir_monitoramentos():
                     database.stop_loss.stop_loss_update(symbol, entry_price)
 
                 # Decide o novo stop_price com base no TP monitorado
+                if current_stop_price == 0: current_stop_price = entry_price
                 stop_price = current_stop_price if numero_tp == 1 else entry_price
 
                 # Lógica para ajustar Stop Loss após TP
@@ -132,7 +133,9 @@ def consumir_monitoramentos():
                     broker.cancela_ordem_tp(symbol=symbol)
                     broker.cancela_ordem_sl(symbol=symbol)
                     fila.task_done()
+                database.take_profit.tp_atualizar(order_id=order_id, numero_tp=numero_tp, novo_status=2)
                 logger.info(f"✅ - TP{numero_tp} processado com sucesso para {symbol}.")
+                fila.task_done()
             except Empty:
                 time.sleep(2)
                 continue

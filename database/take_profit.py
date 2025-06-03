@@ -45,7 +45,8 @@ def tp_atualizar(order_id, numero_tp, novo_status=1):
     :param novo_status: Novo status a ser definido para o TP.
                         (1 = configurado, 2 = atingido, 3 = em execução, etc.)
     """
-
+    if isinstance(numero_tp, str) and numero_tp.upper().startswith("TP"):
+        numero_tp = int(numero_tp.replace("TP", ""))
     query = """
         UPDATE v2.take_profits
         SET tp_status_id = %(status)s
@@ -64,9 +65,9 @@ def tp_ordem_id_mais_nova(symbol):
     """
     query = """
         SELECT order_id FROM v2.ordem
-        WHERE symbol = %(symbol)s AND ordem_status_id = 1
+        WHERE symbol = %(symbol)s AND ordem_status_id = 2
         ORDER BY data_hora DESC
         LIMIT 1
     """
     resultado = executar_select(query, {"symbol": symbol})
-    return resultado["order_id"] if resultado else 0
+    return resultado[0]["order_id"] if resultado else 0
