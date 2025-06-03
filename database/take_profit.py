@@ -65,7 +65,7 @@ def tp_ordem_id_mais_nova(symbol):
     """
     query = """
         SELECT order_id FROM v2.ordem
-        WHERE symbol = %(symbol)s AND ordem_status_id = 2
+        WHERE symbol = %(symbol)s AND ordem_status_id = 1
         ORDER BY data_hora DESC
         LIMIT 1
     """
