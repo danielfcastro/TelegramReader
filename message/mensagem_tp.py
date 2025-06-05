@@ -1,10 +1,12 @@
 class MensagemTP:
-    def __init__(self, symbol: str, tp_monitorado: str):
+    def __init__(self, symbol: str, tp: str, order_id: int = None):
         self.symbol = symbol
-        self.tp_monitorado = tp_monitorado
+        self.tp = tp
+        self.order_id = order_id
 
     def to_dict(self):
         return {
             "symbol": self.symbol,
-            "tp": self.tp_monitorado
+            "tp": self.tp,
+            "order_id": self.order_id
         }
