@@ -10,9 +10,9 @@ from psycopg2 import OperationalError
 load_dotenv()
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 
-debug_update=True
+debug_update=False
 debug_select=False
-debug_insert=True
+debug_insert=False
 
 # Inicializa o pool globalmente
 DB_POOL = pool.SimpleConnectionPool(

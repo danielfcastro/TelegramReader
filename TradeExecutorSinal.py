@@ -134,7 +134,7 @@ def consumir_sinais():
                 time.sleep(2)
                 continue
             except Exception as e:
-                logger.error(f"❌ Erro ao processar mensagem de sinal: {e}")
+                logger.error(f"❌ - Erro ao processar mensagem de sinal: {e}")
     except KeyboardInterrupt:
         logger.info("🛑 - TradeExecutorSinal interrompido pelo usuário.")
 

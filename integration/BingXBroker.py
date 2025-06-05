@@ -173,7 +173,8 @@ class BingXBroker(BrokerInterface, ABC):
                     "type": "STOP_MARKET",
                     "quantity": quantidade,
                     "stopPrice": mensagem.sl,
-                    "workingType": "MARK_PRICE"
+                    "workingType": "MARK_PRICE",
+                    "stopGuaranteed": True
                 })
             }
 
@@ -265,7 +266,8 @@ class BingXBroker(BrokerInterface, ABC):
                     "stopPrice": stop_price,
                     "positionSide": "BOTH",
                     "quantity": qtd,
-                    "orderId": order_id
+                    "orderId": order_id,
+                    "stopGuaranteed": True
                 }
                 logger.debug(f"✅️ - Pedido de envio de SL: path: {path} - body {body}")
                 response = self._send_request("POST", path, body)
@@ -330,7 +332,8 @@ class BingXBroker(BrokerInterface, ABC):
                 "stopPrice": round(stop_price, 6),
                 "quantity": round(quantity, 6),
                 "workingType": "MARK_PRICE",
-                "orderId": order_id
+                "orderId": order_id,
+                "stopGuaranteed":True
             }
             logger.debug(f"✅ - Pedido de TP: path: {path} - body {body}")
             response = self._send_request("POST", path, body)
