@@ -168,7 +168,6 @@ class BingXBroker(BrokerInterface, ABC):
                 "positionSide": side_leverage,
                 "type": "MARKET",
                 "quantity": quantidade,
-                "stopGuaranteed": "true",
                 "stopLoss": json.dumps({
                     "type": "STOP_MARKET",
                     "quantity": quantidade,
