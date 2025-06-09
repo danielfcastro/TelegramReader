@@ -4,12 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.0 - Fix ordem mais nova">
+    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.1 - stopGuaranteed = True">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TradeExecutorSinal.py" beforeDir="false" afterPath="$PROJECT_DIR$/TradeExecutorSinal.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/db.py" beforeDir="false" afterPath="$PROJECT_DIR$/database/db.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/integration/BingXBroker.py" beforeDir="false" afterPath="$PROJECT_DIR$/integration/BingXBroker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/log/logger_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/log/logger_config.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,7 +26,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="release/v.1.1.0" />
+        <entry key="$PROJECT_DIR$" value="development" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -72,33 +68,33 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python.TradeExecutor.executor": "Run",
-    "Python.start_all (1).executor": "Debug",
-    "Python.start_all.executor": "Debug",
-    "Python.testar_insercao_sinal.executor": "Run",
-    "Python.testar_monitoramento_be.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "development",
-    "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "C:/Varios/TelegramReader/queue/subscriber",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.TradeExecutor.executor&quot;: &quot;Run&quot;,
+    &quot;Python.start_all (1).executor&quot;: &quot;Debug&quot;,
+    &quot;Python.start_all.executor&quot;: &quot;Debug&quot;,
+    &quot;Python.testar_insercao_sinal.executor&quot;: &quot;Run&quot;,
+    &quot;Python.testar_monitoramento_be.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Varios/TelegramReader/queue/subscriber&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "DatabaseDriversLRU": [
-      "postgresql"
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;postgresql&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Varios\TelegramReader\queue\subscriber" />
@@ -112,7 +108,30 @@
       <recent name="C:\Varios\TelegramReader\database" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.start_all (1)">
+  <component name="RunManager" selected="Python.start_all">
+    <configuration name="TradeExecutor" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="ProjetoTelegram" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/TradeExecutor.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="start_all (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="TelegramReader" />
       <option name="ENV_FILES" value="" />
@@ -139,35 +158,86 @@
     </configuration>
     <configuration name="start_all" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="ProjetoTelegram" />
-      <option name="ENV_FILES" value="$PROJECT_DIR$/.env" />
+      <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="SDK_NAME" value="Python 3.11 (TelegramReader)" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="false" />
+      <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="start_all" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/start_all.py" />
       <option name="PARAMETERS" value="--testnet" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="true" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="testar_insercao_sinal" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="ProjetoTelegram" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tools" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tools/testar_insercao_sinal.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="testar_monitoramento_be" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="ProjetoTelegram" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tools" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tools/testar_monitoramento_be.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
       <option name="REDIRECT_INPUT" value="false" />
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
     <list>
+      <item itemvalue="Python.TradeExecutor" />
+      <item itemvalue="Python.testar_insercao_sinal" />
+      <item itemvalue="Python.testar_monitoramento_be" />
       <item itemvalue="Python.start_all (1)" />
       <item itemvalue="Python.start_all" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.start_all (1)" />
+        <item itemvalue="Python.TradeExecutor" />
+        <item itemvalue="Python.testar_monitoramento_be" />
+        <item itemvalue="Python.testar_insercao_sinal" />
+        <item itemvalue="Python.start_all" />
         <item itemvalue="Python.start_all" />
       </list>
     </recent_temporary>
@@ -192,30 +262,6 @@
       <workItem from="1746665220865" duration="362000" />
       <workItem from="1746665594501" duration="65981000" />
       <workItem from="1748532199558" duration="3196000" />
-    </task>
-    <task id="LOCAL-00010" summary="Fix com ordens gravadas com quantidade">
-      <option name="closed" value="true" />
-      <created>1746531559066</created>
-      <option name="number" value="00010" />
-      <option name="presentableId" value="LOCAL-00010" />
-      <option name="project" value="LOCAL" />
-      <updated>1746531559066</updated>
-    </task>
-    <task id="LOCAL-00011" summary="Coluna tentativas_be escrita errada e fix da query que pega sinais para break even">
-      <option name="closed" value="true" />
-      <created>1746532628907</created>
-      <option name="number" value="00011" />
-      <option name="presentableId" value="LOCAL-00011" />
-      <option name="project" value="LOCAL" />
-      <updated>1746532628907</updated>
-    </task>
-    <task id="LOCAL-00012" summary="Coluna tentativas_be escrita errada e fix da query que pega sinais para break even">
-      <option name="closed" value="true" />
-      <created>1746553822836</created>
-      <option name="number" value="00012" />
-      <option name="presentableId" value="LOCAL-00012" />
-      <option name="project" value="LOCAL" />
-      <updated>1746553822836</updated>
     </task>
     <task id="LOCAL-00013" summary="Ajuste de método de Break Even adicionando o cancelamento do Stop Loss anterior e a adição de um novo SL no preço de entrada">
       <option name="closed" value="true" />
@@ -585,7 +631,31 @@
       <option name="project" value="LOCAL" />
       <updated>1748971120926</updated>
     </task>
-    <option name="localTasksCounter" value="59" />
+    <task id="LOCAL-00059" summary="- Versão 1.2.0 - stopGuaranteed e log level">
+      <option name="closed" value="true" />
+      <created>1749143013809</created>
+      <option name="number" value="00059" />
+      <option name="presentableId" value="LOCAL-00059" />
+      <option name="project" value="LOCAL" />
+      <updated>1749143013809</updated>
+    </task>
+    <task id="LOCAL-00060" summary="- Versão 1.2.1 - persistqueue como dependeência em requirements.txt">
+      <option name="closed" value="true" />
+      <created>1749144232759</created>
+      <option name="number" value="00060" />
+      <option name="presentableId" value="LOCAL-00060" />
+      <option name="project" value="LOCAL" />
+      <updated>1749144232759</updated>
+    </task>
+    <task id="LOCAL-00061" summary="- Versão 1.2.1 - stopGuaranteed = True">
+      <option name="closed" value="true" />
+      <created>1749416055778</created>
+      <option name="number" value="00061" />
+      <option name="presentableId" value="LOCAL-00061" />
+      <option name="project" value="LOCAL" />
+      <updated>1749416055778</updated>
+    </task>
+    <option name="localTasksCounter" value="62" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -616,9 +686,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="- Adicionei condição para marcar como true ativar_be se contador chegar a 3&#10;- mudei o sleep para 1" />
-    <MESSAGE value="- introdução da coluna proporcao no Banco pra simplificar a operação e tentar resolver um bug intermitente" />
-    <MESSAGE value="- introdução da divisão do trade em 5 proporções" />
     <MESSAGE value="- introdução da divisão do trade em 5 proporções&#10;- break even para TP2 e TP4&#10;- ajuste no modelo de dados para mais clareza&#10;- correção das queries&#10;novo conteúdo do README.md" />
     <MESSAGE value="- Correção do README.md e remoção de parâmetros não usados mais" />
     <MESSAGE value="- Configuração para Linux Alpine" />
@@ -641,30 +708,28 @@
     <MESSAGE value="- Versão 1.2.0 - Fix com controle de TP" />
     <MESSAGE value="- Versão 1.2.0 - Fix com status de ordem enviada para corretora" />
     <MESSAGE value="- Versão 1.2.0 - Fix ordem mais nova" />
-    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.0 - Fix ordem mais nova" />
+    <MESSAGE value="- Versão 1.2.0 - stopGuaranteed e log level" />
+    <MESSAGE value="- Versão 1.2.1 - persistqueue como dependeência em requirements.txt" />
+    <MESSAGE value="- Versão 1.2.1 - stopGuaranteed = True" />
+    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.1 - stopGuaranteed = True" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
-        <line-breakpoint suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/TradeExecutorSinal.py</url>
-          <line>95</line>
-          <option name="timeStamp" value="112" />
-        </line-breakpoint>
-        <line-breakpoint suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/TradeExecutorSinal.py</url>
-          <line>86</line>
-          <option name="timeStamp" value="130" />
-        </line-breakpoint>
-        <line-breakpoint suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/database/sinal.py</url>
-          <line>17</line>
-          <option name="timeStamp" value="131" />
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/TelegramReader.py</url>
+          <line>180</line>
+          <option name="timeStamp" value="84" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/TradeExecutorTP.py</url>
-          <line>129</line>
-          <option name="timeStamp" value="145" />
+          <url>file://$PROJECT_DIR$/integration/BingXBroker.py</url>
+          <line>239</line>
+          <option name="timeStamp" value="88" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/integration/BingXBroker.py</url>
+          <line>317</line>
+          <option name="timeStamp" value="89" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
