@@ -29,6 +29,10 @@ class BrokerInterface(ABC):
         pass
 
     @abstractmethod
+    def get_pending_order_info(self, symbol, order_id):
+        pass
+
+    @abstractmethod
     def verificar_tipo_margem(self, symbol):
         pass
 
