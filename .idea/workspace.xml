@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.1 - fix" />
+    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.1 - fix para listar ordens pendentes como stop loss" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -262,15 +262,7 @@
       <workItem from="1748532199558" duration="3196000" />
       <workItem from="1749458401180" duration="5672000" />
       <workItem from="1749504080921" duration="1834000" />
-      <workItem from="1749552660908" duration="5117000" />
-    </task>
-    <task id="LOCAL-00019" summary="- introdução da divisão do trade em 5 proporções">
-      <option name="closed" value="true" />
-      <created>1746835397891</created>
-      <option name="number" value="00019" />
-      <option name="presentableId" value="LOCAL-00019" />
-      <option name="project" value="LOCAL" />
-      <updated>1746835397891</updated>
+      <workItem from="1749552660908" duration="5590000" />
     </task>
     <task id="LOCAL-00020" summary="- introdução da divisão do trade em 5 proporções&#10;- break even para TP2 e TP4&#10;- ajuste no modelo de dados para mais clareza&#10;- correção das queries&#10;novo conteúdo do README.md">
       <option name="closed" value="true" />
@@ -656,7 +648,15 @@
       <option name="project" value="LOCAL" />
       <updated>1749583594808</updated>
     </task>
-    <option name="localTasksCounter" value="68" />
+    <task id="LOCAL-00068" summary="- Versão 1.2.1 - fix para listar ordens pendentes como stop loss">
+      <option name="closed" value="true" />
+      <created>1749589841485</created>
+      <option name="number" value="00068" />
+      <option name="presentableId" value="LOCAL-00068" />
+      <option name="project" value="LOCAL" />
+      <updated>1749589841485</updated>
+    </task>
+    <option name="localTasksCounter" value="69" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -687,7 +687,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="- Tentativa de fix para o SL" />
     <MESSAGE value="- Mudança na configuração do serviço" />
     <MESSAGE value="- Fix de fechamento, cancela_order" />
     <MESSAGE value="- Fix de atualização de ordens" />
@@ -712,7 +711,8 @@
     <MESSAGE value="- Versão 1.2.1 - log e melhoria de lógica de break even" />
     <MESSAGE value="- Versão 1.2.1 - log e melhoria de Stop Loss" />
     <MESSAGE value="- Versão 1.2.1 - fix" />
-    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.1 - fix" />
+    <MESSAGE value="- Versão 1.2.1 - fix para listar ordens pendentes como stop loss" />
+    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.1 - fix para listar ordens pendentes como stop loss" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

@@ -78,7 +78,7 @@ def iniciar_telegram_reader():
     - subprocess.Popen: Instância do processo iniciado.
     """
     logger.info("📈 - Iniciando Telegram Reader...")
-    return subprocess.Popen([sys.executable, "TelegramReader.py"])
+    return subprocess.Popen([sys.executable, "TelegramReader.py"], start_new_session=True)
 
 def iniciar_executor_sinal():
     """
@@ -91,7 +91,7 @@ def iniciar_executor_sinal():
     - subprocess.Popen: Processo do executor de sinal.
     """
     logger.info("📈 - Iniciando TradeExecutorSinal...")
-    return subprocess.Popen([sys.executable, "TradeExecutorSinal.py"])
+    return subprocess.Popen([sys.executable, "TradeExecutorSinal.py"], start_new_session=True)
 
 def iniciar_executor_tp():
     """
@@ -104,7 +104,7 @@ def iniciar_executor_tp():
     - subprocess.Popen: Processo do executor de TPs.
     """
     logger.info("📈 - Iniciando TradeExecutorTP...")
-    return subprocess.Popen([sys.executable, "TradeExecutorTP.py"])
+    return subprocess.Popen([sys.executable, "TradeExecutorTP.py"], start_new_session=True)
 
 
 processos = []
@@ -156,7 +156,7 @@ def finalizar_programa(*_):
     for p in processos:
         if p.poll() is None:  # ainda está rodando
             logger.warning(f"🔪 - Matando processo PID {p.pid}")
-            p.terminate()
+            os.killpg(os.getpgid(p.pid), signal.SIGTERM)
     db.fechar_pool()
     sys.exit(0)
 
