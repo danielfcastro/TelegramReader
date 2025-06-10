@@ -1,6 +1,6 @@
 from database.db import executar_update, executar_select
 
-def stop_loss_update(symbol, novo_sl):
+def stop_loss_update(order_id, novo_sl):
     """
     Atualiza o valor do Stop Loss da ordem principal (em execução) associada a um determinado par de trading.
 
@@ -10,9 +10,9 @@ def stop_loss_update(symbol, novo_sl):
     query = """
         UPDATE v2.ordem
         SET sl = %s
-        WHERE symbol = %s AND ordem_status_id = 1
+        WHERE order_id = %s AND ordem_status_id = 1
     """
-    executar_update(query, (novo_sl, symbol))
+    executar_update(query, (novo_sl, order_id))
 
 def stop_loss_soma_quantidade(order_id):
     """

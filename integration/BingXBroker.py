@@ -407,7 +407,7 @@ class BingXBroker(BrokerInterface, ABC):
             logger.debug(f"✅ - Resposta do pedido de cancelamento de ordem de TP: {response}")
             return response
         except Exception as e:
-            logger.exception(f"❌ - Erro ao boter detalhe de ordem {symbol}: {e}")
+            logger.exception(f"❌ - Erro ao cancelar ordem {symbol}: {e}")
             return {}
 
     def cancela_ordem_sl(self, symbol):
@@ -428,7 +428,7 @@ class BingXBroker(BrokerInterface, ABC):
             logger.debug(f"✅ - Resposta do pedido de cancelamento de ordem de SL: {response}")
             return response
         except Exception as e:
-            logger.exception(f"❌ - Erro ao boter detalhe de ordem {symbol}: {e}")
+            logger.exception(f"❌ - Erro ao cancelar ordem {symbol}: {e}")
             return {}
 
     def verificar_tipo_margem(self, symbol):

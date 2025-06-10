@@ -4,9 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.1 - remoção de stopGuaranteed">
+    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.1 - log e melhoria de lógica de break even">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TradeExecutorTP.py" beforeDir="false" afterPath="$PROJECT_DIR$/TradeExecutorTP.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/integration/BingXBroker.py" beforeDir="false" afterPath="$PROJECT_DIR$/integration/BingXBroker.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/logger_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/log/logger_config.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -264,15 +266,8 @@
       <workItem from="1746665594501" duration="65981000" />
       <workItem from="1748532199558" duration="3196000" />
       <workItem from="1749458401180" duration="5672000" />
-      <workItem from="1749504080921" duration="883000" />
-    </task>
-    <task id="LOCAL-00014" summary="Ajuste de método de Break Even adicionando o cancelamento do Stop Loss anterior e a adição de um novo SL no preço de entrada">
-      <option name="closed" value="true" />
-      <created>1746662904627</created>
-      <option name="number" value="00014" />
-      <option name="presentableId" value="LOCAL-00014" />
-      <option name="project" value="LOCAL" />
-      <updated>1746662904627</updated>
+      <workItem from="1749504080921" duration="1834000" />
+      <workItem from="1749552660908" duration="1013000" />
     </task>
     <task id="LOCAL-00015" summary="Ajuste de método de Break Even adicionando o cancelamento do Stop Loss anterior e a adição de um novo SL no preço de entrada">
       <option name="closed" value="true" />
@@ -658,7 +653,15 @@
       <option name="project" value="LOCAL" />
       <updated>1749458531749</updated>
     </task>
-    <option name="localTasksCounter" value="63" />
+    <task id="LOCAL-00063" summary="- Versão 1.2.1 - log e melhoria de lógica de break even">
+      <option name="closed" value="true" />
+      <created>1749513787441</created>
+      <option name="number" value="00063" />
+      <option name="presentableId" value="LOCAL-00063" />
+      <option name="project" value="LOCAL" />
+      <updated>1749513787441</updated>
+    </task>
+    <option name="localTasksCounter" value="64" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -689,7 +692,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="- Correção do README.md e remoção de parâmetros não usados mais" />
     <MESSAGE value="- Configuração para Linux Alpine" />
     <MESSAGE value="- Fechamento" />
     <MESSAGE value="- Tentativa de fix para o SL" />
@@ -714,7 +716,8 @@
     <MESSAGE value="- Versão 1.2.1 - persistqueue como dependeência em requirements.txt" />
     <MESSAGE value="- Versão 1.2.1 - stopGuaranteed = True" />
     <MESSAGE value="- Versão 1.2.1 - remoção de stopGuaranteed" />
-    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.1 - remoção de stopGuaranteed" />
+    <MESSAGE value="- Versão 1.2.1 - log e melhoria de lógica de break even" />
+    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.1 - log e melhoria de lógica de break even" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
