@@ -214,27 +214,6 @@ class BingXBroker(BrokerInterface, ABC):
             logger.exception(f"❌ - Erro ao enviar ordem BingX: {e}")
             return {"sucesso": False, "erro": str(e)}
 
-    def cancela_stop_loss(self, symbol):
-        """
-        Cancela todas as ordens STOP_MARKET abertas para o símbolo.
-
-        :param symbol: Par de negociação.
-        :return: Resposta da API.
-        """
-        try:
-            path = "/openApi/swap/v2/trade/allOpenOrders"
-            body = {
-                "symbol": symbol,
-                "type": "STOP_MARKET"
-            }
-            logger.debug(f"✅ - Cancelamento de SL: path: {path} - body {body}")
-            response = self._send_request("DELETE", path, body)
-            logger.debug(f"✅ - Cancelamento de SL: response: {response} com sucesso")
-            return response
-        except Exception as e:
-            logger.exception(f"❌ - Erro ao cancelar SL para {symbol}: {e}")
-            return {}
-
     def ajustar_stop_loss(self, symbol, position_side, quantity, stop_price, order_id, current_order_side):
         """
         Ajusta o Stop Loss para uma posição específica.
@@ -271,7 +250,7 @@ class BingXBroker(BrokerInterface, ABC):
                 logger.debug(f"✅ - Resposta do pedido de SL: {response}")
                 return response
 
-            self.cancela_stop_loss(symbol)
+            self.cancela_ordem_sl(symbol)
             response = enviar_sl(quantity)
 
             # Verifica sucesso

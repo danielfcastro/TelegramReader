@@ -9,10 +9,6 @@ class BrokerInterface(ABC):
         pass
 
     @abstractmethod
-    def cancela_stop_loss(self, symbol):
-        pass
-
-    @abstractmethod
     def ajustar_stop_loss(self, symbol, position_side, quantity, stop_price, order_id, current_order_side):
         pass
 

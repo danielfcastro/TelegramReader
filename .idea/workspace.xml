@@ -4,11 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.1 - log e melhoria de lógica de break even">
+    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.1 - fix">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TradeExecutorTP.py" beforeDir="false" afterPath="$PROJECT_DIR$/TradeExecutorTP.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/integration/BingXBroker.py" beforeDir="false" afterPath="$PROJECT_DIR$/integration/BingXBroker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/log/logger_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/log/logger_config.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -267,23 +264,7 @@
       <workItem from="1748532199558" duration="3196000" />
       <workItem from="1749458401180" duration="5672000" />
       <workItem from="1749504080921" duration="1834000" />
-      <workItem from="1749552660908" duration="1013000" />
-    </task>
-    <task id="LOCAL-00015" summary="Ajuste de método de Break Even adicionando o cancelamento do Stop Loss anterior e a adição de um novo SL no preço de entrada">
-      <option name="closed" value="true" />
-      <created>1746664890031</created>
-      <option name="number" value="00015" />
-      <option name="presentableId" value="LOCAL-00015" />
-      <option name="project" value="LOCAL" />
-      <updated>1746664890031</updated>
-    </task>
-    <task id="LOCAL-00016" summary="Padronização de log">
-      <option name="closed" value="true" />
-      <created>1746667002705</created>
-      <option name="number" value="00016" />
-      <option name="presentableId" value="LOCAL-00016" />
-      <option name="project" value="LOCAL" />
-      <updated>1746667002705</updated>
+      <workItem from="1749552660908" duration="3842000" />
     </task>
     <task id="LOCAL-00017" summary="- Adicionei condição para marcar como true ativar_be se contador chegar a 3&#10;- mudei o sleep para 1">
       <option name="closed" value="true" />
@@ -661,7 +642,23 @@
       <option name="project" value="LOCAL" />
       <updated>1749513787441</updated>
     </task>
-    <option name="localTasksCounter" value="64" />
+    <task id="LOCAL-00064" summary="- Versão 1.2.1 - log e melhoria de Stop Loss">
+      <option name="closed" value="true" />
+      <created>1749553901673</created>
+      <option name="number" value="00064" />
+      <option name="presentableId" value="LOCAL-00064" />
+      <option name="project" value="LOCAL" />
+      <updated>1749553901673</updated>
+    </task>
+    <task id="LOCAL-00065" summary="- Versão 1.2.1 - fix">
+      <option name="closed" value="true" />
+      <created>1749554872418</created>
+      <option name="number" value="00065" />
+      <option name="presentableId" value="LOCAL-00065" />
+      <option name="project" value="LOCAL" />
+      <updated>1749554872418</updated>
+    </task>
+    <option name="localTasksCounter" value="66" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -692,8 +689,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="- Configuração para Linux Alpine" />
-    <MESSAGE value="- Fechamento" />
     <MESSAGE value="- Tentativa de fix para o SL" />
     <MESSAGE value="- Mudança na configuração do serviço" />
     <MESSAGE value="- Fix de fechamento, cancela_order" />
@@ -717,7 +712,9 @@
     <MESSAGE value="- Versão 1.2.1 - stopGuaranteed = True" />
     <MESSAGE value="- Versão 1.2.1 - remoção de stopGuaranteed" />
     <MESSAGE value="- Versão 1.2.1 - log e melhoria de lógica de break even" />
-    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.1 - log e melhoria de lógica de break even" />
+    <MESSAGE value="- Versão 1.2.1 - log e melhoria de Stop Loss" />
+    <MESSAGE value="- Versão 1.2.1 - fix" />
+    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.1 - fix" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

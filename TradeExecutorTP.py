@@ -119,7 +119,7 @@ def consumir_monitoramentos():
                     database.stop_loss.stop_loss_update(order_id=order_id, novo_sl=stop_price)
 
                 # Lógica para ajustar Stop Loss após TP
-                if numero_tp <4:
+                if numero_tp == 2 or numero_tp == 3:
                     #Soma as quantidades remanescentes dos TPS ainda não concluídos
                     quantidade = database.stop_loss.stop_loss_soma_quantidade(order_id)
                     #Chama broker pra ajustar stop loss
@@ -137,7 +137,7 @@ def consumir_monitoramentos():
                         logger.error(f"❌ - TP{numero_tp} não processado com sucesso para {symbol}.")
                     else:
                         logger.info(f"✅ - TP{numero_tp} processado com sucesso para {symbol}.")
-                else:
+                elif numero_tp == 4:
                     database.take_profit.tp_atualizar(order_id=order_id, numero_tp=1, novo_status=2)
                     database.take_profit.tp_atualizar(order_id=order_id, numero_tp=2, novo_status=2)
                     database.take_profit.tp_atualizar(order_id=order_id, numero_tp=3, novo_status=2)
