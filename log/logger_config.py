@@ -71,7 +71,7 @@ def configurar_logging(log_level=logging.DEBUG, log_dir='logs', log_file='app.lo
     # Ajuste para loggers
     logging.getLogger("start_all").setLevel(logging.INFO)
     logging.getLogger("TelegramReader").setLevel(logging.INFO)
-    logging.getLogger("TradeExecutorSinal").setLevel(logging.DEBUG)
+    logging.getLogger("TradeExecutorSinal").setLevel(logging.INFO)
     logging.getLogger("TradeExecutorTP").setLevel(logging.DEBUG)
     logging.getLogger("BingXBroker").setLevel(logging.DEBUG)
     logging.getLogger("utils").setLevel(logging.INFO)

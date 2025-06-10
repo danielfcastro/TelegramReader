@@ -172,8 +172,7 @@ class BingXBroker(BrokerInterface, ABC):
                     "type": "STOP_MARKET",
                     "quantity": quantidade,
                     "stopPrice": mensagem.sl,
-                    "workingType": "MARK_PRICE",
-                    "stopGuaranteed": True
+                    "workingType": "MARK_PRICE"
                 })
             }
 
@@ -265,8 +264,7 @@ class BingXBroker(BrokerInterface, ABC):
                     "stopPrice": stop_price,
                     "positionSide": "BOTH",
                     "quantity": qtd,
-                    "orderId": order_id,
-                    "stopGuaranteed": True
+                    "orderId": order_id
                 }
                 logger.debug(f"✅️ - Pedido de envio de SL: path: {path} - body {body}")
                 response = self._send_request("POST", path, body)
@@ -331,8 +329,7 @@ class BingXBroker(BrokerInterface, ABC):
                 "stopPrice": round(stop_price, 6),
                 "quantity": round(quantity, 6),
                 "workingType": "MARK_PRICE",
-                "orderId": order_id,
-                "stopGuaranteed":True
+                "orderId": order_id
             }
             logger.debug(f"✅ - Pedido de TP: path: {path} - body {body}")
             response = self._send_request("POST", path, body)
@@ -410,7 +407,7 @@ class BingXBroker(BrokerInterface, ABC):
             logger.debug(f"✅ - Resposta do pedido de cancelamento de ordem de TP: {response}")
             return response
         except Exception as e:
-            logger.exception(f"❌ - Erro ao boter detalhe de ordem {symbol}: {e}")
+            logger.exception(f"❌ - Erro ao cancelar ordem {symbol}: {e}")
             return {}
 
     def cancela_ordem_sl(self, symbol):
@@ -431,7 +428,7 @@ class BingXBroker(BrokerInterface, ABC):
             logger.debug(f"✅ - Resposta do pedido de cancelamento de ordem de SL: {response}")
             return response
         except Exception as e:
-            logger.exception(f"❌ - Erro ao boter detalhe de ordem {symbol}: {e}")
+            logger.exception(f"❌ - Erro ao cancelar ordem {symbol}: {e}")
             return {}
 
     def verificar_tipo_margem(self, symbol):

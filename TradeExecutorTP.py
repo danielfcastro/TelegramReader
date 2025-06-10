@@ -102,13 +102,19 @@ def consumir_monitoramentos():
                 current_order_side = response["data"]["order"]["side"]
                 #Atualiza no banco o status do TP
                 database.take_profit.tp_atualizar(order_id=order_id, numero_tp=numero_tp, novo_status=2)
-                # Se TP2, atualiza o SL para ser o entry_price
-                if numero_tp == 2:
-                    database.stop_loss.stop_loss_update(symbol, entry_price)
-
                 # Decide o novo stop_price com base no TP monitorado
-                if current_stop_price == 0: current_stop_price = entry_price
-                stop_price = current_stop_price if numero_tp == 1 else entry_price
+                if current_stop_price == 0:
+                    logger.warning(f"⚠️ - Stop Price null for order id {order_id}")
+                    current_stop_price = database.sinal.ordem_info(symbol=symbol)
+
+                if numero_tp == 1:
+                    stop_price = current_stop_price
+                else:
+                    stop_price = entry_price
+
+                # Se TP2, atualiza o SL para ser o entry_price
+                if numero_tp >= 2:
+                    database.stop_loss.stop_loss_update(order_id=order_id, novo_sl=stop_price)
 
                 # Lógica para ajustar Stop Loss após TP
                 if numero_tp <4:
@@ -123,24 +129,27 @@ def consumir_monitoramentos():
                         order_id=order_id,
                         current_order_side=current_order_side
                     )
-                    #SXe não deu certo a chamada desfaz o update passando o status anterior
+                    #Se não deu certo a chamada desfaz o update passando o status anterior
                     if not sucesso:
                         database.take_profit.tp_atualizar(order_id=order_id, numero_tp=numero_tp, novo_status=1)
+                        logger.error(f"❌ - TP{numero_tp} não processado com sucesso para {symbol}.")
+                    else:
+                        logger.info(f"✅ - TP{numero_tp} processado com sucesso para {symbol}.")
                 else:
+                    database.take_profit.tp_atualizar(order_id=order_id, numero_tp=1, novo_status=2)
+                    database.take_profit.tp_atualizar(order_id=order_id, numero_tp=2, novo_status=2)
+                    database.take_profit.tp_atualizar(order_id=order_id, numero_tp=3, novo_status=2)
                     database.take_profit.tp_atualizar(order_id=order_id, numero_tp=4, novo_status=2)
                     time.sleep(1.5)
                     broker.fecha_ordem_mercado(symbol=symbol)
                     broker.cancela_ordem_tp(symbol=symbol)
                     broker.cancela_ordem_sl(symbol=symbol)
-                    fila.task_done()
-                database.take_profit.tp_atualizar(order_id=order_id, numero_tp=numero_tp, novo_status=2)
-                logger.info(f"✅ - TP{numero_tp} processado com sucesso para {symbol}.")
                 fila.task_done()
             except Empty:
                 time.sleep(2)
                 continue
             except Exception as e:
-                logger.exception(f"❌ - Erro ao processar TP para {mensagem}: {e}")
+                logger.exception(f"❌ - Erro ao processar TP para {e}")
     except KeyboardInterrupt:
         logger.info("🛑 - TradeExecutorSinal interrompido pelo usuário.")
 
