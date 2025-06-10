@@ -105,7 +105,9 @@ def consumir_monitoramentos():
                 # Decide o novo stop_price com base no TP monitorado
                 if current_stop_price == 0:
                     logger.warning(f"⚠️ - Stop Price null for order id {order_id}")
-                    current_stop_price = database.sinal.ordem_info(symbol=symbol)
+                    ordem_local = current_stop_price = database.sinal.ordem_info(symbol=symbol)
+                    if ordem_local:
+                        current_stop_price = ordem_local["sl"]
 
                 if numero_tp == 1:
                     stop_price = current_stop_price
