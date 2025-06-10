@@ -103,11 +103,13 @@ def consumir_monitoramentos():
                 #Atualiza no banco o status do TP
                 database.take_profit.tp_atualizar(order_id=order_id, numero_tp=numero_tp, novo_status=2)
                 # Se TP2, atualiza o SL para ser o entry_price
-                if numero_tp == 2:
+                if numero_tp >= 2:
                     database.stop_loss.stop_loss_update(symbol, entry_price)
 
                 # Decide o novo stop_price com base no TP monitorado
-                if current_stop_price == 0: current_stop_price = entry_price
+                if current_stop_price == 0:
+                    logger.warning(f"⚠️ - Stop Price null for order id {order_id}")
+                    current_stop_price = database.sinal.ordem_info()
                 stop_price = current_stop_price if numero_tp == 1 else entry_price
 
                 # Lógica para ajustar Stop Loss após TP

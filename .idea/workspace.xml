@@ -4,8 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.1 - stopGuaranteed = True">
+    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.1 - remoção de stopGuaranteed">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TradeExecutorTP.py" beforeDir="false" afterPath="$PROJECT_DIR$/TradeExecutorTP.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -262,14 +263,8 @@
       <workItem from="1746665220865" duration="362000" />
       <workItem from="1746665594501" duration="65981000" />
       <workItem from="1748532199558" duration="3196000" />
-    </task>
-    <task id="LOCAL-00013" summary="Ajuste de método de Break Even adicionando o cancelamento do Stop Loss anterior e a adição de um novo SL no preço de entrada">
-      <option name="closed" value="true" />
-      <created>1746660800149</created>
-      <option name="number" value="00013" />
-      <option name="presentableId" value="LOCAL-00013" />
-      <option name="project" value="LOCAL" />
-      <updated>1746660800149</updated>
+      <workItem from="1749458401180" duration="5672000" />
+      <workItem from="1749504080921" duration="883000" />
     </task>
     <task id="LOCAL-00014" summary="Ajuste de método de Break Even adicionando o cancelamento do Stop Loss anterior e a adição de um novo SL no preço de entrada">
       <option name="closed" value="true" />
@@ -655,7 +650,15 @@
       <option name="project" value="LOCAL" />
       <updated>1749416055778</updated>
     </task>
-    <option name="localTasksCounter" value="62" />
+    <task id="LOCAL-00062" summary="- Versão 1.2.1 - remoção de stopGuaranteed">
+      <option name="closed" value="true" />
+      <created>1749458531749</created>
+      <option name="number" value="00062" />
+      <option name="presentableId" value="LOCAL-00062" />
+      <option name="project" value="LOCAL" />
+      <updated>1749458531749</updated>
+    </task>
+    <option name="localTasksCounter" value="63" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -672,7 +675,7 @@
                   <entry key="branch">
                     <value>
                       <list>
-                        <option value="feature/oo" />
+                        <option value="main" />
                       </list>
                     </value>
                   </entry>
@@ -686,7 +689,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="- introdução da divisão do trade em 5 proporções&#10;- break even para TP2 e TP4&#10;- ajuste no modelo de dados para mais clareza&#10;- correção das queries&#10;novo conteúdo do README.md" />
     <MESSAGE value="- Correção do README.md e remoção de parâmetros não usados mais" />
     <MESSAGE value="- Configuração para Linux Alpine" />
     <MESSAGE value="- Fechamento" />
@@ -711,7 +713,8 @@
     <MESSAGE value="- Versão 1.2.0 - stopGuaranteed e log level" />
     <MESSAGE value="- Versão 1.2.1 - persistqueue como dependeência em requirements.txt" />
     <MESSAGE value="- Versão 1.2.1 - stopGuaranteed = True" />
-    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.1 - stopGuaranteed = True" />
+    <MESSAGE value="- Versão 1.2.1 - remoção de stopGuaranteed" />
+    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.1 - remoção de stopGuaranteed" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -723,12 +726,12 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/integration/BingXBroker.py</url>
-          <line>239</line>
+          <line>238</line>
           <option name="timeStamp" value="88" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/integration/BingXBroker.py</url>
-          <line>317</line>
+          <line>315</line>
           <option name="timeStamp" value="89" />
         </line-breakpoint>
       </breakpoints>
