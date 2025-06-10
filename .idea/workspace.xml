@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.1 - fix">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.1 - fix" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -264,15 +262,7 @@
       <workItem from="1748532199558" duration="3196000" />
       <workItem from="1749458401180" duration="5672000" />
       <workItem from="1749504080921" duration="1834000" />
-      <workItem from="1749552660908" duration="3842000" />
-    </task>
-    <task id="LOCAL-00017" summary="- Adicionei condição para marcar como true ativar_be se contador chegar a 3&#10;- mudei o sleep para 1">
-      <option name="closed" value="true" />
-      <created>1746695112621</created>
-      <option name="number" value="00017" />
-      <option name="presentableId" value="LOCAL-00017" />
-      <option name="project" value="LOCAL" />
-      <updated>1746695112621</updated>
+      <workItem from="1749552660908" duration="4235000" />
     </task>
     <task id="LOCAL-00018" summary="- introdução da coluna proporcao no Banco pra simplificar a operação e tentar resolver um bug intermitente">
       <option name="closed" value="true" />
@@ -658,7 +648,15 @@
       <option name="project" value="LOCAL" />
       <updated>1749554872418</updated>
     </task>
-    <option name="localTasksCounter" value="66" />
+    <task id="LOCAL-00066" summary="- Versão 1.2.1 - fix">
+      <option name="closed" value="true" />
+      <created>1749583356365</created>
+      <option name="number" value="00066" />
+      <option name="presentableId" value="LOCAL-00066" />
+      <option name="project" value="LOCAL" />
+      <updated>1749583356365</updated>
+    </task>
+    <option name="localTasksCounter" value="67" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -726,12 +724,12 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/integration/BingXBroker.py</url>
-          <line>238</line>
+          <line>218</line>
           <option name="timeStamp" value="88" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/integration/BingXBroker.py</url>
-          <line>315</line>
+          <line>295</line>
           <option name="timeStamp" value="89" />
         </line-breakpoint>
       </breakpoints>

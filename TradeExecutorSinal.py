@@ -124,6 +124,7 @@ def consumir_sinais():
                             logger.warning(f"⚠️ - Falha ao configurar TP{i + 1} para {msg.symbol}")
 
                     database.take_profit.tp_inserir(objetos_tp)
+                    broker.get_open_order_info(symbol=msg.symbol, order_id=order_id)
                     logger.info(f"✅ - Ordem enviada e TPs configurados com sucesso: {msg.symbol}")
                     fila.task_done()
                 else:
