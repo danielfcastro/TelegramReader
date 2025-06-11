@@ -74,8 +74,6 @@ def consumir_monitoramentos():
                     fila.task_done()
                     continue
 
-                # Recupera o SL atual da ordem para futuro uso na mudança de Stop Loss
-                current_stop_price = database.sinal.ordem_info(symbol=symbol, order_id=order_id)
                 #Atribui order_id a mensagem
                 msg.order_id = order_id
                 logger.debug(f"📦 - Mensagem: {msg}")
@@ -85,7 +83,6 @@ def consumir_monitoramentos():
 
                 # Buscar informações da ordem principal
                 response = broker.get_open_order_info(symbol=symbol, order_id=order_id)
-
                 if not response:
                     logger.warning(f"⚠️ - Nenhuma ordem encontrada na corretora para {symbol}")
                     fila.task_done()
@@ -93,20 +90,14 @@ def consumir_monitoramentos():
 
                 #Recupera o preço de entrada da ordem para futuro uso na mudança de Stop Loss
                 entry_price = response["data"]["order"]["avgPrice"]
-                # Recupera o valor de comissão da ordem para futuro uso na mudança de Stop Loss
-                commission = response["data"]["order"]["commission"]
                 # Recupera o valor de order_id da ordem para futuro uso na mudança de Stop Loss
                 order_id = response["data"]["order"]["orderId"]
                 # Recupera o lado da ordem (BUY, SELL) da ordem para futuro uso na mudança de Stop Loss
                 current_order_side = response["data"]["order"]["side"]
                 #Atualiza no banco o status do TP
                 database.take_profit.tp_atualizar(order_id=order_id, numero_tp=numero_tp, novo_status=2)
-
-                if numero_tp == 1:
-                    stop_price = current_stop_price
-                else:
-                    stop_price = entry_price
-
+                #Ajuste do stop price igual ao preço de entrada
+                stop_price = entry_price
                 # Se TP2, atualiza o SL para ser o entry_price
                 if numero_tp >= 2:
                     database.stop_loss.stop_loss_update(order_id=order_id, novo_sl=stop_price)
@@ -135,13 +126,13 @@ def consumir_monitoramentos():
                     database.take_profit.tp_atualizar(order_id=order_id, numero_tp=2, novo_status=2)
                     database.take_profit.tp_atualizar(order_id=order_id, numero_tp=3, novo_status=2)
                     database.take_profit.tp_atualizar(order_id=order_id, numero_tp=4, novo_status=2)
-                    time.sleep(1.5)
                     broker.fecha_ordem_mercado(symbol=symbol)
+                    time.sleep(1.1)
                     broker.cancela_ordem_tp(symbol=symbol)
+                    time.sleep(1.1)
                     broker.cancela_ordem_sl(symbol=symbol)
                 fila.task_done()
             except Empty:
-                time.sleep(2)
                 continue
             except Exception as e:
                 logger.exception(f"❌ - Erro ao processar TP para {e}")

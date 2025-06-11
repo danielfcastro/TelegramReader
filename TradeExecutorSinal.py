@@ -1,6 +1,5 @@
 import logging
 import os
-import time
 
 from persistqueue import SQLiteQueue
 
@@ -91,8 +90,6 @@ def consumir_sinais():
                     order_id = _retorno["order_id"]
                     average_price= _retorno["average_price"]
                     quantidade = _retorno["quantidade"]
-                    erro = _retorno["erro"]
-                    erro_msg = _retorno["msg"]
                     database.sinal.ordem_inserir(msg.to_dict(), order_id, average_price, quantidade)
                     _tipo_ordem = "SELL" if _tipo_ordem == "SHORT" else "BUY"
                     side = "SELL" if _tipo_ordem.upper() == "BUY" else "BUY"
@@ -124,8 +121,6 @@ def consumir_sinais():
                             logger.warning(f"⚠️ - Falha ao configurar TP{i + 1} para {msg.symbol}")
 
                     database.take_profit.tp_inserir(objetos_tp)
-                    broker.get_open_order_info(symbol=msg.symbol, order_id=order_id)
-                    broker.get_pending_order_info(symbol=msg.symbol, order_id=order_id)
                     logger.info(f"✅ - Ordem enviada e TPs configurados com sucesso: {msg.symbol}")
                     fila.task_done()
                 else:
@@ -133,7 +128,6 @@ def consumir_sinais():
                     fila.task_done()
 
             except Empty:
-                time.sleep(2)
                 continue
             except Exception as e:
                 logger.error(f"❌ - Erro ao processar mensagem de sinal: {e}")
