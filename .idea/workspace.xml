@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.1 - fix para terminar os programas python">
+    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.1 - fix para stop loss">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -264,15 +264,7 @@
       <workItem from="1748532199558" duration="3196000" />
       <workItem from="1749458401180" duration="5672000" />
       <workItem from="1749504080921" duration="1834000" />
-      <workItem from="1749552660908" duration="8232000" />
-    </task>
-    <task id="LOCAL-00022" summary="- Correção do README.md e remoção de parâmetros não usados mais">
-      <option name="closed" value="true" />
-      <created>1746919479558</created>
-      <option name="number" value="00022" />
-      <option name="presentableId" value="LOCAL-00022" />
-      <option name="project" value="LOCAL" />
-      <updated>1746919479558</updated>
+      <workItem from="1749552660908" duration="9507000" />
     </task>
     <task id="LOCAL-00023" summary="- Configuração para Linux Alpine">
       <option name="closed" value="true" />
@@ -658,7 +650,15 @@
       <option name="project" value="LOCAL" />
       <updated>1749624735685</updated>
     </task>
-    <option name="localTasksCounter" value="71" />
+    <task id="LOCAL-00071" summary="- Versão 1.2.1 - fix para stop loss">
+      <option name="closed" value="true" />
+      <created>1749638288094</created>
+      <option name="number" value="00071" />
+      <option name="presentableId" value="LOCAL-00071" />
+      <option name="project" value="LOCAL" />
+      <updated>1749638288094</updated>
+    </task>
+    <option name="localTasksCounter" value="72" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -689,7 +689,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="- Fix de fechamento, cancela_order" />
     <MESSAGE value="- Fix de atualização de ordens" />
     <MESSAGE value="- Versão 1.2.0 - para teste" />
     <MESSAGE value="- Versão 1.2.0 - Fix consumo de mensagem TP por causa de order_id" />
@@ -714,7 +713,8 @@
     <MESSAGE value="- Versão 1.2.1 - fix" />
     <MESSAGE value="- Versão 1.2.1 - fix para listar ordens pendentes como stop loss" />
     <MESSAGE value="- Versão 1.2.1 - fix para terminar os programas python" />
-    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.1 - fix para terminar os programas python" />
+    <MESSAGE value="- Versão 1.2.1 - fix para stop loss" />
+    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.1 - fix para stop loss" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
