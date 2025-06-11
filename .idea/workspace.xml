@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.1 - fix para terminar os programas python" />
+    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.1 - fix para terminar os programas python">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -262,15 +264,7 @@
       <workItem from="1748532199558" duration="3196000" />
       <workItem from="1749458401180" duration="5672000" />
       <workItem from="1749504080921" duration="1834000" />
-      <workItem from="1749552660908" duration="5941000" />
-    </task>
-    <task id="LOCAL-00021" summary="- Correção do README.md e remoção de parâmetros não usados mais">
-      <option name="closed" value="true" />
-      <created>1746919394117</created>
-      <option name="number" value="00021" />
-      <option name="presentableId" value="LOCAL-00021" />
-      <option name="project" value="LOCAL" />
-      <updated>1746919394117</updated>
+      <workItem from="1749552660908" duration="8232000" />
     </task>
     <task id="LOCAL-00022" summary="- Correção do README.md e remoção de parâmetros não usados mais">
       <option name="closed" value="true" />
@@ -656,7 +650,15 @@
       <option name="project" value="LOCAL" />
       <updated>1749590190088</updated>
     </task>
-    <option name="localTasksCounter" value="70" />
+    <task id="LOCAL-00070" summary="- Versão 1.2.1 - fix para terminar os programas python">
+      <option name="closed" value="true" />
+      <created>1749624735685</created>
+      <option name="number" value="00070" />
+      <option name="presentableId" value="LOCAL-00070" />
+      <option name="project" value="LOCAL" />
+      <updated>1749624735685</updated>
+    </task>
+    <option name="localTasksCounter" value="71" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

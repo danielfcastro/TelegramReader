@@ -62,30 +62,21 @@ def ordem_inserir(dados_dict, order_id, entry_price, quantidade):
     return sinal_id
 
 
-def ordem_info(symbol, exigir_break_even_inativo=False):
+def ordem_info(symbol, order_id):
     """
-    Retorna a ordem ativa mais recente para o par fornecido.
-
-    Pode aplicar filtro adicional para retornar apenas ordens sem break-even ativo.
+    Retorna a ordem ativa com order_id exato para o par fornecido.
 
     :param symbol: Par de negociação (ex: 'BTC-USDT').
-    :param exigir_break_even_inativo: Se True, restringe a busca a ordens com break_even_status_id = 0.
+    :param order_id: ID da ordem.
     :return: Dicionário com os dados da ordem encontrada, ou None se não houver.
     """
-    condicoes = [
-        "symbol = %(symbol)s",
-        "ordem_status_id = 1",
-        "order_id != 0"
-    ]
-
-    if exigir_break_even_inativo:
-        condicoes.append("break_even_status_id = 0")
-
-    query = f"""
+    query = """
         SELECT * FROM v2.ordem
-        WHERE {' AND '.join(condicoes)}
+        WHERE symbol = %(symbol)s
+          AND ordem_status_id = 1
+          AND order_id = %(order_id)s
         ORDER BY id DESC
         LIMIT 1
     """
-    resultado = executar_select(query, {"symbol": symbol})
+    resultado = executar_select(query, {"symbol": symbol, "order_id": order_id})
     return resultado[0] if resultado else None

@@ -67,7 +67,6 @@ def consumir_monitoramentos():
                 symbol = msg.symbol
                 #Recupero o Take Profit relacionado a mensagem
                 numero_tp = int(msg.tp.replace("TP", ""))
-
                 # Enriquecer a mensagem com order_id mais recente se existir.  Se não achar deleta a mensagem e retorna pra próxima iteração
                 order_id = database.take_profit.tp_ordem_id_mais_nova(symbol)
                 if order_id == 0:
@@ -75,6 +74,8 @@ def consumir_monitoramentos():
                     fila.task_done()
                     continue
 
+                # Recupera o SL atual da ordem para futuro uso na mudança de Stop Loss
+                current_stop_price = database.sinal.ordem_info(symbol=symbol, order_id=order_id)
                 #Atribui order_id a mensagem
                 msg.order_id = order_id
                 logger.debug(f"📦 - Mensagem: {msg}")
@@ -96,18 +97,10 @@ def consumir_monitoramentos():
                 commission = response["data"]["order"]["commission"]
                 # Recupera o valor de order_id da ordem para futuro uso na mudança de Stop Loss
                 order_id = response["data"]["order"]["orderId"]
-                # Recupera o SL atual da ordem para futuro uso na mudança de Stop Loss
-                current_stop_price = response["data"]["order"]["stopLoss"]["stopPrice"]
                 # Recupera o lado da ordem (BUY, SELL) da ordem para futuro uso na mudança de Stop Loss
                 current_order_side = response["data"]["order"]["side"]
                 #Atualiza no banco o status do TP
                 database.take_profit.tp_atualizar(order_id=order_id, numero_tp=numero_tp, novo_status=2)
-                # Decide o novo stop_price com base no TP monitorado
-                if current_stop_price == 0:
-                    logger.warning(f"⚠️ - Stop Price null for order id {order_id}")
-                    ordem_local = current_stop_price = database.sinal.ordem_info(symbol=symbol)
-                    if ordem_local:
-                        current_stop_price = ordem_local["sl"]
 
                 if numero_tp == 1:
                     stop_price = current_stop_price
