@@ -129,7 +129,6 @@ def consumir_monitoramentos():
                         database.take_profit.tp_atualizar(order_id=order_id, numero_tp=numero_tp, novo_status=1)
                         logger.error(f"❌ - TP{numero_tp} não processado com sucesso para {symbol}.")
                     else:
-                        broker.get_pending_order_info(symbol=symbol, order_id=order_id)
                         logger.info(f"✅ - TP{numero_tp} processado com sucesso para {symbol}.")
                 elif numero_tp == 4:
                     database.take_profit.tp_atualizar(order_id=order_id, numero_tp=1, novo_status=2)

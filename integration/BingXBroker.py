@@ -58,7 +58,19 @@ class BingXBroker(BrokerInterface, ABC):
         headers = {
             'X-BX-APIKEY': self.API_KEY
         }
-        response = requests.request(method, url, headers=headers)
+        try:
+            response = requests.request(method, url, headers=headers)
+
+        except requests.exceptions.ConnectionError as e:
+            if "NameResolutionError" in str(e):
+                logger.warning("🌐 - Falha de DNS detectada. Aguardando para tentar novamente...")
+                time.sleep(10)
+                return self._send_request(method, path, params)  # retry simples
+            raise
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"❌ - Erro ao enviar requisição para {path}: {e}")
+            raise
         return response.json()
 
     @staticmethod
@@ -344,7 +356,7 @@ class BingXBroker(BrokerInterface, ABC):
             logger.debug(f"✅ - Resposta do pedido de detalhe de ordem: {response}")
             return response
         except Exception as e:
-            logger.exception(f"❌ - Erro ao boter detalhe de ordem {symbol}: {e}")
+            logger.exception(f"❌ - Erro ao obter detalhe de ordem {symbol}: {e}")
             return {}
 
     def fecha_ordem_mercado(self, symbol):

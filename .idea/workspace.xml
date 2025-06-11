@@ -4,8 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.1 - fix para stop loss">
+    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.1 - fix para stop do processo">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TradeExecutorTP.py" beforeDir="false" afterPath="$PROJECT_DIR$/TradeExecutorTP.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/integration/BingXBroker.py" beforeDir="false" afterPath="$PROJECT_DIR$/integration/BingXBroker.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -264,39 +266,7 @@
       <workItem from="1748532199558" duration="3196000" />
       <workItem from="1749458401180" duration="5672000" />
       <workItem from="1749504080921" duration="1834000" />
-      <workItem from="1749552660908" duration="9507000" />
-    </task>
-    <task id="LOCAL-00023" summary="- Configuração para Linux Alpine">
-      <option name="closed" value="true" />
-      <created>1746923051433</created>
-      <option name="number" value="00023" />
-      <option name="presentableId" value="LOCAL-00023" />
-      <option name="project" value="LOCAL" />
-      <updated>1746923051433</updated>
-    </task>
-    <task id="LOCAL-00024" summary="- Configuração para Linux Alpine">
-      <option name="closed" value="true" />
-      <created>1746923167305</created>
-      <option name="number" value="00024" />
-      <option name="presentableId" value="LOCAL-00024" />
-      <option name="project" value="LOCAL" />
-      <updated>1746923167305</updated>
-    </task>
-    <task id="LOCAL-00025" summary="- Fechamento">
-      <option name="closed" value="true" />
-      <created>1748209905378</created>
-      <option name="number" value="00025" />
-      <option name="presentableId" value="LOCAL-00025" />
-      <option name="project" value="LOCAL" />
-      <updated>1748209905378</updated>
-    </task>
-    <task id="LOCAL-00026" summary="- Fechamento">
-      <option name="closed" value="true" />
-      <created>1748247637285</created>
-      <option name="number" value="00026" />
-      <option name="presentableId" value="LOCAL-00026" />
-      <option name="project" value="LOCAL" />
-      <updated>1748247637285</updated>
+      <workItem from="1749552660908" duration="15206000" />
     </task>
     <task id="LOCAL-00027" summary="- Tentativa de fix para o SL">
       <option name="closed" value="true" />
@@ -658,7 +628,39 @@
       <option name="project" value="LOCAL" />
       <updated>1749638288094</updated>
     </task>
-    <option name="localTasksCounter" value="72" />
+    <task id="LOCAL-00072" summary="- Versão 1.2.1 - fix para stop do processo">
+      <option name="closed" value="true" />
+      <created>1749638736110</created>
+      <option name="number" value="00072" />
+      <option name="presentableId" value="LOCAL-00072" />
+      <option name="project" value="LOCAL" />
+      <updated>1749638736110</updated>
+    </task>
+    <task id="LOCAL-00073" summary="- Versão 1.2.1 - fix para stop do processo">
+      <option name="closed" value="true" />
+      <created>1749638999732</created>
+      <option name="number" value="00073" />
+      <option name="presentableId" value="LOCAL-00073" />
+      <option name="project" value="LOCAL" />
+      <updated>1749638999732</updated>
+    </task>
+    <task id="LOCAL-00074" summary="- Versão 1.2.1 - fix para stop do processo">
+      <option name="closed" value="true" />
+      <created>1749639710279</created>
+      <option name="number" value="00074" />
+      <option name="presentableId" value="LOCAL-00074" />
+      <option name="project" value="LOCAL" />
+      <updated>1749639710279</updated>
+    </task>
+    <task id="LOCAL-00075" summary="- Versão 1.2.1 - fix para stop do processo">
+      <option name="closed" value="true" />
+      <created>1749640271471</created>
+      <option name="number" value="00075" />
+      <option name="presentableId" value="LOCAL-00075" />
+      <option name="project" value="LOCAL" />
+      <updated>1749640271471</updated>
+    </task>
+    <option name="localTasksCounter" value="76" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -689,7 +691,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="- Fix de atualização de ordens" />
     <MESSAGE value="- Versão 1.2.0 - para teste" />
     <MESSAGE value="- Versão 1.2.0 - Fix consumo de mensagem TP por causa de order_id" />
     <MESSAGE value="- Versão 1.2.0 - Documentação e log" />
@@ -714,7 +715,8 @@
     <MESSAGE value="- Versão 1.2.1 - fix para listar ordens pendentes como stop loss" />
     <MESSAGE value="- Versão 1.2.1 - fix para terminar os programas python" />
     <MESSAGE value="- Versão 1.2.1 - fix para stop loss" />
-    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.1 - fix para stop loss" />
+    <MESSAGE value="- Versão 1.2.1 - fix para stop do processo" />
+    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.1 - fix para stop do processo" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
