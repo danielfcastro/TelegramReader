@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.1 - fix para listar ordens pendentes como stop loss" />
+    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.1 - fix para terminar os programas python" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -262,15 +262,7 @@
       <workItem from="1748532199558" duration="3196000" />
       <workItem from="1749458401180" duration="5672000" />
       <workItem from="1749504080921" duration="1834000" />
-      <workItem from="1749552660908" duration="5590000" />
-    </task>
-    <task id="LOCAL-00020" summary="- introdução da divisão do trade em 5 proporções&#10;- break even para TP2 e TP4&#10;- ajuste no modelo de dados para mais clareza&#10;- correção das queries&#10;novo conteúdo do README.md">
-      <option name="closed" value="true" />
-      <created>1746918865816</created>
-      <option name="number" value="00020" />
-      <option name="presentableId" value="LOCAL-00020" />
-      <option name="project" value="LOCAL" />
-      <updated>1746918865816</updated>
+      <workItem from="1749552660908" duration="5941000" />
     </task>
     <task id="LOCAL-00021" summary="- Correção do README.md e remoção de parâmetros não usados mais">
       <option name="closed" value="true" />
@@ -656,7 +648,15 @@
       <option name="project" value="LOCAL" />
       <updated>1749589841485</updated>
     </task>
-    <option name="localTasksCounter" value="69" />
+    <task id="LOCAL-00069" summary="- Versão 1.2.1 - fix para terminar os programas python">
+      <option name="closed" value="true" />
+      <created>1749590190088</created>
+      <option name="number" value="00069" />
+      <option name="presentableId" value="LOCAL-00069" />
+      <option name="project" value="LOCAL" />
+      <updated>1749590190088</updated>
+    </task>
+    <option name="localTasksCounter" value="70" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -687,7 +687,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="- Mudança na configuração do serviço" />
     <MESSAGE value="- Fix de fechamento, cancela_order" />
     <MESSAGE value="- Fix de atualização de ordens" />
     <MESSAGE value="- Versão 1.2.0 - para teste" />
@@ -712,7 +711,8 @@
     <MESSAGE value="- Versão 1.2.1 - log e melhoria de Stop Loss" />
     <MESSAGE value="- Versão 1.2.1 - fix" />
     <MESSAGE value="- Versão 1.2.1 - fix para listar ordens pendentes como stop loss" />
-    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.1 - fix para listar ordens pendentes como stop loss" />
+    <MESSAGE value="- Versão 1.2.1 - fix para terminar os programas python" />
+    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.1 - fix para terminar os programas python" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

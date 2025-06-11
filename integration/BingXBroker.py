@@ -460,7 +460,7 @@ class BingXBroker(BrokerInterface, ABC):
         :return: Dados da ordem, se existirem.
         """
         try:
-            path = " /openApi/swap/v2/trade/openOrder"
+            path = "/openApi/swap/v2/trade/openOrder"
             body = {
                 "symbol": symbol,
                 "orderId": order_id
@@ -470,5 +470,5 @@ class BingXBroker(BrokerInterface, ABC):
             logger.debug(f"✅ - Resposta do pedido de detalhe de ordem pendente: {response}")
             return response
         except Exception as e:
-            logger.exception(f"❌ - Erro ao boter detalhe de ordem pendente {symbol}: {e}")
+            logger.exception(f"❌ - Erro ao obter detalhe de ordem pendente {symbol}: {e}")
             return {}
