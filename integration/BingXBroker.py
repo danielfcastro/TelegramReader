@@ -16,7 +16,6 @@ from integration.BrokerInterface import BrokerInterface
 from message.mensagem_sinal import MensagemSinal
 
 load_dotenv()
-
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 
 class BingXBroker(BrokerInterface, ABC):
@@ -87,7 +86,6 @@ class BingXBroker(BrokerInterface, ABC):
 
         sorted_params = sorted(all_params.items())
         query = "&".join(f"{k}={v}" for k, v in sorted_params)
-        #logger.debug(f"query: {query}")
         return query
 
     def obter_preco_mercado(self, symbol):
@@ -257,9 +255,9 @@ class BingXBroker(BrokerInterface, ABC):
                     "quantity": qtd,
                     "orderId": order_id
                 }
-                logger.debug(f"✅️ - Pedido de envio de SL: path: {path} - body {body}")
+                logger.info(f"✅️ - Pedido de envio de SL: path: {path} - body {body}")
                 response = self._send_request("POST", path, body)
-                logger.debug(f"✅ - Resposta do pedido de SL: {response}")
+                logger.info(f"✅ - Resposta do pedido de SL: {response}")
                 return response
 
             self.cancela_ordem_sl(symbol)
@@ -393,9 +391,9 @@ class BingXBroker(BrokerInterface, ABC):
                 "symbol": symbol,
                 "type": "TAKE_PROFIT_MARKET"
             }
-            logger.debug(f"✅ - Pedido de cancelamento de ordem de TP: path: {path} - body {body}")
+            logger.info(f"✅ - Pedido de cancelamento de ordem de TP: path: {path} - body {body}")
             response = self._send_request("DELETE", path, body)
-            logger.debug(f"✅ - Resposta do pedido de cancelamento de ordem de TP: {response}")
+            logger.info(f"✅ - Resposta do pedido de cancelamento de ordem de TP: {response}")
             return response
         except Exception as e:
             logger.exception(f"❌ - Erro ao cancelar ordem {symbol}: {e}")
@@ -414,9 +412,9 @@ class BingXBroker(BrokerInterface, ABC):
                 "symbol": symbol,
                 "type": "STOP_MARKET"
             }
-            logger.debug(f"✅ - Pedido de cancelamento de ordem de SL: path: {path} - body {body}")
+            logger.info(f"✅ - Pedido de cancelamento de ordem de SL: path: {path} - body {body}")
             response = self._send_request("DELETE", path, body)
-            logger.debug(f"✅ - Resposta do pedido de cancelamento de ordem de SL: {response}")
+            logger.info(f"✅ - Resposta do pedido de cancelamento de ordem de SL: {response}")
             return response
         except Exception as e:
             logger.exception(f"❌ - Erro ao cancelar ordem {symbol}: {e}")

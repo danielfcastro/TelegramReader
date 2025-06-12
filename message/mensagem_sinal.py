@@ -33,3 +33,10 @@ class MensagemSinal:
             "margem": self.margem,
             "alavancagem": self.alavancagem,
         }
+
+    def __repr__(self):
+        return (
+            f"<MensagemSinal symbol={self.symbol} tipo_ordem={self.tipo_ordem} "
+            f"sl={self.sl} tp1={self.tp1} tp2={self.tp2} tp3={self.tp3} tp4={self.tp4} "
+            f"margem={self.margem} alavancagem={self.alavancagem}>"
+        )

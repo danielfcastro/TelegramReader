@@ -10,3 +10,6 @@ class MensagemTP:
             "tp": self.tp,
             "order_id": self.order_id
         }
+
+    def __repr__(self):
+        return f"MensagemTP(symbol={self.symbol}, TP={self.tp}, order_id={self.order_id})"
