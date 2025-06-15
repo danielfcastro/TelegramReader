@@ -94,6 +94,9 @@ def consumir_monitoramentos():
                 order_id = response["data"]["order"]["orderId"]
                 # Recupera o lado da ordem (BUY, SELL) da ordem para futuro uso na mudança de Stop Loss
                 current_order_side = response["data"]["order"]["side"]
+                originalQuantity = response["data"]["order"]["origQty"]
+                executedQuantity = response["data"]["order"]["executedQty"]
+                remainingQuantity = originalQuantity - executedQuantity
                 #Atualiza no banco o status do TP
                 database.take_profit.tp_atualizar(order_id=order_id, numero_tp=numero_tp, novo_status=2)
                 #Ajuste do stop price igual ao preço de entrada
@@ -106,6 +109,7 @@ def consumir_monitoramentos():
                 if numero_tp == 2 or numero_tp == 3:
                     #Soma as quantidades remanescentes dos TPS ainda não concluídos
                     quantidade = database.stop_loss.stop_loss_soma_quantidade(order_id)
+                    logger.info(f"<UNK> - Quantidade remanescente: {remainingQuantity} - quantidade do BD {quantidade}")
                     #Chama broker pra ajustar stop loss
                     sucesso = broker.ajustar_stop_loss(
                         symbol=symbol,
