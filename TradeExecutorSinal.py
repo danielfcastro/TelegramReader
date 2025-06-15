@@ -1,5 +1,6 @@
 import logging
 import os
+import time
 
 from persistqueue import SQLiteQueue
 
@@ -99,6 +100,7 @@ def consumir_sinais():
                     for i, proporcao in enumerate(proporcoes):
                         qtd_tp = ajustar_quantidade(quantidade * proporcao, step=0.0001)
                         preco_tp = tps[i]
+                        time.sleep(1.1)
                         sucesso = broker.ajustar_take_profit(
                             symbol=msg.symbol,
                             position_side=side,

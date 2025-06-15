@@ -4,12 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.1 - ajustes em tempos de espera">
+    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.1 - debug de ordem residual">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config.properties" beforeDir="false" afterPath="$PROJECT_DIR$/config.properties" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/integration/BingXBroker.py" beforeDir="false" afterPath="$PROJECT_DIR$/integration/BingXBroker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/log/logger_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/log/logger_config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/message/mensagem_sinal.py" beforeDir="false" afterPath="$PROJECT_DIR$/message/mensagem_sinal.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/message/mensagem_tp.py" beforeDir="false" afterPath="$PROJECT_DIR$/message/mensagem_tp.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -271,15 +269,7 @@
       <workItem from="1749552660908" duration="18037000" />
       <workItem from="1749678520217" duration="99000" />
       <workItem from="1749678727105" duration="972000" />
-      <workItem from="1749762406200" duration="715000" />
-    </task>
-    <task id="LOCAL-00029" summary="- Mudança na configuração do serviço">
-      <option name="closed" value="true" />
-      <created>1748346943002</created>
-      <option name="number" value="00029" />
-      <option name="presentableId" value="LOCAL-00029" />
-      <option name="project" value="LOCAL" />
-      <updated>1748346943002</updated>
+      <workItem from="1749762406200" duration="5905000" />
     </task>
     <task id="LOCAL-00030" summary="- Fix de fechamento, cancela_order">
       <option name="closed" value="true" />
@@ -665,7 +655,15 @@
       <option name="project" value="LOCAL" />
       <updated>1749677610043</updated>
     </task>
-    <option name="localTasksCounter" value="78" />
+    <task id="LOCAL-00078" summary="- Versão 1.2.1 - debug de ordem residual">
+      <option name="closed" value="true" />
+      <created>1749763171119</created>
+      <option name="number" value="00078" />
+      <option name="presentableId" value="LOCAL-00078" />
+      <option name="project" value="LOCAL" />
+      <updated>1749763171119</updated>
+    </task>
+    <option name="localTasksCounter" value="79" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -696,7 +694,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="- Versão 1.2.0 - Documentação e log" />
     <MESSAGE value="- Versão 1.2.0 - Documentação" />
     <MESSAGE value="- Versão 1.2.0 - Fix de mensagem com stoploss ao invés de sl" />
     <MESSAGE value="- Versão 1.2.0 - Fix de mensagem com elemento margem" />
@@ -721,7 +718,8 @@
     <MESSAGE value="- Versão 1.2.1 - fix para stop do processo" />
     <MESSAGE value="- Versão 1.2.1 - fix para erro de DNS" />
     <MESSAGE value="- Versão 1.2.1 - ajustes em tempos de espera" />
-    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.1 - ajustes em tempos de espera" />
+    <MESSAGE value="- Versão 1.2.1 - debug de ordem residual" />
+    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.1 - debug de ordem residual" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -735,11 +733,6 @@
           <url>file://$PROJECT_DIR$/integration/BingXBroker.py</url>
           <line>216</line>
           <option name="timeStamp" value="88" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/integration/BingXBroker.py</url>
-          <line>293</line>
-          <option name="timeStamp" value="89" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
