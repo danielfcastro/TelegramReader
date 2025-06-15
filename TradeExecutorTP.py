@@ -97,7 +97,7 @@ def consumir_monitoramentos():
                 originalQuantity = float(response["data"]["order"]["origQty"])
                 executedQuantity = float(response["data"]["order"]["executedQty"])
                 remainingQuantity = originalQuantity - executedQuantity
-                logger.info(f"⚠️ - Quantidade remanescente: {remainingQuantity} - quantidade do BD {quantidade}")
+                logger.info(f"⚠️ - Quantidade remanescente: {remainingQuantity}")
                 #Atualiza no banco o status do TP
                 database.take_profit.tp_atualizar(order_id=order_id, numero_tp=numero_tp, novo_status=2)
                 #Ajuste do stop price igual ao preço de entrada
