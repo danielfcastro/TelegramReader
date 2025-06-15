@@ -94,8 +94,8 @@ def consumir_monitoramentos():
                 order_id = response["data"]["order"]["orderId"]
                 # Recupera o lado da ordem (BUY, SELL) da ordem para futuro uso na mudança de Stop Loss
                 current_order_side = response["data"]["order"]["side"]
-                originalQuantity = response["data"]["order"]["origQty"]
-                executedQuantity = response["data"]["order"]["executedQty"]
+                originalQuantity = float(response["data"]["order"]["origQty"])
+                executedQuantity = float(response["data"]["order"]["executedQty"])
                 remainingQuantity = originalQuantity - executedQuantity
                 #Atualiza no banco o status do TP
                 database.take_profit.tp_atualizar(order_id=order_id, numero_tp=numero_tp, novo_status=2)
