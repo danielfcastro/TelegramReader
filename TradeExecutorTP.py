@@ -94,12 +94,13 @@ def consumir_monitoramentos():
                 order_id = response["data"]["order"]["orderId"]
                 # Recupera o lado da ordem (BUY, SELL) da ordem para futuro uso na mudança de Stop Loss
                 current_order_side = response["data"]["order"]["side"]
-                original_quantity = float(response["data"]["order"]["origQty"])
-                executed_quantity = float(response["data"]["order"]["executedQty"])
-                remaining_quantity = original_quantity - executed_quantity
-                logger.info(f"⚠️ - Quantidade remanescente: {remaining_quantity}")
-                _resp = broker.lista_todas_as_ordens(symbol=symbol, order_id=order_id)
-                logger.info(f"⚠️ - response: {_resp}")
+                ordens_ativas = broker.lista_todas_as_ordens(symbol=symbol, order_id=order_id)
+                logger.debug(f"⚠️ - response: {ordens_ativas}")
+                quantidade = 0.0
+                if ordens_ativas and ordens_ativas.get("data") and ordens_ativas["code"] == 0:
+                    for ordem in ordens_ativas["data"]["orders"]:
+                        if ordem["type"] == "TAKE_PROFIT_MARKET" and ordem["status"] == "NEW":
+                            quantidade += float(ordem["origQty"])
                 #Atualiza no banco o status do TP
                 database.take_profit.tp_atualizar(order_id=order_id, numero_tp=numero_tp, novo_status=2)
                 #Ajuste do stop price igual ao preço de entrada
@@ -111,7 +112,7 @@ def consumir_monitoramentos():
                 # Lógica para ajustar Stop Loss após TP
                 if numero_tp == 2 or numero_tp == 3:
                     #Soma as quantidades remanescentes dos TPS ainda não concluídos
-                    quantidade = database.stop_loss.stop_loss_soma_quantidade(order_id)
+                    #quantidade = database.stop_loss.stop_loss_soma_quantidade(order_id)
                     #Chama broker pra ajustar stop loss
                     sucesso = broker.ajustar_stop_loss(
                         symbol=symbol,

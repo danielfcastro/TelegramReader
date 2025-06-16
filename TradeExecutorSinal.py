@@ -90,7 +90,8 @@ def consumir_sinais():
                     #Insere a ordem no banco com o id da ordem e o preço de envio
                     order_id = _retorno["order_id"]
                     average_price= _retorno["average_price"]
-                    quantidade = _retorno["quantidade"]
+                    quantidade = float(_retorno["quantidade"])
+                    quantidade_acumulada = quantidade
                     database.sinal.ordem_inserir(msg.to_dict(), order_id, average_price, quantidade)
                     _tipo_ordem = "SELL" if _tipo_ordem == "SHORT" else "BUY"
                     side = "SELL" if _tipo_ordem.upper() == "BUY" else "BUY"
@@ -98,7 +99,13 @@ def consumir_sinais():
 
                     objetos_tp = []
                     for i, proporcao in enumerate(proporcoes):
-                        qtd_tp = ajustar_quantidade(quantidade * proporcao, step=0.0001)
+                        #qtd_tp = ajustar_quantidade(quantidade * proporcao, step=0.0001)
+                        if i < len(proporcoes) - 1:
+                            qtd_tp = ajustar_quantidade(quantidade_total * proporcao, step=0.0001)
+                            quantidade_acumulada -= qtd_tp
+                        else:
+                            # TP4 recebe o resíduo exato, sem ajuste
+                            qtd_tp = quantidade_acumulada
                         preco_tp = tps[i]
                         time.sleep(1.1)
                         sucesso = broker.ajustar_take_profit(

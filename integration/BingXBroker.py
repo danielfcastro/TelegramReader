@@ -485,8 +485,7 @@ class BingXBroker(BrokerInterface, ABC):
 
     def lista_todas_as_ordens(self, symbol, order_id):
         """
-        Obtém detalhes da ordem pendente.
-
+        Obtém todas as ordens pendentes.
         :param symbol: Par de negociação.
         :param order_id: ID da ordem.
         :return: Dados da ordem, se existirem.
