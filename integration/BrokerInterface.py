@@ -51,3 +51,7 @@ class BrokerInterface(ABC):
     @abstractmethod
     def cancela_ordem_sl(self, symbol):
         pass
+
+    @abstractmethod
+    def lista_todas_as_ordens(self, symbol, order_id):
+        pass
