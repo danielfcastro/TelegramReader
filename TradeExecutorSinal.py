@@ -133,7 +133,7 @@ def consumir_sinais():
                     logger.info(f"✅ - Ordem enviada e TPs configurados com sucesso: {msg.symbol}")
                     fila.task_done()
                 else:
-                    logger.info(f"❌ - Erro ao enviar ordem para {msg.symbol}: {_retorno['msg']}")
+                    logger.error(f"❌ - Erro ao enviar ordem para {msg.symbol}: {_retorno['msg']}")
                     fila.task_done()
 
             except Empty:

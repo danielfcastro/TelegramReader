@@ -391,9 +391,9 @@ class BingXBroker(BrokerInterface, ABC):
                 "symbol": symbol,
                 "type": "TAKE_PROFIT_MARKET"
             }
-            logger.info(f"✅ - Pedido de cancelamento de ordem de TP: path: {path} - body {body}")
+            logger.debug(f"✅ - Pedido de cancelamento de ordem de TP: path: {path} - body {body}")
             response = self._send_request("DELETE", path, body)
-            logger.info(f"✅ - Resposta do pedido de cancelamento de ordem de TP: {response}")
+            logger.debug(f"✅ - Resposta do pedido de cancelamento de ordem de TP: {response}")
             return response
         except Exception as e:
             logger.exception(f"❌ - Erro ao cancelar ordem {symbol}: {e}")
@@ -412,9 +412,9 @@ class BingXBroker(BrokerInterface, ABC):
                 "symbol": symbol,
                 "type": "STOP_MARKET"
             }
-            logger.info(f"✅ - Pedido de cancelamento de ordem de SL: path: {path} - body {body}")
+            logger.debug(f"✅ - Pedido de cancelamento de ordem de SL: path: {path} - body {body}")
             response = self._send_request("DELETE", path, body)
-            logger.info(f"✅ - Resposta do pedido de cancelamento de ordem de SL: {response}")
+            logger.debug(f"✅ - Resposta do pedido de cancelamento de ordem de SL: {response}")
             return response
         except Exception as e:
             logger.exception(f"❌ - Erro ao cancelar ordem {symbol}: {e}")

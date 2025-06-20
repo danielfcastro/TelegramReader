@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.1 - debug para quantidade remanescente">
+    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.3 - log info para todos">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -269,14 +269,7 @@
       <workItem from="1749678727105" duration="972000" />
       <workItem from="1749762406200" duration="19981000" />
       <workItem from="1750265390933" duration="1357000" />
-    </task>
-    <task id="LOCAL-00037" summary="- Versão 1.2.0 - para teste">
-      <option name="closed" value="true" />
-      <created>1748615781961</created>
-      <option name="number" value="00037" />
-      <option name="presentableId" value="LOCAL-00037" />
-      <option name="project" value="LOCAL" />
-      <updated>1748615781961</updated>
+      <workItem from="1750270347502" duration="865000" />
     </task>
     <task id="LOCAL-00038" summary="- Versão 1.2.0 - para teste">
       <option name="closed" value="true" />
@@ -662,7 +655,15 @@
       <option name="project" value="LOCAL" />
       <updated>1750089663318</updated>
     </task>
-    <option name="localTasksCounter" value="86" />
+    <task id="LOCAL-00086" summary="- Versão 1.2.3 - log info para todos">
+      <option name="closed" value="true" />
+      <created>1750270581156</created>
+      <option name="number" value="00086" />
+      <option name="presentableId" value="LOCAL-00086" />
+      <option name="project" value="LOCAL" />
+      <updated>1750270581156</updated>
+    </task>
+    <option name="localTasksCounter" value="87" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -693,7 +694,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="- Versão 1.2.0 - Fix de mensagem com elemento margem" />
     <MESSAGE value="- Versão 1.2.0 - Fix para validação de mensagem" />
     <MESSAGE value="- Versão 1.2.0 - Padronização de log e simplificação de script sql para criar a base de dados" />
     <MESSAGE value="- Versão 1.2.0 - PAdronização de Logs" />
@@ -718,7 +718,8 @@
     <MESSAGE value="- Versão 1.2.1 - debug de ordem residual" />
     <MESSAGE value="- Versão 1.2.1 - fix para evitar TPs serem perdidos na hora do envio por taxa de request" />
     <MESSAGE value="- Versão 1.2.1 - debug para quantidade remanescente" />
-    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.1 - debug para quantidade remanescente" />
+    <MESSAGE value="- Versão 1.2.3 - log info para todos" />
+    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.3 - log info para todos" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
