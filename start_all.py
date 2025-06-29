@@ -1,18 +1,15 @@
 import argparse
-import atexit
 import logging
 import os
 import sys
 import subprocess
 import signal
 
-from database import db
 from log.logger_config import configurar_logging
 from utils import carregar_config
 
 LOG_DIR = "logs"
 os.makedirs(LOG_DIR, exist_ok=True)
-atexit.register(db.fechar_pool)
 
 configurar_logging()
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
@@ -157,7 +154,6 @@ def finalizar_programa(*_):
         if p.poll() is None:  # ainda está rodando
             logger.warning(f"🔪 - Matando processo PID {p.pid}")
             os.killpg(os.getpgid(p.pid), signal.SIGTERM)
-    db.fechar_pool()
     sys.exit(0)
 
 signal.signal(signal.SIGINT, finalizar_programa)
