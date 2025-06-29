@@ -76,9 +76,10 @@ def consumir_monitoramentos():
 
                 # Atualiza status do TP no banco
                 #database.take_profit.tp_atualizar(order_id=msg.order_id, numero_tp=msg.tp, novo_status=2)
-                ordens_ativas = broker.lista_todas_as_ordens(symbol=symbol, order_id=order_id)
+                ordens_ativas = broker.lista_todas_as_ordens(symbol=symbol)
                 logger.debug(f"⚠️ - response: {ordens_ativas}")
                 quantidade = 0.0
+                order_id = None
                 if ordens_ativas and ordens_ativas.get("data") and ordens_ativas["code"] == 0:
                     for ordem in ordens_ativas["data"]["orders"]:
                         if ordem["type"] == "TAKE_PROFIT_MARKET" and ordem["status"] == "NEW":
@@ -86,6 +87,7 @@ def consumir_monitoramentos():
                         else: order_id = ordem["order_id"]
 
                 # Buscar informações da ordem principal
+                #ordens_ativas = broker.lista_todas_as_ordens(symbol=symbol, order_id=order_id)
                 response = broker.get_open_order_info(symbol=symbol, order_id=order_id)
                 if not response:
                     logger.warning(f"⚠️ - Nenhuma ordem encontrada na corretora para {symbol}")

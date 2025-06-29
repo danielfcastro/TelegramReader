@@ -483,23 +483,24 @@ class BingXBroker(BrokerInterface, ABC):
             logger.exception(f"❌ - Erro ao obter detalhe de ordem pendente {symbol}: {e}")
             return {}
 
-    def lista_todas_as_ordens(self, symbol, order_id):
+    def lista_todas_as_ordens(self, symbol, order_id=None):
         """
         Obtém todas as ordens pendentes.
         :param symbol: Par de negociação.
-        :param order_id: ID da ordem.
-        :return: Dados da ordem, se existirem.
+        :param order_id: ID da ordem. Opcional.
+        :return: Dados da(s) ordem(ns), se existirem.
         """
         try:
             path = "/openApi/swap/v1/trade/fullOrder"
-            body = {
-                "symbol": symbol,
-                "orderId": order_id
-            }
-            logger.debug(f"✅ - Pedido de detalhe de todas as ordens para para {symbol} - {order_id}: path: {path} - body {body}")
+            body = {"symbol": symbol}
+            if order_id is not None:
+                body["orderId"] = order_id
+
+            logger.debug(
+                f"✅ - Pedido de detalhe de todas as ordens para {symbol} - order_id={order_id}: path: {path} - body {body}")
             response = self._send_request("GET", path, body)
-            logger.debug(f"✅ - Pedido de detalhe de todas as ordens para {symbol} - {order_id}: {response}")
+            logger.debug(f"✅ - Resposta do pedido: {response}")
             return response
         except Exception as e:
-            logger.exception(f"❌ - Erro ao obter detalhe de ordes: {e}")
+            logger.exception(f"❌ - Erro ao obter detalhe de ordens: {e}")
             return {}

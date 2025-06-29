@@ -53,5 +53,5 @@ class BrokerInterface(ABC):
         pass
 
     @abstractmethod
-    def lista_todas_as_ordens(self, symbol, order_id):
+    def lista_todas_as_ordens(self, symbol, order_id=None):
         pass
