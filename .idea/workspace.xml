@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.3 - log info para todos">
+    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.3 - remove debug entries">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -270,14 +270,7 @@
       <workItem from="1749762406200" duration="19981000" />
       <workItem from="1750265390933" duration="1357000" />
       <workItem from="1750270347502" duration="865000" />
-    </task>
-    <task id="LOCAL-00038" summary="- Versão 1.2.0 - para teste">
-      <option name="closed" value="true" />
-      <created>1748620831843</created>
-      <option name="number" value="00038" />
-      <option name="presentableId" value="LOCAL-00038" />
-      <option name="project" value="LOCAL" />
-      <updated>1748620831843</updated>
+      <workItem from="1750408763109" duration="652000" />
     </task>
     <task id="LOCAL-00039" summary="- Versão 1.2.0 - para teste">
       <option name="closed" value="true" />
@@ -663,7 +656,15 @@
       <option name="project" value="LOCAL" />
       <updated>1750270581156</updated>
     </task>
-    <option name="localTasksCounter" value="87" />
+    <task id="LOCAL-00087" summary="- Versão 1.2.3 - remove debug entries">
+      <option name="closed" value="true" />
+      <created>1750409055928</created>
+      <option name="number" value="00087" />
+      <option name="presentableId" value="LOCAL-00087" />
+      <option name="project" value="LOCAL" />
+      <updated>1750409055933</updated>
+    </task>
+    <option name="localTasksCounter" value="88" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -694,7 +695,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="- Versão 1.2.0 - Fix para validação de mensagem" />
     <MESSAGE value="- Versão 1.2.0 - Padronização de log e simplificação de script sql para criar a base de dados" />
     <MESSAGE value="- Versão 1.2.0 - PAdronização de Logs" />
     <MESSAGE value="- Versão 1.2.0 - Fix de mensagem de log" />
@@ -719,7 +719,8 @@
     <MESSAGE value="- Versão 1.2.1 - fix para evitar TPs serem perdidos na hora do envio por taxa de request" />
     <MESSAGE value="- Versão 1.2.1 - debug para quantidade remanescente" />
     <MESSAGE value="- Versão 1.2.3 - log info para todos" />
-    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.3 - log info para todos" />
+    <MESSAGE value="- Versão 1.2.3 - remove debug entries" />
+    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.3 - remove debug entries" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -733,6 +734,11 @@
           <url>file://$PROJECT_DIR$/integration/BingXBroker.py</url>
           <line>216</line>
           <option name="timeStamp" value="88" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/integration/BingXBroker.py</url>
+          <line>337</line>
+          <option name="timeStamp" value="89" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
