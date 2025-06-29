@@ -79,6 +79,8 @@ def consumir_monitoramentos():
                 ordens_ativas = broker.lista_todas_as_ordens(symbol=symbol)
                 logger.debug(f"⚠️ - response: {ordens_ativas}")
                 quantidade = 0.0
+                entry_price = 0.0
+                current_order_side = None
                 order_id = None
                 if ordens_ativas and ordens_ativas.get("data") and ordens_ativas["code"] == 0:
                     for ordem in ordens_ativas["data"]["orders"]:
@@ -86,24 +88,19 @@ def consumir_monitoramentos():
                             quantidade += float(ordem["origQty"])
                         elif ordem["type"] == "MARKET":
                             order_id = ordem["orderId"]
+                            entry_price = ordem["avgPrice"]
+                            current_order_side = ordem["side"]
 
-                # Buscar informações da ordem principal
-                #ordens_ativas = broker.lista_todas_as_ordens(symbol=symbol, order_id=order_id)
-                response = broker.get_open_order_info(symbol=symbol, order_id=order_id)
-                if not response:
-                    logger.warning(f"⚠️ - Nenhuma ordem encontrada na corretora para {symbol}")
+                if not order_id:
+                    logger.warning(f"⚠️ - Nenhuma ordem MARKET encontrada para {symbol}")
                     fila.task_done()
                     continue
 
-                #Recupera o preço de entrada da ordem para futuro uso na mudança de Stop Loss
-                entry_price = response["data"]["order"]["avgPrice"]
-                # Recupera o valor de order_id da ordem para futuro uso na mudança de Stop Loss
-                order_id = response["data"]["order"]["orderId"]
                 #Atribui order_id a mensagem
                 msg.order_id = order_id
                 logger.debug(f"📦 - Mensagem: {msg}")
                 # Recupera o lado da ordem (BUY, SELL) da ordem para futuro uso na mudança de Stop Loss
-                current_order_side = response["data"]["order"]["side"]
+
                 #Atualiza no banco o status do TP
                 #database.take_profit.tp_atualizar(order_id=order_id, numero_tp=numero_tp, novo_status=2)
                 #Ajuste do stop price igual ao preço de entrada
