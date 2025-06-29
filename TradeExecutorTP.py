@@ -67,15 +67,7 @@ def consumir_monitoramentos():
                 symbol = msg.symbol
                 #Recupero o Take Profit relacionado a mensagem
                 numero_tp = int(msg.tp.replace("TP", ""))
-                # Enriquecer a mensagem com order_id mais recente se existir.  Se não achar deleta a mensagem e retorna pra próxima iteração
-                #order_id = database.take_profit.tp_ordem_id_mais_nova(symbol)
-                #if order_id == 0:
-                #    logger.info(f"⚠️ - Nenhuma ordem executada registrada no banco para {symbol}")
-                #    fila.task_done()
-                #    continue
-
-                # Atualiza status do TP no banco
-                #database.take_profit.tp_atualizar(order_id=msg.order_id, numero_tp=msg.tp, novo_status=2)
+                #Recupero as ordens enviadas, sl, tp e de mercado
                 ordens_ativas = broker.lista_todas_as_ordens(symbol=symbol)
                 logger.debug(f"⚠️ - response: {ordens_ativas}")
                 quantidade = 0.0
@@ -99,15 +91,8 @@ def consumir_monitoramentos():
                 #Atribui order_id a mensagem
                 msg.order_id = order_id
                 logger.debug(f"📦 - Mensagem: {msg}")
-                # Recupera o lado da ordem (BUY, SELL) da ordem para futuro uso na mudança de Stop Loss
-
-                #Atualiza no banco o status do TP
-                #database.take_profit.tp_atualizar(order_id=order_id, numero_tp=numero_tp, novo_status=2)
                 #Ajuste do stop price igual ao preço de entrada
                 stop_price = entry_price
-                # Se TP2, atualiza o SL para ser o entry_price
-                #if numero_tp >= 2:
-                #    database.stop_loss.stop_loss_update(order_id=order_id, novo_sl=stop_price)
 
                 # Lógica para ajustar Stop Loss após TP
                 if numero_tp == 2 or numero_tp == 3:
@@ -121,15 +106,10 @@ def consumir_monitoramentos():
                     )
                     #Se não deu certo a chamada desfaz o update passando o status anterior
                     if not sucesso:
-                        #database.take_profit.tp_atualizar(order_id=order_id, numero_tp=numero_tp, novo_status=1)
                         logger.error(f"❌ - TP{numero_tp} não processado com sucesso para {symbol}.")
                     else:
                         logger.info(f"✅ - TP{numero_tp} processado com sucesso para {symbol}.")
                 elif numero_tp == 4:
-                    #database.take_profit.tp_atualizar(order_id=order_id, numero_tp=1, novo_status=2)
-                    #database.take_profit.tp_atualizar(order_id=order_id, numero_tp=2, novo_status=2)
-                    #database.take_profit.tp_atualizar(order_id=order_id, numero_tp=3, novo_status=2)
-                    #database.take_profit.tp_atualizar(order_id=order_id, numero_tp=4, novo_status=2)
                     broker.fecha_ordem_mercado(symbol=symbol)
                     time.sleep(1.1)
                     broker.cancela_ordem_tp(symbol=symbol)
