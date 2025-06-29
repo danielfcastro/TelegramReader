@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.3 - remove debug entries">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.3 - não precisa de BD" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -271,14 +269,7 @@
       <workItem from="1750265390933" duration="1357000" />
       <workItem from="1750270347502" duration="865000" />
       <workItem from="1750408763109" duration="652000" />
-    </task>
-    <task id="LOCAL-00039" summary="- Versão 1.2.0 - para teste">
-      <option name="closed" value="true" />
-      <created>1748623726243</created>
-      <option name="number" value="00039" />
-      <option name="presentableId" value="LOCAL-00039" />
-      <option name="project" value="LOCAL" />
-      <updated>1748623726243</updated>
+      <workItem from="1751183506357" duration="401000" />
     </task>
     <task id="LOCAL-00040" summary="- Versão 1.2.0 - para teste">
       <option name="closed" value="true" />
@@ -664,7 +655,15 @@
       <option name="project" value="LOCAL" />
       <updated>1750409055933</updated>
     </task>
-    <option name="localTasksCounter" value="88" />
+    <task id="LOCAL-00088" summary="- Versão 1.2.3 - não precisa de BD">
+      <option name="closed" value="true" />
+      <created>1751183773734</created>
+      <option name="number" value="00088" />
+      <option name="presentableId" value="LOCAL-00088" />
+      <option name="project" value="LOCAL" />
+      <updated>1751183773734</updated>
+    </task>
+    <option name="localTasksCounter" value="89" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -695,7 +694,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="- Versão 1.2.0 - Padronização de log e simplificação de script sql para criar a base de dados" />
     <MESSAGE value="- Versão 1.2.0 - PAdronização de Logs" />
     <MESSAGE value="- Versão 1.2.0 - Fix de mensagem de log" />
     <MESSAGE value="- Versão 1.2.0 - Envio de ordem funcionando" />
@@ -720,7 +718,8 @@
     <MESSAGE value="- Versão 1.2.1 - debug para quantidade remanescente" />
     <MESSAGE value="- Versão 1.2.3 - log info para todos" />
     <MESSAGE value="- Versão 1.2.3 - remove debug entries" />
-    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.3 - remove debug entries" />
+    <MESSAGE value="- Versão 1.2.3 - não precisa de BD" />
+    <option name="LAST_COMMIT_MESSAGE" value="- Versão 1.2.3 - não precisa de BD" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

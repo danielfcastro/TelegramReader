@@ -76,6 +76,14 @@ def consumir_monitoramentos():
 
                 # Atualiza status do TP no banco
                 #database.take_profit.tp_atualizar(order_id=msg.order_id, numero_tp=msg.tp, novo_status=2)
+                ordens_ativas = broker.lista_todas_as_ordens(symbol=symbol, order_id=order_id)
+                logger.debug(f"⚠️ - response: {ordens_ativas}")
+                quantidade = 0.0
+                if ordens_ativas and ordens_ativas.get("data") and ordens_ativas["code"] == 0:
+                    for ordem in ordens_ativas["data"]["orders"]:
+                        if ordem["type"] == "TAKE_PROFIT_MARKET" and ordem["status"] == "NEW":
+                            quantidade += float(ordem["origQty"])
+                        else: order_id = ordem["order_id"]
 
                 # Buscar informações da ordem principal
                 response = broker.get_open_order_info(symbol=symbol, order_id=order_id)
@@ -93,13 +101,6 @@ def consumir_monitoramentos():
                 logger.debug(f"📦 - Mensagem: {msg}")
                 # Recupera o lado da ordem (BUY, SELL) da ordem para futuro uso na mudança de Stop Loss
                 current_order_side = response["data"]["order"]["side"]
-                ordens_ativas = broker.lista_todas_as_ordens(symbol=symbol, order_id=order_id)
-                logger.debug(f"⚠️ - response: {ordens_ativas}")
-                quantidade = 0.0
-                if ordens_ativas and ordens_ativas.get("data") and ordens_ativas["code"] == 0:
-                    for ordem in ordens_ativas["data"]["orders"]:
-                        if ordem["type"] == "TAKE_PROFIT_MARKET" and ordem["status"] == "NEW":
-                            quantidade += float(ordem["origQty"])
                 #Atualiza no banco o status do TP
                 #database.take_profit.tp_atualizar(order_id=order_id, numero_tp=numero_tp, novo_status=2)
                 #Ajuste do stop price igual ao preço de entrada
