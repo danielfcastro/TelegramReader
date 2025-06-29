@@ -84,7 +84,8 @@ def consumir_monitoramentos():
                     for ordem in ordens_ativas["data"]["orders"]:
                         if ordem["type"] == "TAKE_PROFIT_MARKET" and ordem["status"] == "NEW":
                             quantidade += float(ordem["origQty"])
-                        else: order_id = ordem["orderId"]
+                        elif ordem["type"] == "MARKET":
+                            order_id = ordem["orderId"]
 
                 # Buscar informações da ordem principal
                 #ordens_ativas = broker.lista_todas_as_ordens(symbol=symbol, order_id=order_id)
