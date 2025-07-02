@@ -119,7 +119,7 @@ class BingXBroker(BrokerInterface, ABC):
             body = {}
             logger.debug(f"✅️ - Pedido de saldo: path: {path} - body {body}")
             response = self._send_request("GET", path, body)
-            logger.debug(f"✅ - Resposta do pedido de alavancagem: {response}")
+            logger.debug(f"✅ - Resposta do pedido de saldo: {response}")
 
             if response["code"] == 0 and response.get("data"):
                 for item in response["data"]:
@@ -435,7 +435,7 @@ class BingXBroker(BrokerInterface, ABC):
             logger.debug(f"✅ - Pedido de verificação de tipo de margem: path: {path} - body {body}")
             time.sleep(5)
             response = self._send_request("GET", path, body)
-            logger.info(f"✅ - Resposta do pedido de verificação de tipo de margem: {response}")
+            logger.debug(f"✅ - Resposta do pedido de verificação de tipo de margem: {response}")
             return response["data"]["marginType"]
         except Exception as e:
             logger.exception(f"❌ - Erro {symbol}: {e}")
