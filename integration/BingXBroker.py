@@ -120,7 +120,6 @@ class BingXBroker(BrokerInterface, ABC):
             logger.debug(f"✅️ - Pedido de saldo: path: {path} - body {body}")
             response = self._send_request("GET", path, body)
             logger.debug(f"✅ - Resposta do pedido de saldo: {response}")
-            time.sleep(5)
             if response["code"] == 0 and response.get("data"):
                 for item in response["data"]:
                     if item["asset"] in ["USDT", "VST"]:
@@ -128,7 +127,7 @@ class BingXBroker(BrokerInterface, ABC):
                         return float(item.get("availableMargin", 0.0))
         except Exception as e:
             logger.exception(f"❌ - Exceção ao consular saldo disponível: {e}")
-        raise Exception("Não foi possível obter saldo disponível em USDT.")
+            raise Exception("Não foi possível obter saldo disponível em USDT", "VST.")
 
     def set_leverage(self, symbol, side, leverage):
         """

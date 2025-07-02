@@ -4,7 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.3 - não precisa de BD" />
+    <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.3 - não precisa de BD">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/integration/BingXBroker.py" beforeDir="false" afterPath="$PROJECT_DIR$/integration/BingXBroker.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -270,23 +273,7 @@
       <workItem from="1750270347502" duration="865000" />
       <workItem from="1750408763109" duration="652000" />
       <workItem from="1751183506357" duration="7698000" />
-      <workItem from="1751458818357" duration="665000" />
-    </task>
-    <task id="LOCAL-00052" summary="- Versão 1.2.0 - Padronização de log e simplificação de script sql para criar a base de dados">
-      <option name="closed" value="true" />
-      <created>1748871999348</created>
-      <option name="number" value="00052" />
-      <option name="presentableId" value="LOCAL-00052" />
-      <option name="project" value="LOCAL" />
-      <updated>1748871999348</updated>
-    </task>
-    <task id="LOCAL-00053" summary="- Versão 1.2.0 - PAdronização de Logs">
-      <option name="closed" value="true" />
-      <created>1748872139192</created>
-      <option name="number" value="00053" />
-      <option name="presentableId" value="LOCAL-00053" />
-      <option name="project" value="LOCAL" />
-      <updated>1748872139192</updated>
+      <workItem from="1751458818357" duration="3477000" />
     </task>
     <task id="LOCAL-00054" summary="- Versão 1.2.0 - Fix de mensagem de log">
       <option name="closed" value="true" />
@@ -664,7 +651,23 @@
       <option name="project" value="LOCAL" />
       <updated>1751459275117</updated>
     </task>
-    <option name="localTasksCounter" value="101" />
+    <task id="LOCAL-00101" summary="- Versão 1.2.3 - não precisa de BD">
+      <option name="closed" value="true" />
+      <created>1751459596832</created>
+      <option name="number" value="00101" />
+      <option name="presentableId" value="LOCAL-00101" />
+      <option name="project" value="LOCAL" />
+      <updated>1751459596832</updated>
+    </task>
+    <task id="LOCAL-00102" summary="- Versão 1.2.3 - não precisa de BD">
+      <option name="closed" value="true" />
+      <created>1751459692798</created>
+      <option name="number" value="00102" />
+      <option name="presentableId" value="LOCAL-00102" />
+      <option name="project" value="LOCAL" />
+      <updated>1751459692798</updated>
+    </task>
+    <option name="localTasksCounter" value="103" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -739,6 +742,11 @@
           <url>file://$PROJECT_DIR$/integration/BingXBroker.py</url>
           <line>337</line>
           <option name="timeStamp" value="89" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/integration/BingXBroker.py</url>
+          <line>21</line>
+          <option name="timeStamp" value="91" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
