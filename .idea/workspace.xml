@@ -6,7 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.3 - não precisa de BD">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TradeExecutorTP.py" beforeDir="false" afterPath="$PROJECT_DIR$/TradeExecutorTP.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -272,31 +271,7 @@
       <workItem from="1750265390933" duration="1357000" />
       <workItem from="1750270347502" duration="865000" />
       <workItem from="1750408763109" duration="652000" />
-      <workItem from="1751183506357" duration="5508000" />
-    </task>
-    <task id="LOCAL-00045" summary="- Versão 1.2.0 - Documentação">
-      <option name="closed" value="true" />
-      <created>1748698468947</created>
-      <option name="number" value="00045" />
-      <option name="presentableId" value="LOCAL-00045" />
-      <option name="project" value="LOCAL" />
-      <updated>1748698468947</updated>
-    </task>
-    <task id="LOCAL-00046" summary="- Versão 1.2.0 - Documentação">
-      <option name="closed" value="true" />
-      <created>1748793606380</created>
-      <option name="number" value="00046" />
-      <option name="presentableId" value="LOCAL-00046" />
-      <option name="project" value="LOCAL" />
-      <updated>1748793606380</updated>
-    </task>
-    <task id="LOCAL-00047" summary="- Versão 1.2.0 - Fix de mensagem com stoploss ao invés de sl">
-      <option name="closed" value="true" />
-      <created>1748857886274</created>
-      <option name="number" value="00047" />
-      <option name="presentableId" value="LOCAL-00047" />
-      <option name="project" value="LOCAL" />
-      <updated>1748857886274</updated>
+      <workItem from="1751183506357" duration="7698000" />
     </task>
     <task id="LOCAL-00048" summary="- Versão 1.2.0 - Fix de mensagem de log">
       <option name="closed" value="true" />
@@ -666,7 +641,31 @@
       <option name="project" value="LOCAL" />
       <updated>1751234271743</updated>
     </task>
-    <option name="localTasksCounter" value="94" />
+    <task id="LOCAL-00094" summary="- Versão 1.2.3 - não precisa de BD">
+      <option name="closed" value="true" />
+      <created>1751236132574</created>
+      <option name="number" value="00094" />
+      <option name="presentableId" value="LOCAL-00094" />
+      <option name="project" value="LOCAL" />
+      <updated>1751236132574</updated>
+    </task>
+    <task id="LOCAL-00095" summary="- Versão 1.2.3 - não precisa de BD">
+      <option name="closed" value="true" />
+      <created>1751236231794</created>
+      <option name="number" value="00095" />
+      <option name="presentableId" value="LOCAL-00095" />
+      <option name="project" value="LOCAL" />
+      <updated>1751236231794</updated>
+    </task>
+    <task id="LOCAL-00096" summary="- Versão 1.2.3 - não precisa de BD">
+      <option name="closed" value="true" />
+      <created>1751237011937</created>
+      <option name="number" value="00096" />
+      <option name="presentableId" value="LOCAL-00096" />
+      <option name="project" value="LOCAL" />
+      <updated>1751237011937</updated>
+    </task>
+    <option name="localTasksCounter" value="97" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
