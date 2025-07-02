@@ -47,8 +47,8 @@ def consumir_monitoramentos():
     6. Finaliza graciosamente em `KeyboardInterrupt`.
     """
     logger.info(f"✅ - TradeExecutorTP iniciado.")
+    logger.info(f"📦 - Tamanho inicial da fila TP: {fila.qsize()}")
     broker = BingXBroker()
-    logger.debug(f"📦 - Tamanho inicial da fila TP: {fila.qsize()}")
     try:
         while True:
             try:

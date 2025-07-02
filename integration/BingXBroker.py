@@ -237,6 +237,8 @@ class BingXBroker(BrokerInterface, ABC):
         :return: True se SL foi ajustado com sucesso, False caso contrário.
         """
         try:
+            logger.debug(
+                f"🎯 - Pedido para configurar SL: symbol={symbol} | side={position_side} | quantity={quantity} | stop_price={stop_price} | order_id={order_id} | current_order_side={current_order_side}")
             ordem = self.get_open_order_info(symbol, order_id)
             if not ordem:
                 logger.warning(f"⚠️ - Nenhuma ordem encontrada para {symbol}")
@@ -254,9 +256,9 @@ class BingXBroker(BrokerInterface, ABC):
                     "quantity": qtd,
                     "orderId": order_id
                 }
-                logger.info(f"✅️ - Pedido de envio de SL: path: {path} - body {body}")
+                logger.debug(f"✅️ - Pedido de envio de SL: path: {path} - body {body}")
                 response = self._send_request("POST", path, body)
-                logger.info(f"✅ - Resposta do pedido de SL: {response}")
+                logger.debug(f"✅ - Resposta do pedido de SL: {response}")
                 return response
 
             self.cancela_ordem_sl(symbol)
@@ -327,7 +329,7 @@ class BingXBroker(BrokerInterface, ABC):
                 logger.info(f"✅ - TP{numero} configurado com sucesso para {symbol} a {stop_price}")
                 return True
             else:
-                logger.warning(f"⚠️ - Falha ao configurar TP{numero} para {symbol}: {response}")
+                logger.error(f"❌ - Falha ao configurar TP{numero} para {symbol}: {response}")
                 return False
 
         except Exception as e:
@@ -498,7 +500,7 @@ class BingXBroker(BrokerInterface, ABC):
             logger.debug(
                 f"✅ - Pedido de detalhe de todas as ordens para {symbol} - order_id={order_id}: path: {path} - body {body}")
             response = self._send_request("GET", path, body)
-            logger.debug(f"✅ - Resposta do pedido: {response}")
+            logger.debug(f"✅ - Resposta do pedido de detalhe de todas as ordens: {response}")
             return response
         except Exception as e:
             logger.exception(f"❌ - Erro ao obter detalhe de ordens: {e}")

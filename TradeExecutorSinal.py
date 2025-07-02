@@ -51,7 +51,7 @@ def consumir_sinais():
     :return: None
     """
     logger.info(f"✅ - TradeExecutorSinal iniciado.")
-    logger.debug(f"📦 - Tamanho inicial da fila Sinal: {fila.qsize()}")
+    logger.info(f"📦 - Tamanho inicial da fila Sinal: {fila.qsize()}")
     broker = BingXBroker()
     _retorno = None
     try:
