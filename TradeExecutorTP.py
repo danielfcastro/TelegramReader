@@ -69,7 +69,7 @@ def consumir_monitoramentos():
                 numero_tp = int(msg.tp.replace("TP", ""))
                 #Recupero as ordens enviadas, sl, tp e de mercado
                 ordens_ativas = broker.lista_todas_as_ordens(symbol=symbol)
-                logger.debug(f"⚠️ - response: {ordens_ativas}")
+                logger.debug(f"📦 - Ordens Ativas: {ordens_ativas}")
                 quantidade = 0.0
                 entry_price = 0.0
                 current_order_side = None
