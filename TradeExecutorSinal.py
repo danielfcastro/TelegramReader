@@ -72,7 +72,6 @@ def consumir_sinais():
                 #Se for diferente de crossed configura para crossed
                 if margin_type != REQUIRED_MARGIN_TYPE:
                     broker.mudar_tipo_margem(msg.symbol)
-                time.sleep(4.9)
                 #Recupera saldo disponível
                 saldo = broker.obter_saldo_disponivel()
                 #Recupera se é BUY ou SELL
