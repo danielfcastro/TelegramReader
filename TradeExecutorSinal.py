@@ -2,7 +2,7 @@ import logging
 import os
 import time
 
-from persistqueue import SQLiteQueue
+from persistqueue.sqlqueue import SQLiteQueue
 
 #import database
 from persistqueue.exceptions import Empty

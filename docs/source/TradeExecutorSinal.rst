@@ -1,7 +1,7 @@
 TradeExecutor module
 ====================
 
-.. automodule:: TradeExecutor
+.. automodule:: TradeExecutorSinal
    :members:
    :show-inheritance:
    :undoc-members:
