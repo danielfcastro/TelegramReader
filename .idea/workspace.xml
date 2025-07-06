@@ -6,7 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.3 - não precisa de BD">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TradeExecutorTP.py" beforeDir="false" afterPath="$PROJECT_DIR$/TradeExecutorTP.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -273,15 +272,7 @@
       <workItem from="1750270347502" duration="865000" />
       <workItem from="1750408763109" duration="652000" />
       <workItem from="1751183506357" duration="7698000" />
-      <workItem from="1751458818357" duration="7523000" />
-    </task>
-    <task id="LOCAL-00056" summary="- Versão 1.2.0 - Fix com controle de TP">
-      <option name="closed" value="true" />
-      <created>1748915041567</created>
-      <option name="number" value="00056" />
-      <option name="presentableId" value="LOCAL-00056" />
-      <option name="project" value="LOCAL" />
-      <updated>1748915041567</updated>
+      <workItem from="1751458818357" duration="8671000" />
     </task>
     <task id="LOCAL-00057" summary="- Versão 1.2.0 - Fix com status de ordem enviada para corretora">
       <option name="closed" value="true" />
@@ -667,7 +658,15 @@
       <option name="project" value="LOCAL" />
       <updated>1751495288493</updated>
     </task>
-    <option name="localTasksCounter" value="105" />
+    <task id="LOCAL-00105" summary="- Versão 1.2.3 - não precisa de BD">
+      <option name="closed" value="true" />
+      <created>1751496842714</created>
+      <option name="number" value="00105" />
+      <option name="presentableId" value="LOCAL-00105" />
+      <option name="project" value="LOCAL" />
+      <updated>1751496842714</updated>
+    </task>
+    <option name="localTasksCounter" value="106" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

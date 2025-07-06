@@ -73,7 +73,7 @@ async def main():
             try:
                 msg = MensagemSinal(**dados)
                 fila_sinal.put(msg.to_dict())
-                logger.info(f"✅ Sinal enfileirado: {msg.symbol}")
+                logger.info(f"✅ - Sinal enfileirado: {msg.symbol}")
             except Exception as e:
                 logger.exception(f"❌ - Erro ao processar sinal: {e}")
                 return None
