@@ -70,6 +70,11 @@ def consumir_sinais():
                 #Verifica o tipo de margem
                 margin_type = broker.verificar_tipo_margem(msg.symbol)
                 #Se for diferente de crossed configura para crossed
+                if margin_type == "ERROR":
+                    logger.error(f"❌ - Erro ao obter margem para simbolo: {msg.symbol}")
+                    fila.task_done()
+                    continue
+
                 if margin_type != REQUIRED_MARGIN_TYPE:
                     broker.mudar_tipo_margem(msg.symbol)
                 #Recupera saldo disponível

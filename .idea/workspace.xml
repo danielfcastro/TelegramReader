@@ -5,15 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b7d702a3-1b74-45c1-bdee-6223343ceeab" name="Changes" comment="- Versão 1.2.3 - não precisa de BD">
-      <change afterPath="$PROJECT_DIR$/docs/source/TradeExecutorTP.rst" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TelegramReader.py" beforeDir="false" afterPath="$PROJECT_DIR$/TelegramReader.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TradeExecutorSinal.py" beforeDir="false" afterPath="$PROJECT_DIR$/TradeExecutorSinal.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TradeExecutorTP.py" beforeDir="false" afterPath="$PROJECT_DIR$/TradeExecutorTP.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/source/TradeExecutor.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/source/TradeExecutorSinal.rst" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/source/database.db.rst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/source/index.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/source/index.rst" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/source/modules.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/source/modules.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -282,15 +275,7 @@
       <workItem from="1750408763109" duration="652000" />
       <workItem from="1751183506357" duration="7698000" />
       <workItem from="1751458818357" duration="8671000" />
-      <workItem from="1751817420815" duration="2067000" />
-    </task>
-    <task id="LOCAL-00058" summary="- Versão 1.2.0 - Fix ordem mais nova">
-      <option name="closed" value="true" />
-      <created>1748971120926</created>
-      <option name="number" value="00058" />
-      <option name="presentableId" value="LOCAL-00058" />
-      <option name="project" value="LOCAL" />
-      <updated>1748971120926</updated>
+      <workItem from="1751817420815" duration="2852000" />
     </task>
     <task id="LOCAL-00059" summary="- Versão 1.2.0 - stopGuaranteed e log level">
       <option name="closed" value="true" />
@@ -676,7 +661,15 @@
       <option name="project" value="LOCAL" />
       <updated>1751817450339</updated>
     </task>
-    <option name="localTasksCounter" value="107" />
+    <task id="LOCAL-00107" summary="- Versão 1.2.3 - não precisa de BD">
+      <option name="closed" value="true" />
+      <created>1751819601458</created>
+      <option name="number" value="00107" />
+      <option name="presentableId" value="LOCAL-00107" />
+      <option name="project" value="LOCAL" />
+      <updated>1751819601458</updated>
+    </task>
+    <option name="localTasksCounter" value="108" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

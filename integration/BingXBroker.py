@@ -426,20 +426,23 @@ class BingXBroker(BrokerInterface, ABC):
         Consulta o tipo de margem (CROSSED ou ISOLATED) do ativo.
 
         :param symbol: Par de negociação.
-        :return: Tipo de margem ou vazio em caso de erro.
+        :return: Tipo de margem se presente, ou string vazia em caso de erro.
         """
         try:
             path = "/openApi/swap/v2/trade/marginType"
-            body = {
-                "symbol": symbol
-            }
+            body = {"symbol": symbol}
             logger.debug(f"✅ - Pedido de verificação de tipo de margem: path: {path} - body {body}")
             response = self._send_request("GET", path, body)
             logger.debug(f"✅ - Resposta do pedido de verificação de tipo de margem: {response}")
-            return response["data"]["marginType"]
+
+            if response.get("code") == 0 and "data" in response:
+                return response["data"].get("marginType", "")
+            else:
+                logger.error(f"⚠️ - Resposta inválida ao consultar tipo de margem para {symbol}: {response}")
+                return "ERROR"
         except Exception as e:
-            logger.exception(f"❌ - Erro {symbol}: {e}")
-            return {}
+            logger.exception(f"❌ - Exceção ao consultar tipo de margem para {symbol}: {e}")
+            return ""
 
     def mudar_tipo_margem(self, symbol):
         """
