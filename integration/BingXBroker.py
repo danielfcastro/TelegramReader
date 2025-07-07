@@ -433,7 +433,7 @@ class BingXBroker(BrokerInterface, ABC):
             body = {"symbol": symbol}
             logger.debug(f"✅ - Pedido de verificação de tipo de margem: path: {path} - body {body}")
             response = self._send_request("GET", path, body)
-            logger.debug(f"✅ - Resposta do pedido de verificação de tipo de margem: {response}")
+            logger.info(f"✅ - Resposta do pedido de verificação de tipo de margem: {response}")
 
             if response.get("code") == 0 and "data" in response:
                 return response["data"].get("marginType", "")

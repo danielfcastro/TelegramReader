@@ -96,14 +96,12 @@ def consumir_sinais():
                     average_price= _retorno["average_price"]
                     quantidade = float(_retorno["quantidade"])
                     quantidade_acumulada = quantidade
-                    # database.sinal.ordem_inserir(msg.to_dict(), order_id, average_price, quantidade)
                     _tipo_ordem = "SELL" if _tipo_ordem == "SHORT" else "BUY"
                     side = "SELL" if _tipo_ordem.upper() == "BUY" else "BUY"
                     tps = [msg.tp1, msg.tp2, msg.tp3, msg.tp4]
 
                     objetos_tp = []
                     for i, proporcao in enumerate(proporcoes):
-                        #qtd_tp = ajustar_quantidade(quantidade * proporcao, step=0.0001)
                         if i < len(proporcoes) - 1:
                             qtd_tp = ajustar_quantidade(quantidade_total * proporcao, step=0.0001)
                             quantidade_acumulada -= qtd_tp
@@ -133,7 +131,6 @@ def consumir_sinais():
                         else:
                             logger.warning(f"⚠️ - Falha ao configurar TP{i + 1} para {msg.symbol}")
 
-                    #database.take_profit.tp_inserir(objetos_tp)
                     logger.info(f"✅ - Ordem enviada e TPs configurados com sucesso: {msg.symbol}")
                     fila.task_done()
                 else:
