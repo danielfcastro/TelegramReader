@@ -257,9 +257,9 @@ class BingXBroker(BrokerInterface, ABC):
                     "orderId": order_id
                 }
                 logger.debug(f"✅️ - Pedido de envio de SL: path: {path} - body {body}")
-                response = self._send_request("POST", path, body)
-                logger.debug(f"✅ - Resposta do pedido de SL: {response}")
-                return response
+                _response = self._send_request("POST", path, body)
+                logger.debug(f"✅ - Resposta do pedido de SL: {_response}")
+                return _response
 
             self.cancela_ordem_sl(symbol)
             response = enviar_sl(quantity)
