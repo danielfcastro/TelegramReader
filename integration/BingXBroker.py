@@ -16,7 +16,6 @@ from integration.BrokerInterface import BrokerInterface
 from message.mensagem_sinal import MensagemSinal
 
 load_dotenv()
-
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 
 class BingXBroker(BrokerInterface, ABC):
@@ -58,7 +57,19 @@ class BingXBroker(BrokerInterface, ABC):
         headers = {
             'X-BX-APIKEY': self.API_KEY
         }
-        response = requests.request(method, url, headers=headers)
+        try:
+            response = requests.request(method, url, headers=headers)
+
+        except requests.exceptions.ConnectionError as e:
+            if "NameResolutionError" in str(e):
+                logger.warning("🌐 - Falha de DNS detectada. Aguardando para tentar novamente...")
+                time.sleep(10)
+                return self._send_request(method, path, params)  # retry simples
+            raise
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"❌ - Erro ao enviar requisição para {path}: {e}")
+            raise
         return response.json()
 
     @staticmethod
@@ -75,7 +86,6 @@ class BingXBroker(BrokerInterface, ABC):
 
         sorted_params = sorted(all_params.items())
         query = "&".join(f"{k}={v}" for k, v in sorted_params)
-        #logger.debug(f"query: {query}")
         return query
 
     def obter_preco_mercado(self, symbol):
@@ -109,8 +119,7 @@ class BingXBroker(BrokerInterface, ABC):
             body = {}
             logger.debug(f"✅️ - Pedido de saldo: path: {path} - body {body}")
             response = self._send_request("GET", path, body)
-            logger.debug(f"✅ - Resposta do pedido de alavancagem: {response}")
-
+            logger.debug(f"✅ - Resposta do pedido de saldo: {response}")
             if response["code"] == 0 and response.get("data"):
                 for item in response["data"]:
                     if item["asset"] in ["USDT", "VST"]:
@@ -118,7 +127,7 @@ class BingXBroker(BrokerInterface, ABC):
                         return float(item.get("availableMargin", 0.0))
         except Exception as e:
             logger.exception(f"❌ - Exceção ao consular saldo disponível: {e}")
-        raise Exception("Não foi possível obter saldo disponível em USDT.")
+            raise Exception("Não foi possível obter saldo disponível em USDT", "VST.")
 
     def set_leverage(self, symbol, side, leverage):
         """
@@ -214,27 +223,6 @@ class BingXBroker(BrokerInterface, ABC):
             logger.exception(f"❌ - Erro ao enviar ordem BingX: {e}")
             return {"sucesso": False, "erro": str(e)}
 
-    def cancela_stop_loss(self, symbol):
-        """
-        Cancela todas as ordens STOP_MARKET abertas para o símbolo.
-
-        :param symbol: Par de negociação.
-        :return: Resposta da API.
-        """
-        try:
-            path = "/openApi/swap/v2/trade/allOpenOrders"
-            body = {
-                "symbol": symbol,
-                "type": "STOP_MARKET"
-            }
-            logger.debug(f"✅ - Cancelamento de SL: path: {path} - body {body}")
-            response = self._send_request("DELETE", path, body)
-            logger.debug(f"✅ - Cancelamento de SL: response: {response} com sucesso")
-            return response
-        except Exception as e:
-            logger.exception(f"❌ - Erro ao cancelar SL para {symbol}: {e}")
-            return {}
-
     def ajustar_stop_loss(self, symbol, position_side, quantity, stop_price, order_id, current_order_side):
         """
         Ajusta o Stop Loss para uma posição específica.
@@ -249,6 +237,8 @@ class BingXBroker(BrokerInterface, ABC):
         :return: True se SL foi ajustado com sucesso, False caso contrário.
         """
         try:
+            logger.debug(
+                f"🎯 - Pedido para configurar SL: symbol={symbol} | side={position_side} | quantity={quantity} | stop_price={stop_price} | order_id={order_id} | current_order_side={current_order_side}")
             ordem = self.get_open_order_info(symbol, order_id)
             if not ordem:
                 logger.warning(f"⚠️ - Nenhuma ordem encontrada para {symbol}")
@@ -271,7 +261,7 @@ class BingXBroker(BrokerInterface, ABC):
                 logger.debug(f"✅ - Resposta do pedido de SL: {response}")
                 return response
 
-            self.cancela_stop_loss(symbol)
+            self.cancela_ordem_sl(symbol)
             response = enviar_sl(quantity)
 
             # Verifica sucesso
@@ -339,7 +329,7 @@ class BingXBroker(BrokerInterface, ABC):
                 logger.info(f"✅ - TP{numero} configurado com sucesso para {symbol} a {stop_price}")
                 return True
             else:
-                logger.warning(f"⚠️ - Falha ao configurar TP{numero} para {symbol}: {response}")
+                logger.error(f"❌ - Falha ao configurar TP{numero} para {symbol}: {response}")
                 return False
 
         except Exception as e:
@@ -365,7 +355,7 @@ class BingXBroker(BrokerInterface, ABC):
             logger.debug(f"✅ - Resposta do pedido de detalhe de ordem: {response}")
             return response
         except Exception as e:
-            logger.exception(f"❌ - Erro ao boter detalhe de ordem {symbol}: {e}")
+            logger.exception(f"❌ - Erro ao obter detalhe de ordem {symbol}: {e}")
             return {}
 
     def fecha_ordem_mercado(self, symbol):
@@ -436,20 +426,23 @@ class BingXBroker(BrokerInterface, ABC):
         Consulta o tipo de margem (CROSSED ou ISOLATED) do ativo.
 
         :param symbol: Par de negociação.
-        :return: Tipo de margem ou vazio em caso de erro.
+        :return: Tipo de margem se presente, ou string vazia em caso de erro.
         """
         try:
             path = "/openApi/swap/v2/trade/marginType"
-            body = {
-                "symbol": symbol
-            }
+            body = {"symbol": symbol}
             logger.debug(f"✅ - Pedido de verificação de tipo de margem: path: {path} - body {body}")
             response = self._send_request("GET", path, body)
-            logger.debug(f"✅ - Resposta do pedido de verificação de tipo de margem: {response}")
-            return response["data"]["marginType"]
+            logger.info(f"✅ - Resposta do pedido de verificação de tipo de margem: {response}")
+
+            if response.get("code") == 0 and "data" in response:
+                return response["data"].get("marginType", "")
+            else:
+                logger.error(f"⚠️ - Resposta inválida ao consultar tipo de margem para {symbol}: {response}")
+                return "ERROR"
         except Exception as e:
-            logger.exception(f"❌ - Erro {symbol}: {e}")
-            return {}
+            logger.exception(f"❌ - Exceção ao consultar tipo de margem para {symbol}: {e}")
+            return ""
 
     def mudar_tipo_margem(self, symbol):
         """
@@ -470,4 +463,48 @@ class BingXBroker(BrokerInterface, ABC):
             return response
         except Exception as e:
             logger.exception(f"❌ - Erro {symbol}: {e}")
+            return {}
+
+    def get_pending_order_info(self, symbol, order_id):
+        """
+        Obtém detalhes da ordem pendente.
+
+        :param symbol: Par de negociação.
+        :param order_id: ID da ordem.
+        :return: Dados da ordem, se existirem.
+        """
+        try:
+            path = "/openApi/swap/v2/trade/openOrder"
+            body = {
+                "symbol": symbol,
+                "orderId": order_id
+            }
+            logger.debug(f"✅ - Pedido de detalhe de ordem pendente: path: {path} - body {body}")
+            response = self._send_request("GET", path, body)
+            logger.debug(f"✅ - Resposta do pedido de detalhe de ordem pendente: {response}")
+            return response
+        except Exception as e:
+            logger.exception(f"❌ - Erro ao obter detalhe de ordem pendente {symbol}: {e}")
+            return {}
+
+    def lista_todas_as_ordens(self, symbol, order_id=None):
+        """
+        Obtém todas as ordens pendentes.
+        :param symbol: Par de negociação.
+        :param order_id: ID da ordem. Opcional.
+        :return: Dados da(s) ordem(ns), se existirem.
+        """
+        try:
+            path = "/openApi/swap/v1/trade/fullOrder"
+            body = {"symbol": symbol}
+            if order_id is not None:
+                body["orderId"] = order_id
+
+            logger.debug(
+                f"✅ - Pedido de detalhe de todas as ordens para {symbol} - order_id={order_id}: path: {path} - body {body}")
+            response = self._send_request("GET", path, body)
+            logger.debug(f"✅ - Resposta do pedido de detalhe de todas as ordens: {response}")
+            return response
+        except Exception as e:
+            logger.exception(f"❌ - Erro ao obter detalhe de ordens: {e}")
             return {}

@@ -2,9 +2,9 @@ import logging
 import os
 import time
 
-from persistqueue import SQLiteQueue
+from persistqueue.sqlqueue import SQLiteQueue
 
-import database
+#import database
 from persistqueue.exceptions import Empty
 
 from message.mensagem_sinal import MensagemSinal
@@ -51,7 +51,7 @@ def consumir_sinais():
     :return: None
     """
     logger.info(f"✅ - TradeExecutorSinal iniciado.")
-    logger.debug(f"📦 - Tamanho inicial da fila Sinal: {fila.qsize()}")
+    logger.info(f"📦 - Tamanho inicial da fila Sinal: {fila.qsize()}")
     broker = BingXBroker()
     _retorno = None
     try:
@@ -70,9 +70,13 @@ def consumir_sinais():
                 #Verifica o tipo de margem
                 margin_type = broker.verificar_tipo_margem(msg.symbol)
                 #Se for diferente de crossed configura para crossed
+                if margin_type == "ERROR":
+                    logger.error(f"❌ - Erro ao obter margem para simbolo: {msg.symbol}")
+                    fila.task_done()
+                    continue
+
                 if margin_type != REQUIRED_MARGIN_TYPE:
                     broker.mudar_tipo_margem(msg.symbol)
-
                 #Recupera saldo disponível
                 saldo = broker.obter_saldo_disponivel()
                 #Recupera se é BUY ou SELL
@@ -90,18 +94,22 @@ def consumir_sinais():
                     #Insere a ordem no banco com o id da ordem e o preço de envio
                     order_id = _retorno["order_id"]
                     average_price= _retorno["average_price"]
-                    quantidade = _retorno["quantidade"]
-                    erro = _retorno["erro"]
-                    erro_msg = _retorno["msg"]
-                    database.sinal.ordem_inserir(msg.to_dict(), order_id, average_price, quantidade)
+                    quantidade = float(_retorno["quantidade"])
+                    quantidade_acumulada = quantidade
                     _tipo_ordem = "SELL" if _tipo_ordem == "SHORT" else "BUY"
                     side = "SELL" if _tipo_ordem.upper() == "BUY" else "BUY"
                     tps = [msg.tp1, msg.tp2, msg.tp3, msg.tp4]
 
                     objetos_tp = []
                     for i, proporcao in enumerate(proporcoes):
-                        qtd_tp = ajustar_quantidade(quantidade * proporcao, step=0.0001)
+                        if i < len(proporcoes) - 1:
+                            qtd_tp = ajustar_quantidade(quantidade_total * proporcao, step=0.0001)
+                            quantidade_acumulada -= qtd_tp
+                        else:
+                            # TP4 recebe o resíduo exato, sem ajuste
+                            qtd_tp = quantidade_acumulada
                         preco_tp = tps[i]
+                        time.sleep(1.1)
                         sucesso = broker.ajustar_take_profit(
                             symbol=msg.symbol,
                             position_side=side,
@@ -123,15 +131,13 @@ def consumir_sinais():
                         else:
                             logger.warning(f"⚠️ - Falha ao configurar TP{i + 1} para {msg.symbol}")
 
-                    database.take_profit.tp_inserir(objetos_tp)
                     logger.info(f"✅ - Ordem enviada e TPs configurados com sucesso: {msg.symbol}")
                     fila.task_done()
                 else:
-                    logger.info(f"❌ - Erro ao enviar ordem para {msg.symbol}: {_retorno['msg']}")
+                    logger.error(f"❌ - Erro ao enviar ordem para {msg.symbol}: {_retorno['msg']}")
                     fila.task_done()
 
             except Empty:
-                time.sleep(2)
                 continue
             except Exception as e:
                 logger.error(f"❌ - Erro ao processar mensagem de sinal: {e}")

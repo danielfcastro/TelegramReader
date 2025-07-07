@@ -1,3 +1,6 @@
+PyCharm
+.idea/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -142,7 +145,7 @@ dmypy.json
 cython_debug/
 
 # PyCharm
-.idea/
+
 
 # Ruff stuff:
 .ruff_cache/
@@ -152,9 +155,6 @@ cython_debug/
 
 # logs
 logs/
-
-# database
-./database/*.db
 
 # session files
 minha_sessao.*

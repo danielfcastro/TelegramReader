@@ -5,6 +5,7 @@ TelegramReader
    :maxdepth: 4
 
    TelegramReader
-   TradeExecutor
+   TradeExecutorSinal
+   TradeExecutorTP
    start_all
    utils

@@ -9,10 +9,6 @@ class BrokerInterface(ABC):
         pass
 
     @abstractmethod
-    def cancela_stop_loss(self, symbol):
-        pass
-
-    @abstractmethod
     def ajustar_stop_loss(self, symbol, position_side, quantity, stop_price, order_id, current_order_side):
         pass
 
@@ -33,6 +29,10 @@ class BrokerInterface(ABC):
         pass
 
     @abstractmethod
+    def get_pending_order_info(self, symbol, order_id):
+        pass
+
+    @abstractmethod
     def verificar_tipo_margem(self, symbol):
         pass
 
@@ -50,4 +50,8 @@ class BrokerInterface(ABC):
 
     @abstractmethod
     def cancela_ordem_sl(self, symbol):
+        pass
+
+    @abstractmethod
+    def lista_todas_as_ordens(self, symbol, order_id=None):
         pass

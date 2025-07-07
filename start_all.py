@@ -1,18 +1,15 @@
 import argparse
-import atexit
 import logging
 import os
 import sys
 import subprocess
 import signal
 
-from database import db
 from log.logger_config import configurar_logging
 from utils import carregar_config
 
 LOG_DIR = "logs"
 os.makedirs(LOG_DIR, exist_ok=True)
-atexit.register(db.fechar_pool)
 
 configurar_logging()
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
@@ -78,7 +75,7 @@ def iniciar_telegram_reader():
     - subprocess.Popen: Instância do processo iniciado.
     """
     logger.info("📈 - Iniciando Telegram Reader...")
-    return subprocess.Popen([sys.executable, "TelegramReader.py"])
+    return subprocess.Popen([sys.executable, "TelegramReader.py"], start_new_session=True)
 
 def iniciar_executor_sinal():
     """
@@ -91,7 +88,7 @@ def iniciar_executor_sinal():
     - subprocess.Popen: Processo do executor de sinal.
     """
     logger.info("📈 - Iniciando TradeExecutorSinal...")
-    return subprocess.Popen([sys.executable, "TradeExecutorSinal.py"])
+    return subprocess.Popen([sys.executable, "TradeExecutorSinal.py"], start_new_session=True)
 
 def iniciar_executor_tp():
     """
@@ -104,7 +101,7 @@ def iniciar_executor_tp():
     - subprocess.Popen: Processo do executor de TPs.
     """
     logger.info("📈 - Iniciando TradeExecutorTP...")
-    return subprocess.Popen([sys.executable, "TradeExecutorTP.py"])
+    return subprocess.Popen([sys.executable, "TradeExecutorTP.py"], start_new_session=True)
 
 
 processos = []
@@ -156,8 +153,7 @@ def finalizar_programa(*_):
     for p in processos:
         if p.poll() is None:  # ainda está rodando
             logger.warning(f"🔪 - Matando processo PID {p.pid}")
-            p.terminate()
-    db.fechar_pool()
+            os.killpg(os.getpgid(p.pid), signal.SIGTERM)
     sys.exit(0)
 
 signal.signal(signal.SIGINT, finalizar_programa)

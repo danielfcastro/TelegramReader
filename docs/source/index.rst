@@ -7,9 +7,10 @@ Bem-vindo à documentação do TelegramReader!
    :maxdepth: 2
    :caption: Conteúdo
 
+   modules
    TelegramReader
-   TradeExecutor
+   TradeExecutorSinal
+   TradeExecutorTP
    utils
-   database.db
    integration.BingXBroker
 

@@ -1,5 +1,8 @@
 import logging
 import os
+
+from persistqueue.sqlqueue import SQLiteQueue
+
 import utils
 
 from dotenv import load_dotenv
@@ -7,7 +10,6 @@ from telethon import TelegramClient, events
 from log.logger_config import configurar_logging
 from message.mensagem_sinal import MensagemSinal
 from message.mensagem_tp import MensagemTP
-from persistqueue import SQLiteQueue
 
 TRADE = "trade"
 MONITORAMENTO = "monitoramento"
@@ -35,9 +37,9 @@ async def main():
     1. Obtém a entidade do grupo a partir do ID.
     2. Registra um handler para eventos de novas mensagens no grupo.
     3. Cada mensagem recebida é classificada como:
-       - Sinal de trade (tipo "trade"): convertida em `MensagemSinal` e adicionada à fila `fila_sinal`.
-       - Monitoramento (tipo "monitoramento"): convertida em `MensagemTP` e adicionada à fila `fila_tp`.
-       - Outro tipo: descartado com log de aviso.
+    - Sinal de trade (tipo "trade"): convertida em `MensagemSinal` e adicionada à fila `fila_sinal`.
+    - Monitoramento (tipo "monitoramento"): convertida em `MensagemTP` e adicionada à fila `fila_tp`.
+    - Outro tipo: descartado com log de aviso.
     4. As filas `fila_sinal` e `fila_tp` serão processadas por componentes consumidores posteriores.
     """
     grupo_entidade = await utils.obter_entidade(client, group_id)
@@ -61,7 +63,6 @@ async def main():
         :param event: Objeto de evento do Telethon que representa a nova mensagem.
         :type event: telethon.events.NewMessage.Event
         """
-
         mensagem = event.text
         logger.info("📩 - Mensagem recebida. Classificando...")
         resultado = utils.classificar_mensagem(mensagem)
@@ -73,7 +74,7 @@ async def main():
             try:
                 msg = MensagemSinal(**dados)
                 fila_sinal.put(msg.to_dict())
-                logger.info(f"✅ Sinal enfileirado: {msg.symbol}")
+                logger.info(f"✅ - Sinal enfileirado: {msg.symbol}")
             except Exception as e:
                 logger.exception(f"❌ - Erro ao processar sinal: {e}")
                 return None

@@ -4,12 +4,12 @@
 
 Este projeto é dividido em **dois serviços independentes**:
 
-* **TelegramSignalReader**: Monitora mensagens de sinais de trading em grupos ou canais do Telegram e grava em um banco de dados.
-* **TradeExecutor**: Monitora o banco de dados, identifica sinais pendentes e envia ordens automáticas para a BingX Testnet.
+* **TelegramReader**: Monitora mensagens de sinais de trading em grupos ou canais do Telegram e deposita em uma fila.
+* **TradeExecutorSinal**: Recupera mensagem da fila de sinais, identifica sinais pendentes e envia ordens automáticas para a BingX.
+* **TradeExecutorTP**: Recupera mensagem da fila de tp, identifica sinais pendentes e envia ordens automáticas para a BingX.
 
 ✅ Arquitetura desacoplada, modular e escalável.
 ✅ Configuração fácil para ambiente de testes e produção.
-✅ Pronto para migrar de SQLite para PostgreSQL.
 
 ---
 
@@ -18,15 +18,6 @@ Este projeto é dividido em **dois serviços independentes**:
 ```
 TelegramReader/
 ├── .venv/
-├── database/
-│   ├── scripts/
-│   │   └── v2database.sql
-│   ├── __init__.py
-│   ├── criar_tabela.py
-│   ├── db.py
-│   ├── sinal.py
-│   ├── stop_loss.py
-│   └── take_profit.py
 ├── docs/
 ├── fila/
 ├── integration/
@@ -112,25 +103,13 @@ bingx_api_url=#https://open-api.bingx.com
 # Trading Strategy
 trade_percentage=3
 
-db_type=postgres
-db_host=IP ONDE O POSTGRES ESTÁ
-db_port=5432
-db_name=tradebotdb
-db_user=tradebot
-db_password=tradebot
 ```
 
 ---
 
 ## 🏁 Primeiro Uso
 
-1. Crie o banco de dados:
-
-```bash
-python database/criar_tabela.py
-```
-
-2. Inicie o sistema (duas formas):
+1. Inicie o sistema (duas formas):
 
 ### Forma 1: Script start_all.py
 
@@ -207,7 +186,7 @@ O arquivo `.env` é gerado automaticamente e contém suas chaves da API da BingX
 
 ## 📋 Logs
 
-- Log da aplicação: `logs/app.log`
+- Log da aplicação: `/var/log/tradebot.log`
 
 ---
 
@@ -260,7 +239,6 @@ Este projeto integra sinais de trade recebidos via Telegram com execução autom
 * `TradeExecutorSinal.py`: Envia ordens e configura TPs.
 * `TradeExecutorTP.py`: Monitora e executa Break Even.
 * `BingXBroker.py`: Wrapper da API BingX.
-* `db.py`: Funções auxiliares de acesso ao banco.
 * `utils.py`: Helpers de arredondamento, configuração e parser.
 * `mensagem_sinal.py`: Modelo e validação de mensagens de trade.
 
@@ -276,7 +254,6 @@ sequenceDiagram
     participant Fila
     participant Executor
     participant BingX
-    participant DB
 
     Telegram->>Reader: Nova mensagem recebida
     Reader->>Reader: classificar_mensagem()
@@ -289,14 +266,11 @@ sequenceDiagram
     Executor->>Fila: get(sinal)
     Executor->>BingX: enviar_ordem_tp_sl
     BingX-->>Executor: resposta
-    Executor->>DB: ordem_inserir + tp_inserir
 
     Executor->>Fila: get(monitoramento)
-    Executor->>DB: buscar ordem
     alt TP2 ou TP4
         Executor->>BingX: ajustar_para_break_even
         BingX-->>Executor: sucesso
-        Executor->>DB: marcar BE executado
     end
 ```
 
@@ -316,7 +290,6 @@ sequenceDiagram
 2. Valida e transforma a mensagem via `MensagemSinal`.
 3. Calcula quantidade com base em saldo e `trade_percentage`.
 4. Envia ordem com múltiplos TPs usando proporções \[0.1, 0.2, 0.5, 0.2].
-5. Atualiza banco com `ordem_inserir` e `tp_inserir`.
 
 ### 📈 TradeExecutorTP
 
@@ -325,7 +298,6 @@ sequenceDiagram
 
    * Busca ordem ativa relacionada.
    * Cancela SL atual e envia novo SL para preço de entrada (Break Even).
-   * Atualiza banco com status de Break Even aplicado.
 
 ---
 
@@ -341,95 +313,3 @@ make html
 make.bat html
 ```
 ---
-
-## 🧾 Dicionário de Dados
-
-### 🧾 Tabela `ordem` (v2.ordem)
-
-Registra cada ordem de trade identificada e processada.
-
-| Campo                | Tipo        | Descrição |
-|---------------------|-------------|-----------|
-| id                  | `serial`    | Identificador interno da ordem |
-| data_hora           | `timestamp` | Momento em que a ordem foi criada |
-| symbol              | `text`      | Par de negociação (ex: BTC-USDT) |
-| tipo_ordem          | `text`      | Direção da ordem (BUY / SELL) |
-| margem              | `text`      | Tipo de margem (ex: Cross) |
-| alavancagem         | `text`      | Alavancagem usada (ex: 20X) |
-| sl                  | `real`      | Stop loss da ordem |
-| ordem_status_id     | `smallint`  | Status geral da ordem (FK) |
-| break_even_status_id| `smallint`  | Status do break even (FK) |
-| order_id            | `bigint`    | ID da ordem na corretora (único) |
-| entry_price         | `real`      | Preço de entrada efetivo |
-| quantidade          | `real`      | Quantidade total da ordem |
-
-🔗 **Chaves estrangeiras:**
-- `ordem_status_id → ordem_status.id`
-- `break_even_status_id → break_even_status.id`
-
-🔐 **Índices sugeridos:**
-```sql
-CREATE INDEX idx_sinais_par_status
-  ON v2.ordem(symbol, ordem_status_id);
-```
-
----
-
-### 🎯 Tabela `take_profits` (v2.take_profits)
-
-Armazena os múltiplos alvos de lucro (TPs) associados a uma ordem.
-
-| Campo       | Tipo       | Descrição                               |
-|-------------|------------|-----------------------------------------|
-| order_id    | `bigint`   | ID da ordem principal (FK para `ordem`) |
-| numero      | `smallint` | Número do TP (1 a 4)                    |
-| valor       | `real`     | Valor do TP                             |
-| quantidade  | `real`     | Quantidade associada a este TP          |
-| tp_status_id| `smallint` | Status do TP (FK)                       |
-| proporcao   | `real`     | Proporção do total da ordem nesse TP    |
-> A coluna `proporcao` representa a fração da posição total atribuída a cada TP.
-> Exemplo: proporções padrão são `[0.1, 0.2, 0.5, 0.2]`.
-
-🔗 **PK:** (order_id, numero)  
-🔗 **FK:** order_id → ordem.order_id  
-🔗 **Índice sugerido:**
-```sql
-CREATE INDEX idx_take_profits_order
-  ON v2.take_profits(order_id, numero);
-```
-
----
-
-### ⚙️ Tabela `ordem_status` (v2.ordem_status)
-
-Define os estados possíveis para a ordem principal.
-
-| ID | Descrição              |
-|----|------------------------|
-| 0  | ENVIADA PARA CORRETORA |
-| 1  | CONCLUÍDA              |
-| 2  | IGNORADA               |
-
-
----
-
-### ⚙️ Tabela `break_even_status` (v2.break_even_status)
-
-Define os estados para controle de break-even.
-
-| ID | Descrição             |
-|----|-----------------------|
-| 0  | INATIVO               |
-| 1  | AGUARDANDO BREAK EVEN |
-| 2  | BREAK EVEN AJUSTADO   |
-
----
-
-### ⚙️ Tabela `take_profit_status` (v2.take_profit_status)
-
-Define os estados para cada TP.
-
-| ID | Descrição     |
-|----|----------------|
-| 1  | CONFIGURADO    |
-| 2  | ATINGIDO       |
