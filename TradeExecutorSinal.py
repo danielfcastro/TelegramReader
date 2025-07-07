@@ -91,16 +91,13 @@ def consumir_sinais():
                 _retorno = broker.enviar_ordem_tp_sl(msg, quantidade_total)
 
                 if _retorno["sucesso"]:
-                    #Insere a ordem no banco com o id da ordem e o preço de envio
                     order_id = _retorno["order_id"]
-                    average_price= _retorno["average_price"]
                     quantidade = float(_retorno["quantidade"])
                     quantidade_acumulada = quantidade
                     _tipo_ordem = "SELL" if _tipo_ordem == "SHORT" else "BUY"
                     side = "SELL" if _tipo_ordem.upper() == "BUY" else "BUY"
                     tps = [msg.tp1, msg.tp2, msg.tp3, msg.tp4]
 
-                    objetos_tp = []
                     for i, proporcao in enumerate(proporcoes):
                         if i < len(proporcoes) - 1:
                             qtd_tp = ajustar_quantidade(quantidade_total * proporcao, step=0.0001)
@@ -118,18 +115,10 @@ def consumir_sinais():
                             order_id=order_id,
                             numero=i+1
                         )
-
                         if sucesso:
-                            objetos_tp.append({
-                                "numero": i + 1,
-                                "valor": preco_tp,
-                                "quantidade": qtd_tp,
-                                "order_id": order_id,
-                                "status": 1,
-                                "proporcao": proporcao
-                            })
+                            logger.info(f"✅ - TP :{i+1} configurado com sucesso: {msg.symbol}")
                         else:
-                            logger.warning(f"⚠️ - Falha ao configurar TP{i + 1} para {msg.symbol}")
+                            logger.error(f"⚠️ - Falha ao configurar TP{i + 1} para {msg.symbol}")
 
                     logger.info(f"✅ - Ordem enviada e TPs configurados com sucesso: {msg.symbol}")
                     fila.task_done()
