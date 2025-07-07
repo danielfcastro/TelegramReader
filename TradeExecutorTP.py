@@ -10,7 +10,6 @@ from persistqueue.exceptions import Empty
 from log.logger_config import configurar_logging
 from message.mensagem_tp import MensagemTP
 from integration.BingXBroker import BingXBroker
-mensagem = None
 fila = SQLiteQueue(os.path.join("fila", "monitoramentos"), auto_commit=False)
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 configurar_logging()
