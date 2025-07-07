@@ -89,7 +89,7 @@ def consumir_sinais():
                 quantidade_total = ajustar_quantidade(valor_trade / preco_mercado, step=0.0001)
                 #Envia a ordem
                 _retorno = broker.enviar_ordem_tp_sl(msg, quantidade_total)
-
+                tps_enviados = set()
                 if _retorno["sucesso"]:
                     order_id = _retorno["order_id"]
                     quantidade = float(_retorno["quantidade"])
@@ -99,6 +99,12 @@ def consumir_sinais():
                     tps = [msg.tp1, msg.tp2, msg.tp3, msg.tp4]
 
                     for i, proporcao in enumerate(proporcoes):
+                        numero_tp = i + 1
+                        chave_tp = (msg.symbol, order_id, numero_tp)
+                        if chave_tp in tps_enviados:
+                            logger.warning(
+                                f"⚠️ - TP{numero_tp} já foi configurado anteriormente para {msg.symbol}. Ignorando.")
+                            continue
                         if i < len(proporcoes) - 1:
                             qtd_tp = ajustar_quantidade(quantidade_total * proporcao, step=0.0001)
                             quantidade_acumulada -= qtd_tp
@@ -113,10 +119,11 @@ def consumir_sinais():
                             quantity=qtd_tp,
                             stop_price=preco_tp,
                             order_id=order_id,
-                            numero=i+1
+                            numero=numero_tp
                         )
                         if sucesso:
                             logger.info(f"✅ - TP :{i+1} configurado com sucesso: {msg.symbol}")
+                            tps_enviados.add(chave_tp)
                         else:
                             logger.error(f"⚠️ - Falha ao configurar TP{i + 1} para {msg.symbol}")
 
