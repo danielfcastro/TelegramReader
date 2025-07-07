@@ -22,7 +22,7 @@ logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 configurar_logging()
 load_dotenv()
 
-api_id = os.getenv("api_id")
+api_id = int(os.getenv("api_id"))
 api_hash = os.getenv("api_hash")
 session_name = os.getenv("session_name")
 group_id = int(os.getenv("group_id"))
