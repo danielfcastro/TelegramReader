@@ -1,4 +1,5 @@
 import argparse
+import glob
 import logging
 import os
 import sys
@@ -13,8 +14,6 @@ os.makedirs(LOG_DIR, exist_ok=True)
 
 configurar_logging()
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
-os.makedirs("fila/sinais", exist_ok=True)
-os.makedirs("fila/monitoramentos", exist_ok=True)
 
 
 def salvar_env_com_base_no_config(is_testnet):
@@ -40,15 +39,7 @@ def salvar_env_com_base_no_config(is_testnet):
         f"broker_api_key={config['bingx_api_key']}",
         f"broker_api_secret={config['bingx_secret_key']}",
         f"broker_api_url={config['bingx_api_url_testnet'] if is_testnet else config['bingx_api_url']}",
-        "",
-        f"#db configuration",
-        f"db_type={config['db_type']}",
-        f"db_host={config['db_host']}",
-        f"db_port={config['db_port']}",
-        f"db_name={config['db_name']}",
-        f"db_user={config['db_user']}",
-        f"db_password={config['db_password']}",
-        "",
+        f"",
         f"#telegram configuration",
         f"api_id={config['api_id']}",
         f"api_hash={config['api_hash']}",
@@ -77,54 +68,52 @@ def iniciar_telegram_reader():
     logger.info("📈 - Iniciando Telegram Reader...")
     return subprocess.Popen([sys.executable, "TelegramReader.py"], start_new_session=True)
 
-def iniciar_executor_sinal():
+def iniciar_executor():
     """
-    Inicia o executor de sinais (entrada de ordens) como subprocesso.
+    Inicia o executor unificado de trades e TPs como subprocesso.
 
-    - Executa `TradeExecutorSinal.py`.
-    - Usado para lidar com sinais extraídos do Telegram.
+    - Executa `TradeExecutor.py`.
+    - Lida com sinais e monitoramento via endpoints HTTP localmente.
 
     Retorna:
-    - subprocess.Popen: Processo do executor de sinal.
+    - subprocess.Popen: Processo do executor.
     """
-    logger.info("📈 - Iniciando TradeExecutorSinal...")
-    return subprocess.Popen([sys.executable, "TradeExecutorSinal.py"], start_new_session=True)
+    logger.info("📈 - Iniciando TradeExecutor Unificado...")
+    return subprocess.Popen([sys.executable, "TradeExecutor.py"], start_new_session=True)
 
-def iniciar_executor_tp():
+
+def limpar_arquivos_sessao():
     """
-    Inicia o executor de monitoramento de Take Profits (TP) como subprocesso.
-
-    - Executa `TradeExecutorTP.py`.
-    - Responsável por reagir a mensagens de monitoramento.
-
-    Retorna:
-    - subprocess.Popen: Processo do executor de TPs.
+    Remove arquivos temporários de sessão do SQLite (*.session-journal, *.session-wal)
+    para evitar erros de 'database is locked' no Telethon.
     """
-    logger.info("📈 - Iniciando TradeExecutorTP...")
-    return subprocess.Popen([sys.executable, "TradeExecutorTP.py"], start_new_session=True)
-
+    arquivos_trava = glob.glob("*.session-journal") + glob.glob("*.session-wal")
+    for arquivo in arquivos_trava:
+        try:
+            os.remove(arquivo)
+            logger.info(f"🧹 - Arquivo de trava removido: {arquivo}")
+        except Exception as e:
+            logger.warning(f"⚠️ - Não foi possível remover {arquivo}: {e}")
 
 processos = []
 
 def iniciar_componentes():
     """
     Inicia todos os componentes principais do sistema em subprocessos.
-
-    Etapas principais:
-    1. Inicia o Telegram Reader.
-    2. Inicia o TradeExecutorSinal.
-    3. Inicia o TradeExecutorTP.
-    4. Aguarda todos os subprocessos com `.wait()`.
-    5. Se houver interrupção por teclado (CTRL+C), aciona `finalizar_programa()`.
-
-    Observações:
-    - Os processos iniciados são salvos na variável global `processos`.
     """
+    # Mata processos órfãos que possam estar travando o banco de dados
+    try:
+        subprocess.run(["pkill", "-f", "TelegramReader.py"], stderr=subprocess.DEVNULL)
+        subprocess.run(["pkill", "-f", "TradeExecutor.py"], stderr=subprocess.DEVNULL)
+        time.sleep(1)
+    except Exception:
+        pass
+
+    limpar_arquivos_sessao()
     global processos
     processos = [
         iniciar_telegram_reader(),
-        iniciar_executor_sinal(),
-        iniciar_executor_tp()
+        iniciar_executor()
     ]
 
     try:
@@ -150,10 +139,23 @@ def finalizar_programa(*_):
     Este método é registrado como handler para os sinais `SIGINT` e `SIGTERM`.
     """
     logger.info("🛑 - Encerrando aplicação por sinal do sistema...")
+    # Tenta terminar graciosamente primeiro
     for p in processos:
-        if p.poll() is None:  # ainda está rodando
-            logger.warning(f"🔪 - Matando processo PID {p.pid}")
-            os.killpg(os.getpgid(p.pid), signal.SIGTERM)
+        if p.poll() is None:
+            logger.warning(f"⏳ - Enviando SIGTERM para processo PID {p.pid}")
+            p.terminate()
+
+    # Aguarda um pouco e força se necessário
+    import time
+    time.sleep(1)
+    for p in processos:
+        if p.poll() is None:
+            logger.warning(f"🔪 - Forçando encerramento (SIGKILL) do processo PID {p.pid}")
+            p.kill()
+
+    # Limpeza de possíveis locks de sqlite do Telethon se necessário
+    # mas o Telethon deve cuidar disso se o processo morrer.
+    
     sys.exit(0)
 
 signal.signal(signal.SIGINT, finalizar_programa)

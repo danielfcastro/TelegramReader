@@ -152,21 +152,17 @@ class BingXBroker(BrokerInterface, ABC):
         except Exception as e:
             logger.exception(f"❌ - Exceção ao ajustar leverage para {symbol}: {e}")
 
-    def enviar_ordem_tp_sl(self, mensagem: MensagemSinal, quantidade):
+    def enviar_ordem_tp_sl(self, mensagem: MensagemSinal, quantidade, take_profit=None):
         """
-        Envia uma ordem de mercado com SL embutido para o par especificado.
-
-        Etapas:
-        1. Define alavancagem.
-        2. Envia ordem com `stopLoss` do tipo STOP_MARKET.
-        3. Retorna dados da ordem ou erro.
+        Envia uma ordem de mercado com SL embutido (e opcionalmente TP) para o par especificado.
 
         :param mensagem: Dados do sinal a ser executado.
         :param quantidade: Quantidade do ativo a negociar.
+        :param take_profit: Preço de Take Profit opcional.
         :return: Resultado da operação (sucesso, order_id, preço, erros).
         """
         side_leverage = "BOTH"
-        logger.debug(f"✅️ - symbol: {mensagem.symbol} - side: {mensagem.tipo_ordem} - leverage: {mensagem.alavancagem} - tp1: {mensagem.tp1} - t2: {mensagem.tp2}  - tp3: {mensagem.tp3}  - tp4: {mensagem.tp4} - sl: {mensagem.sl}")
+        logger.debug(f"✅️ - symbol: {mensagem.symbol} - side: {mensagem.tipo_ordem} - leverage: {mensagem.alavancagem} - sl: {mensagem.sl} - tp_atual: {take_profit}")
 
         try:
             self.set_leverage(symbol=mensagem.symbol, side=side_leverage, leverage=mensagem.alavancagem)
@@ -184,6 +180,14 @@ class BingXBroker(BrokerInterface, ABC):
                     "workingType": "MARK_PRICE"
                 })
             }
+
+            if take_profit:
+                body["takeProfit"] = json.dumps({
+                    "type": "TAKE_PROFIT_MARKET",
+                    "quantity": quantidade,
+                    "stopPrice": take_profit,
+                    "workingType": "MARK_PRICE"
+                })
 
             path = "/openApi/swap/v2/trade/order"
             logger.debug(f"✅️ - Pedido de envio de ordem: path: {path} - body {body}")

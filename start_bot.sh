@@ -1,4 +1,4 @@
 #!/bin/sh
-cd /root/TelegramReader
+cd /mnt/data/projetos/TelegramReader
 . venv/bin/activate
-python3 start_all.py --testnet >> /var/log/tradebot.log 2>&1
+python3 start_all.py --testnet >> logs/tradebot.log 2>&1
