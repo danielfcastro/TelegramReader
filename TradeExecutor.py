@@ -3,12 +3,7 @@ import os
 import time
 from flask import Flask, request, jsonify
 
-# Tentativa de importação do módulo de banco de dados
-try:
-    import database
-except ImportError:
-    database = None
-    logging.warning("⚠️ - Módulo 'database' não encontrado. Algumas funcionalidades podem estar limitadas.")
+# Módulo de banco de dados foi removido (agora 100% Stateless)
 
 from message.mensagem_sinal import MensagemSinal
 from message.mensagem_tp import MensagemTP
