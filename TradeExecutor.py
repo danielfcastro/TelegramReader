@@ -117,15 +117,20 @@ def process_tp():
         numero_tp = int(msg.tp.replace("TP", ""))
 
         pos_res = broker.obter_posicao(symbol)
-        if not pos_res or pos_res.get("code") != 0 or not pos_res.get("data"):
-            logger.error(f"❌ - Erro ao consultar posição para {symbol} na corretora.")
-            return jsonify({"sucesso": False, "msg": "Posição não encontrada ou erro na consulta"}), 404
+        if not pos_res or pos_res.get("code") != 0:
+            logger.error(f"❌ - Erro ao consultar posição para {symbol} na corretora: {pos_res}")
+            return jsonify({"sucesso": False, "msg": "Erro na consulta de posição"}), 500
 
-        # Encontra a posição ativa
+        # Se 'data' for vazio, não há posição aberta
+        if not pos_res.get("data"):
+            logger.warning(f"⚠️ - Nenhuma posição aberta para {symbol}. Ignorando {msg.tp}.")
+            return jsonify({"sucesso": True, "msg": "Nenhuma posição aberta"}), 200
+
+        # Encontra a posição ativa no modo One-Way
         posicao = next((p for p in pos_res["data"] if float(p["positionAmt"]) != 0), None)
         if not posicao:
-            logger.warning(f"⚠️ - Nenhuma posição aberta encontrada para {symbol} ao processar TP{numero_tp}.")
-            return jsonify({"sucesso": False, "msg": "Nenhuma posição aberta"}), 404
+            logger.warning(f"⚠️ - Nenhuma posição ativa com volume encontrada para {symbol} ao processar {msg.tp}.")
+            return jsonify({"sucesso": True, "msg": "Nenhuma posição com volume"}), 200
 
         entry_price = float(posicao["avgPrice"])
         quantidade = abs(float(posicao["positionAmt"]))
