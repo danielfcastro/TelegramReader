@@ -15,6 +15,7 @@ from message.mensagem_tp import MensagemTP
 from integration.BingXBroker import BingXBroker
 from utils import ajustar_quantidade
 from log.logger_config import configurar_logging
+from analise_tecnica import analisar
 
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 proporcoes = [0.1, 0.2, 0.5, 0.2]
@@ -38,6 +39,19 @@ def execute_trade():
 
         logger.info(f"📩 - Requisição de SINAL (POST /trade) recebida")
         msg = MensagemSinal(**mensagem)
+        
+        # Análise Técnica antes de executar a ordem
+        logger.info(f"🔍 - Analisando tendência para {msg.symbol}...")
+        resultado_analise = analisar(msg.symbol, msg.tipo_ordem)
+        
+        if not resultado_analise.get("confluencia", False):
+            motivos = " | ".join(resultado_analise.get("motivo_rejeicao", []))
+            logger.warning(f"🚫 - Sinal rejeitado pela Análise Técnica: {motivos}")
+            return jsonify({
+                "sucesso": False,
+                "msg": f"Sinal contra a tendência. Motivo: {motivos}",
+                "detalhes": resultado_analise
+            }), 200
         
         # Lógica de execução de sinal (4-way split)
         preco_mercado = broker.obter_preco_mercado(msg.symbol)
