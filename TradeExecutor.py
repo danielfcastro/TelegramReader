@@ -95,7 +95,7 @@ def execute_trade():
 def process_tp():
     """
     Endpoint para processar monitoramento de Take Profit (PUT /tp).
-    Ajusta Stop Loss ou encerra posição conforme o alvo atingido.
+    Ajusta Stop Loss ou encerra posição conforme o alvo atingido (Stateless).
     """
     try:
         mensagem = request.get_json()
@@ -107,49 +107,44 @@ def process_tp():
         symbol = msg.symbol
         numero_tp = int(msg.tp.replace("TP", ""))
 
-        if not database:
-            return jsonify({"sucesso": False, "msg": "Módulo database não configurado"}), 500
+        pos_res = broker.obter_posicao(symbol)
+        if not pos_res or pos_res.get("code") != 0 or not pos_res.get("data"):
+            logger.error(f"❌ - Erro ao consultar posição para {symbol} na corretora.")
+            return jsonify({"sucesso": False, "msg": "Posição não encontrada ou erro na consulta"}), 404
 
-        order_id = database.take_profit.tp_ordem_id_mais_nova(symbol)
-        if order_id == 0:
-            return jsonify({"sucesso": False, "msg": f"Nenhuma ordem encontrada para {symbol}"}), 404
+        # Encontra a posição ativa
+        posicao = next((p for p in pos_res["data"] if float(p["positionAmt"]) != 0), None)
+        if not posicao:
+            logger.warning(f"⚠️ - Nenhuma posição aberta encontrada para {symbol} ao processar TP{numero_tp}.")
+            return jsonify({"sucesso": False, "msg": "Nenhuma posição aberta"}), 404
 
-        msg.order_id = order_id
-        database.take_profit.tp_atualizar(order_id=msg.order_id, numero_tp=msg.tp, novo_status=2)
-
-        response = broker.get_open_order_info(symbol=symbol, order_id=order_id)
-        if not response:
-            return jsonify({"sucesso": False, "msg": "Ordem não encontrada na corretora"}), 404
-
-        entry_price = response["data"]["order"]["avgPrice"]
-        current_stop_price = response["data"]["order"]["stopLoss"]["stopPrice"]
-        current_order_side = response["data"]["order"]["side"]
-
-        stop_price = current_stop_price if numero_tp == 1 else entry_price
-
-        if numero_tp >= 2:
-            database.stop_loss.stop_loss_update(order_id=order_id, novo_sl=stop_price)
+        entry_price = float(posicao["avgPrice"])
+        quantidade = abs(float(posicao["positionAmt"]))
+        position_side = "LONG" if float(posicao["positionAmt"]) > 0 else "SHORT"
 
         if numero_tp < 4:
-            quantidade = database.stop_loss.stop_loss_soma_quantidade(order_id)
-            sucesso = broker.ajustar_stop_loss(
-                symbol=symbol,
-                position_side="BOTH",
-                quantity=quantidade,
-                stop_price=stop_price,
-                order_id=order_id,
-                current_order_side=current_order_side
-            )
-            if not sucesso:
-                database.take_profit.tp_atualizar(order_id=order_id, numero_tp=numero_tp, novo_status=1)
-                return jsonify({"sucesso": False, "msg": "Falha ao ajustar SL"}), 500
-            else:
-                return jsonify({"sucesso": True, "msg": f"TP{numero_tp} processado"}), 200
+            # Para TP2 e TP3, ajustamos o Break Even (novo SL no preço de entrada)
+            if numero_tp >= 2:
+                logger.info(f"🎯 - TP{numero_tp} atingido para {symbol}. Movendo SL para Break Even...")
+                # O SL é o inverso da posição
+                side_sl = "SELL" if position_side == "LONG" else "BUY"
+
+                broker.cancela_ordem_sl(symbol)
+                time.sleep(0.5)
+
+                ret_sl = broker.enviar_ordem_sl(symbol, side_sl, quantidade, entry_price)
+                if ret_sl.get("code") == 0:
+                    logger.info(f"✅ - SL movido com sucesso para {entry_price} (Break Even) para {symbol}")
+                    return jsonify({"sucesso": True, "msg": f"TP{numero_tp} processado e Break Even ativado"}), 200
+                else:
+                    logger.error(f"❌ - Falha ao criar novo SL para {symbol}: {ret_sl.get('msg')}")
+                    return jsonify({"sucesso": False, "msg": "Falha ao ajustar SL"}), 500
+
+            return jsonify({"sucesso": True, "msg": f"TP{numero_tp} ignorado para ajuste de SL"}), 200
+
         else:
-            # TP4 - Encerramento
-            for i in range(1, 5):
-                database.take_profit.tp_atualizar(order_id=order_id, numero_tp=i, novo_status=2)
-            time.sleep(1.5)
+            # TP4 - Encerramento de todas as posições daquele símbolo
+            logger.info(f"🎯 - TP4 atingido para {symbol}. Encerrando posição e cancelando ordens...")
             broker.cancela_ordem_tp(symbol=symbol)
             broker.cancela_ordem_sl(symbol=symbol)
             broker.fecha_ordem_mercado(symbol=symbol)

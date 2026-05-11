@@ -512,3 +512,49 @@ class BingXBroker(BrokerInterface, ABC):
         except Exception as e:
             logger.exception(f"❌ - Erro ao obter detalhe de ordens: {e}")
             return {}
+
+    def obter_posicao(self, symbol):
+        """
+        Consulta a posição atual aberta para um símbolo.
+
+        :param symbol: Par de negociação.
+        :return: Dados da posição ou dicionário vazio.
+        """
+        try:
+            path = "/openApi/swap/v2/user/positions"
+            body = {"symbol": symbol}
+            logger.debug(f"✅ - Pedido de posição para {symbol}: path: {path}")
+            response = self._send_request("GET", path, body)
+            logger.debug(f"✅ - Resposta do pedido de posição: {response}")
+            return response
+        except Exception as e:
+            logger.exception(f"❌ - Erro ao obter posição para {symbol}: {e}")
+            return {}
+
+    def enviar_ordem_sl(self, symbol, side, quantity, stop_price):
+        """
+        Envia uma ordem de Stop Loss (STOP_MARKET) independente.
+
+        :param symbol: Par de negociação.
+        :param side: Lado da ordem (BUY para fechar SHORT, SELL para fechar LONG).
+        :param quantity: Quantidade a proteger.
+        :param stop_price: Preço de disparo.
+        :return: Resposta da API.
+        """
+        try:
+            path = "/openApi/swap/v2/trade/order"
+            body = {
+                "symbol": symbol,
+                "side": side,
+                "type": "STOP_MARKET",
+                "stopPrice": stop_price,
+                "quantity": quantity,
+                "positionSide": "BOTH"
+            }
+            logger.debug(f"✅ - Pedido de ordem SL: path: {path} - body {body}")
+            response = self._send_request("POST", path, body)
+            logger.debug(f"✅ - Resposta do pedido de ordem SL: {response}")
+            return response
+        except Exception as e:
+            logger.exception(f"❌ - Erro ao enviar ordem SL para {symbol}: {e}")
+            return {}

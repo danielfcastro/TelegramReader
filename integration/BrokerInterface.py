@@ -55,3 +55,11 @@ class BrokerInterface(ABC):
     @abstractmethod
     def lista_todas_as_ordens(self, symbol, order_id=None):
         pass
+
+    @abstractmethod
+    def obter_posicao(self, symbol):
+        pass
+
+    @abstractmethod
+    def enviar_ordem_sl(self, symbol, side, quantity, stop_price):
+        pass
