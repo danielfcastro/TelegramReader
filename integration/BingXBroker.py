@@ -560,3 +560,37 @@ class BingXBroker(BrokerInterface, ABC):
         except Exception as e:
             logger.exception(f"❌ - Erro ao enviar ordem SL para {symbol}: {e}")
             return {}
+
+    def enviar_trailing_stop(self, symbol, side, quantity, activation_price=None, callback_rate=1.0):
+        """
+        Envia uma ordem de Trailing Stop Market para proteger a posição.
+
+        :param symbol: Par de negociação.
+        :param side: Lado da ordem (BUY para fechar SHORT, SELL para fechar LONG).
+        :param quantity: Quantidade a proteger.
+        :param activation_price: Preço de ativação (opcional). Se não fornecido, ativa imediatamente.
+        :param callback_rate: Taxa de retorno em % (ex: 1.0 para 1%).
+        :return: Resposta da API.
+        """
+        try:
+            path = "/openApi/swap/v2/trade/order"
+            body = {
+                "symbol": symbol,
+                "side": side,
+                "type": "TRAILING_STOP_MARKET",
+                "quantity": str(quantity),
+                "positionSide": "BOTH",
+                "callbackRate": str(callback_rate),
+                "workingType": "MARK_PRICE",
+                "reduceOnly": True
+            }
+            if activation_price:
+                body["activationPrice"] = str(activation_price)
+
+            logger.debug(f"✅ - Pedido de Trailing Stop: path: {path} - body {body}")
+            response = self._send_request("POST", path, body)
+            logger.debug(f"✅ - Resposta do pedido de Trailing Stop: {response}")
+            return response
+        except Exception as e:
+            logger.exception(f"❌ - Erro ao enviar Trailing Stop para {symbol}: {e}")
+            return {}

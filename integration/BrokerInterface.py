@@ -63,3 +63,7 @@ class BrokerInterface(ABC):
     @abstractmethod
     def enviar_ordem_sl(self, symbol, side, quantity, stop_price):
         pass
+
+    @abstractmethod
+    def enviar_trailing_stop(self, symbol, side, quantity, activation_price=None, callback_rate=1.0):
+        pass

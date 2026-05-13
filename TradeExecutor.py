@@ -137,9 +137,25 @@ def process_tp():
         position_side = "LONG" if float(posicao["positionAmt"]) > 0 else "SHORT"
 
         if numero_tp < 4:
-            # Para TP2 e TP3, ajustamos o Break Even (novo SL no preço de entrada)
-            if numero_tp >= 2:
-                logger.info(f"🎯 - TP{numero_tp} atingido para {symbol}. Movendo SL para Break Even...")
+            if numero_tp == 3:
+                logger.info(f"🎯 - TP3 atingido para {symbol}. Ativando Trailing Stop...")
+                side_sl = "SELL" if position_side == "LONG" else "BUY"
+                broker.cancela_ordem_sl(symbol)
+                time.sleep(0.5)
+                
+                # Por padrão, trailing stop com callback de 1.5%
+                callback_rate = float(os.getenv("TRAILING_STOP_RATE", "1.5"))
+                ret_ts = broker.enviar_trailing_stop(symbol, side_sl, quantidade, callback_rate=callback_rate)
+                
+                if ret_ts.get("code") == 0:
+                    logger.info(f"✅ - Trailing Stop ativado para {symbol} com callback de {callback_rate}%")
+                    return jsonify({"sucesso": True, "msg": f"TP3 processado e Trailing Stop ativado"}), 200
+                else:
+                    logger.error(f"❌ - Falha ao criar Trailing Stop para {symbol}: {ret_ts.get('msg')}")
+                    return jsonify({"sucesso": False, "msg": "Falha ao ativar Trailing Stop"}), 500
+
+            elif numero_tp == 2:
+                logger.info(f"🎯 - TP2 atingido para {symbol}. Movendo SL para Break Even...")
                 # O SL é o inverso da posição
                 side_sl = "SELL" if position_side == "LONG" else "BUY"
 
@@ -154,7 +170,7 @@ def process_tp():
                     logger.error(f"❌ - Falha ao criar novo SL para {symbol}: {ret_sl.get('msg')}")
                     return jsonify({"sucesso": False, "msg": "Falha ao ajustar SL"}), 500
 
-            return jsonify({"sucesso": True, "msg": f"TP{numero_tp} ignorado para ajuste de SL"}), 200
+            return jsonify({"sucesso": True, "msg": f"TP{numero_tp} ignorado para ajuste de SL/Trailing Stop"}), 200
 
         else:
             # TP4 - Encerramento de todas as posições daquele símbolo
