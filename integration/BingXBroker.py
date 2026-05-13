@@ -175,19 +175,19 @@ class BingXBroker(BrokerInterface, ABC):
                 "quantity": quantidade,
                 "stopLoss": json.dumps({
                     "type": "STOP_MARKET",
-                    "quantity": quantidade,
-                    "stopPrice": mensagem.sl,
+                    "quantity": str(quantidade),
+                    "stopPrice": str(mensagem.sl),
                     "workingType": "MARK_PRICE"
-                })
+                }, separators=(',', ':'))
             }
 
             if take_profit:
                 body["takeProfit"] = json.dumps({
                     "type": "TAKE_PROFIT_MARKET",
-                    "quantity": quantidade,
-                    "stopPrice": take_profit,
+                    "quantity": str(quantidade),
+                    "stopPrice": str(take_profit),
                     "workingType": "MARK_PRICE"
-                })
+                }, separators=(',', ':'))
 
             path = "/openApi/swap/v2/trade/order"
             logger.debug(f"✅️ - Pedido de envio de ordem: path: {path} - body {body}")
