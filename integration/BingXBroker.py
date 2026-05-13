@@ -549,7 +549,9 @@ class BingXBroker(BrokerInterface, ABC):
                 "type": "STOP_MARKET",
                 "stopPrice": stop_price,
                 "quantity": quantity,
-                "positionSide": "BOTH"
+                "positionSide": "BOTH",
+                "workingType": "MARK_PRICE",
+                "reduceOnly": True
             }
             logger.debug(f"✅ - Pedido de ordem SL: path: {path} - body {body}")
             response = self._send_request("POST", path, body)
