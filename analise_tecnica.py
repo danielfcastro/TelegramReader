@@ -90,14 +90,14 @@ def analisar(symbol, tipo_ordem):
         t = r["tendencia"]
         logger.debug(f"📈 - TF {label}: Tendência {t} (EMA9:{r['ema9']} | EMA21:{r['ema21']} | EMA50:{r['ema50']})")
 
-        if tipo_ordem == "SHORT" and t == "ALTA":
+        if tipo_ordem == "SHORT" and t != "BAIXA":
             confluencia = False
-            motivo = f"{label} em ALTA (EMA9 > EMA21 > EMA50)"
+            motivo = f"{label} não está em BAIXA (Tendência atual: {t})"
             logger.warning(f"🚫 - {symbol} SHORT rejeitado: {motivo}")
             motivo_rejeicao.append(motivo)
-        elif tipo_ordem == "LONG" and t == "BAIXA":
+        elif tipo_ordem == "LONG" and t != "ALTA":
             confluencia = False
-            motivo = f"{label} em BAIXA (EMA9 < EMA21 < EMA50)"
+            motivo = f"{label} não está em ALTA (Tendência atual: {t})"
             logger.warning(f"🚫 - {symbol} LONG rejeitado: {motivo}")
             motivo_rejeicao.append(motivo)
 
