@@ -21,11 +21,12 @@ def _get_klines(symbol, interval, limit=60):
             logger.error(f"❌ - Erro API BingX ao buscar klines ({interval}): {data}")
             return None
         closes = [float(c["close"]) for c in data["data"]]
+        volumes = [float(c["volume"]) for c in data["data"]]
         logger.debug(f"✅ - {len(closes)} klines obtidas para {symbol} ({interval})")
-        return closes
+        return closes, volumes
     except Exception as e:
         logger.exception(f"❌ - Exceção ao buscar klines para {symbol} ({interval}): {e}")
-        return None
+        return None, None
 
 def calc_ema(closes, period):
     if len(closes) < period:
@@ -77,8 +78,8 @@ def analisar(symbol, tipo_ordem):
     motivo_rejeicao = []
 
     for label, interval in tfs.items():
-        closes = _get_klines(symbol, interval)
-        if not closes:
+        closes, volumes = _get_klines(symbol, interval)
+        if not closes or not volumes:
             logger.warning(f"⚠️ - TF {label} ignorado por falta de dados.")
             resultados[label] = {"tendencia": "ERRO", "ema9": None, "ema21": None, "ema50": None}
             confluencia = False
@@ -89,6 +90,19 @@ def analisar(symbol, tipo_ordem):
         resultados[label] = r
         t = r["tendencia"]
         logger.debug(f"📈 - TF {label}: Tendência {t} (EMA9:{r['ema9']} | EMA21:{r['ema21']} | EMA50:{r['ema50']})")
+
+        # Filtro de Volume (Evitar lateralização sem liquidez)
+        if len(volumes) >= 21:
+            # Média de volume dos últimos 3 candles fechados
+            recent_vol_avg = sum(volumes[-4:-1]) / 3
+            # Média de volume dos 20 candles anteriores
+            sma_vol = sum(volumes[-21:-1]) / 20
+            
+            if recent_vol_avg < sma_vol:
+                confluencia = False
+                motivo = f"{label} com BAIXO VOLUME (Atual: {recent_vol_avg:.2f} < Média: {sma_vol:.2f})"
+                logger.warning(f"🚫 - {symbol} rejeitado pelo filtro de Volume: {motivo}")
+                motivo_rejeicao.append(motivo)
 
         if tipo_ordem == "SHORT" and t != "BAIXA":
             confluencia = False
