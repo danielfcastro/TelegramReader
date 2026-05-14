@@ -175,8 +175,8 @@ class BingXBroker(BrokerInterface, ABC):
                 "quantity": quantidade,
                 "stopLoss": json.dumps({
                     "type": "STOP_MARKET",
-                    "quantity": str(quantidade),
-                    "stopPrice": str(mensagem.sl),
+                    "quantity": quantidade,
+                    "stopPrice": mensagem.sl,
                     "workingType": "MARK_PRICE"
                 }, separators=(',', ':'))
             }
@@ -184,8 +184,8 @@ class BingXBroker(BrokerInterface, ABC):
             if take_profit:
                 body["takeProfit"] = json.dumps({
                     "type": "TAKE_PROFIT_MARKET",
-                    "quantity": str(quantidade),
-                    "stopPrice": str(take_profit),
+                    "quantity": quantidade,
+                    "stopPrice": take_profit,
                     "workingType": "MARK_PRICE"
                 }, separators=(',', ':'))
 
