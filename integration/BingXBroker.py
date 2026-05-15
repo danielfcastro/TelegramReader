@@ -513,6 +513,27 @@ class BingXBroker(BrokerInterface, ABC):
             logger.exception(f"❌ - Erro ao obter detalhe de ordens: {e}")
             return {}
 
+    def obter_ordens_abertas(self, symbol=None):
+        """
+        Consulta as ordens abertas na conta.
+        
+        :param symbol: Opcional. Par de negociação. Se None, retorna de todos.
+        :return: Resposta da API com lista de ordens abertas.
+        """
+        try:
+            path = "/openApi/swap/v2/trade/openOrders"
+            params = {}
+            if symbol:
+                params["symbol"] = symbol
+            
+            logger.debug(f"✅️ - Pedido de ordens abertas: path: {path} - params {params}")
+            response = self._send_request("GET", path, params)
+            logger.debug(f"✅ - Resposta do pedido de ordens abertas: {response}")
+            return response
+        except Exception as e:
+            logger.exception(f"❌ - Erro ao obter ordens abertas: {e}")
+            return {}
+
     def obter_posicao(self, symbol):
         """
         Consulta a posição atual aberta para um símbolo.

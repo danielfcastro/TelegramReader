@@ -82,6 +82,13 @@ def iniciar_executor():
     return subprocess.Popen([sys.executable, "TradeExecutor.py"], start_new_session=True)
 
 
+def iniciar_monitor_posicoes():
+    """
+    Inicia o daemon de monitoramento de posições (Break Even / Trailing Stop independente do Telegram).
+    """
+    logger.info("📈 - Iniciando Position Monitor...")
+    return subprocess.Popen([sys.executable, "PositionMonitor.py"], start_new_session=True)
+
 def limpar_arquivos_sessao():
     """
     Remove arquivos temporários de sessão do SQLite (*.session-journal, *.session-wal)
@@ -105,6 +112,7 @@ def iniciar_componentes():
     try:
         subprocess.run(["pkill", "-f", "TelegramReader.py"], stderr=subprocess.DEVNULL)
         subprocess.run(["pkill", "-f", "TradeExecutor.py"], stderr=subprocess.DEVNULL)
+        subprocess.run(["pkill", "-f", "PositionMonitor.py"], stderr=subprocess.DEVNULL)
         time.sleep(1)
     except Exception:
         pass
@@ -113,7 +121,8 @@ def iniciar_componentes():
     global processos
     processos = [
         iniciar_telegram_reader(),
-        iniciar_executor()
+        iniciar_executor(),
+        iniciar_monitor_posicoes()
     ]
 
     try:
