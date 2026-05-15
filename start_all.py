@@ -47,7 +47,8 @@ def salvar_env_com_base_no_config(is_testnet):
         f"session_name={config['session_name']}",
         "",
         f"#trade configuration",
-        f"trade_percentage={config['trade_percentage']}"
+        f"trade_percentage={config['trade_percentage']}",
+        f"USE_TECHNICAL_ANALYSIS=false"
     ]
 
     with open(".env", "w") as f:

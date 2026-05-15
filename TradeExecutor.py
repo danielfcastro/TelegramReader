@@ -36,17 +36,22 @@ def execute_trade():
         msg = MensagemSinal(**mensagem)
         
         # Análise Técnica antes de executar a ordem
-        logger.info(f"🔍 - Analisando tendência para {msg.symbol}...")
-        resultado_analise = analisar(msg.symbol, msg.tipo_ordem)
+        use_technical_analysis = os.getenv("USE_TECHNICAL_ANALYSIS", "true").lower() == "true"
         
-        if not resultado_analise.get("confluencia", False):
-            motivos = " | ".join(resultado_analise.get("motivo_rejeicao", []))
-            logger.warning(f"🚫 - Sinal rejeitado pela Análise Técnica: {motivos}")
-            return jsonify({
-                "sucesso": False,
-                "msg": f"Sinal contra a tendência. Motivo: {motivos}",
-                "detalhes": resultado_analise
-            }), 200
+        if use_technical_analysis:
+            logger.info(f"🔍 - Analisando tendência para {msg.symbol}...")
+            resultado_analise = analisar(msg.symbol, msg.tipo_ordem)
+            
+            if not resultado_analise.get("confluencia", False):
+                motivos = " | ".join(resultado_analise.get("motivo_rejeicao", []))
+                logger.warning(f"🚫 - Sinal rejeitado pela Análise Técnica: {motivos}")
+                return jsonify({
+                    "sucesso": False,
+                    "msg": f"Sinal contra a tendência. Motivo: {motivos}",
+                    "detalhes": resultado_analise
+                }), 200
+        else:
+            logger.info(f"⚡ - Análise Técnica desabilitada via USE_TECHNICAL_ANALYSIS. Aprovando sinal {msg.symbol} diretamente.")
         
         # Lógica de execução de sinal (4-way split)
         preco_mercado = broker.obter_preco_mercado(msg.symbol)
