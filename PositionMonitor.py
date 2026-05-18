@@ -46,16 +46,58 @@ def monitorar_posicoes():
                 
                 ordens = ordens_res.get("data", {}).get("orders", [])
                 
+                import json
+                
                 # Conta TPs
                 tps = [o for o in ordens if o["type"] == "TAKE_PROFIT_MARKET"]
                 num_tps_restantes = len(tps)
+
+                # Carrega o total de TPs esperados do active_trades.json
+                expected_tps = None
+                state_file = "active_trades.json"
+                if os.path.exists(state_file):
+                    try:
+                        with open(state_file, "r") as f:
+                            state = json.load(f)
+                        expected_tps = state.get(symbol)
+                    except:
+                        pass
+                
+                if expected_tps is None:
+                    # Se não está no JSON, o TradeExecutor ainda está abrindo as ordens ou é trade manual
+                    continue
+
+                # Define o que deve ser ativado com base no número original de ordens abertas
+                should_be = False
+                should_ts = False
+                
+                if expected_tps == 4:
+                    if num_tps_restantes == 2: should_be = True
+                    if num_tps_restantes == 1: should_ts = True
+                elif expected_tps == 3:
+                    if num_tps_restantes == 1: should_be = True
+                elif expected_tps <= 2:
+                    pass # Trades muito parciais não aplicam BE complexo por segurança
+
+                # Anti-Race Condition Debounce: Confirma se o status se mantém após 5s
+                if should_be or should_ts:
+                    time.sleep(5)
+                    ordens_res = broker.obter_ordens_abertas(symbol)
+                    if not ordens_res or ordens_res.get("code") != 0:
+                        continue
+                    ordens = ordens_res.get("data", {}).get("orders", [])
+                    tps = [o for o in ordens if o["type"] == "TAKE_PROFIT_MARKET"]
+                    num_tps_confirmado = len(tps)
+                    
+                    if num_tps_confirmado != num_tps_restantes:
+                        logger.info(f"⏳ - [Monitor] Falso positivo evitado para {symbol}. TPs mudaram de {num_tps_restantes} para {num_tps_confirmado}.")
+                        continue
 
                 # Busca ordens Stop Loss ou Trailing Stop
                 sl_orders = [o for o in ordens if o["type"] == "STOP_MARKET"]
                 ts_orders = [o for o in ordens if o["type"] in ["TRAILING_STOP_MARKET", "TRAILING_TP_SL"]]
 
-                if num_tps_restantes == 2:
-                    # TP2 atingido, requer Break Even
+                if should_be:
                     if len(ts_orders) > 0:
                         continue # Já tem trailing stop, ignora BE
 
@@ -64,7 +106,7 @@ def monitorar_posicoes():
                         current_sl_price = float(sl_orders[0].get("stopPrice", 0))
                         # Se o SL ainda não for igual ao entry price (avg_price), aplica BE
                         if abs(current_sl_price - avg_price) / avg_price > 0.001:  # Tolerância de 0.1%
-                            logger.info(f"🛡️ - [Monitor] TP2 detectado para {symbol}. Aplicando Break Even...")
+                            logger.info(f"🛡️ - [Monitor] Condição de Break Even detectada para {symbol}. Aplicando...")
                             broker.cancela_ordem_sl(symbol)
                             time.sleep(0.5)
                             ret_sl = broker.enviar_ordem_sl(symbol, side_sl, quantidade, avg_price)
@@ -73,10 +115,9 @@ def monitorar_posicoes():
                             else:
                                 logger.error(f"❌ - [Monitor] Erro ao ativar Break Even: {ret_sl}")
                 
-                elif num_tps_restantes == 1:
-                    # TP3 atingido, requer Trailing Stop
+                elif should_ts:
                     if len(ts_orders) == 0:
-                        logger.info(f"🚀 - [Monitor] TP3 detectado para {symbol}. Aplicando Trailing Stop...")
+                        logger.info(f"🚀 - [Monitor] Condição de Trailing Stop detectada para {symbol}. Aplicando...")
                         broker.cancela_ordem_sl(symbol)
                         time.sleep(0.5)
                         

@@ -95,6 +95,20 @@ def execute_trade():
             time.sleep(0.5)
 
         if sucessos > 0:
+            # Salvar state para o PositionMonitor saber quantos TPs foram abertos
+            try:
+                import json
+                state_file = "active_trades.json"
+                state = {}
+                if os.path.exists(state_file):
+                    with open(state_file, "r") as f:
+                        state = json.load(f)
+                state[msg.symbol] = sucessos
+                with open(state_file, "w") as f:
+                    json.dump(state, f)
+            except Exception as e:
+                logger.error(f"Erro ao salvar state em active_trades.json: {e}")
+
             msg_final = f"🏁 - Processamento de sinal concluído. {sucessos}/4 ordens executadas."
             logger.info(msg_final)
             return jsonify({"sucesso": True, "msg": msg_final, "detalhes": detalhes_ordens}), 200
