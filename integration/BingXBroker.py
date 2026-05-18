@@ -601,7 +601,7 @@ class BingXBroker(BrokerInterface, ABC):
                 "type": "TRAILING_STOP_MARKET",
                 "quantity": str(quantity),
                 "positionSide": "BOTH",
-                "priceRate": str(callback_rate),
+                "priceRate": str(float(callback_rate) / 100.0),
                 "workingType": "MARK_PRICE",
                 "reduceOnly": True
             }
