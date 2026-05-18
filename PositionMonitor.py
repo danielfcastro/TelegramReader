@@ -101,19 +101,23 @@ def monitorar_posicoes():
                     if len(ts_orders) > 0:
                         continue # Já tem trailing stop, ignora BE
 
+                    needs_be = False
                     if len(sl_orders) > 0:
-                        # Pega o preço da ordem SL atual
                         current_sl_price = float(sl_orders[0].get("stopPrice", 0))
-                        # Se o SL ainda não for igual ao entry price (avg_price), aplica BE
-                        if abs(current_sl_price - avg_price) / avg_price > 0.001:  # Tolerância de 0.1%
-                            logger.info(f"🛡️ - [Monitor] Condição de Break Even detectada para {symbol}. Aplicando...")
-                            broker.cancela_ordem_sl(symbol)
-                            time.sleep(0.5)
-                            ret_sl = broker.enviar_ordem_sl(symbol, side_sl, quantidade, avg_price)
-                            if ret_sl.get("code") == 0:
-                                logger.info(f"✅ - [Monitor] Break Even ativado com sucesso para {symbol} em {avg_price}.")
-                            else:
-                                logger.error(f"❌ - [Monitor] Erro ao ativar Break Even: {ret_sl}")
+                        if abs(current_sl_price - avg_price) / avg_price > 0.001:
+                            needs_be = True
+                    else:
+                        needs_be = True # Se não tem SL, precisa criar no Break Even!
+                        
+                    if needs_be:
+                        logger.info(f"🛡️ - [Monitor] Condição de Break Even detectada para {symbol}. Aplicando...")
+                        broker.cancela_ordem_sl(symbol)
+                        time.sleep(0.5)
+                        ret_sl = broker.enviar_ordem_sl(symbol, side_sl, quantidade, avg_price)
+                        if ret_sl.get("code") == 0:
+                            logger.info(f"✅ - [Monitor] Break Even ativado com sucesso para {symbol} em {avg_price}.")
+                        else:
+                            logger.error(f"❌ - [Monitor] Erro ao ativar Break Even: {ret_sl}")
                 
                 elif should_ts:
                     if len(ts_orders) == 0:
