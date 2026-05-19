@@ -5,6 +5,7 @@ import os
 import sys
 import subprocess
 import signal
+import time
 
 from log.logger_config import configurar_logging
 from utils import carregar_config
