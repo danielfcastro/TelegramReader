@@ -36,7 +36,7 @@ def monitorar_posicoes():
                 symbol = pos["symbol"]
                 avg_price = float(pos["avgPrice"])
                 quantidade = abs(float(pos["positionAmt"]))
-                position_side = "LONG" if float(pos["positionAmt"]) > 0 else "SHORT"
+                position_side = pos.get("positionSide", "LONG" if float(pos["positionAmt"]) > 0 else "SHORT")
                 side_sl = "SELL" if position_side == "LONG" else "BUY"
 
                 # Obtém todas as ordens abertas para o símbolo

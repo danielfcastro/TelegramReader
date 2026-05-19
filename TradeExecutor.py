@@ -153,7 +153,7 @@ def process_tp():
 
         entry_price = float(posicao["avgPrice"])
         quantidade = abs(float(posicao["positionAmt"]))
-        position_side = "LONG" if float(posicao["positionAmt"]) > 0 else "SHORT"
+        position_side = posicao.get("positionSide", "LONG" if float(posicao["positionAmt"]) > 0 else "SHORT")
 
         if numero_tp < 4:
             if numero_tp == 3:
