@@ -163,3 +163,4 @@ minha_sessao.*
 fila/
 
 active_trades.json
+positions_output.json
