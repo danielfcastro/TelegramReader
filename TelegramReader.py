@@ -130,7 +130,7 @@ async def main():
     async def wrapper_handler(event):
         resultado = await handler(event)
         if resultado:
-            logger.info(f"📊 - Resultado: \n{json.dumps(resultado, indent=4)}")
+            logger.debug(f"📊 - Mensagem: \n{json.dumps(resultado, indent=4)}")
 
     await client.run_until_disconnected()
 
