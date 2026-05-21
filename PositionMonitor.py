@@ -110,18 +110,18 @@ def monitorar_posicoes():
                         needs_be = True # Se não tem SL, precisa criar no Break Even!
                         
                     if needs_be:
-                        logger.info(f"🛡️ - [Monitor] Condição de Break Even detectada para {symbol}. Aplicando...")
+                        logger.debug(f"🛡️ - [Monitor] Condição de Break Even detectada para {symbol}. Aplicando...")
                         broker.cancela_ordem_sl(symbol)
                         time.sleep(0.5)
                         ret_sl = broker.enviar_ordem_sl(symbol, side_sl, quantidade, avg_price)
                         if ret_sl.get("code") == 0:
-                            logger.info(f"✅ - [Monitor] Break Even ativado com sucesso para {symbol} em {avg_price}.")
+                            logger.debug(f"✅ - [Monitor] Break Even ativado com sucesso para {symbol} em {avg_price}.")
                         else:
                             logger.error(f"❌ - [Monitor] Erro ao ativar Break Even: {ret_sl}")
                 
                 elif should_ts:
                     if len(ts_orders) == 0:
-                        logger.info(f"🚀 - [Monitor] Condição de Trailing Stop detectada para {symbol}. Aplicando...")
+                        logger.debug(f"🚀 - [Monitor] Condição de Trailing Stop detectada para {symbol}. Aplicando...")
                         broker.cancela_ordem_sl(symbol)
                         time.sleep(0.5)
                         
@@ -129,7 +129,7 @@ def monitorar_posicoes():
                         ret_ts = broker.enviar_trailing_stop(symbol, side_sl, quantidade, callback_rate=callback_rate)
                         
                         if ret_ts.get("code") == 0:
-                            logger.info(f"✅ - [Monitor] Trailing Stop ativado com sucesso para {symbol} a {callback_rate}%.")
+                            logger.debug(f"✅ - [Monitor] Trailing Stop ativado com sucesso para {symbol} a {callback_rate}%.")
                         else:
                             logger.error(f"❌ - [Monitor] Erro ao ativar Trailing Stop: {ret_ts}")
 

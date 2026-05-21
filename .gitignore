@@ -16,8 +16,8 @@ logs/
 minha_sessao.*
 
 #trade logs
-active_trades.json
-positions_output.json
+active*.json
+positions*.json
 
 # Distribution / packaging
 .Python
