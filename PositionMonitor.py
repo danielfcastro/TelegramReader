@@ -68,16 +68,36 @@ def monitorar_posicoes():
                     continue
 
                 # Define o que deve ser ativado com base no número original de ordens abertas
+                # Estratégia de gestão de risco em 4 estágios:
+                #   TP1 (10% do volume) → Move o SL para Break Even
+                #   TP2 (20% do volume) → Move o SL para Break Even se já não estiver
+                #   TP3 (50% do volume) → Move o SL para Break Even se já não estiver
+                #   TP4 (10% do volume) → Ativa Trailing Stop para os 10% restantes abertos
+                #   (Os 10% restantes não possuem TP fixo — são monitorados apenas pelo TS)
                 should_be = False
                 should_ts = False
-                
+
                 if expected_tps == 4:
-                    if num_tps_restantes == 2: should_be = True
-                    if num_tps_restantes == 1: should_ts = True
+                    if num_tps_restantes == 3:                 # TP1 atingido
+                        should_be = True
+                    elif num_tps_restantes == 2:               # TP2 atingido
+                        should_be = True
+                    elif num_tps_restantes == 1:               # TP3 atingido
+                        should_be = True
+                    elif num_tps_restantes == 0:               # TP4 atingido → TS para os 10% restantes
+                        should_ts = True
                 elif expected_tps == 3:
-                    if num_tps_restantes == 1: should_be = True
-                elif expected_tps <= 2:
-                    pass # Trades muito parciais não aplicam BE complexo por segurança
+                    if num_tps_restantes == 2:                 # TP1 atingido
+                        should_be = True
+                    elif num_tps_restantes == 1:               # TP2 atingido
+                        should_be = True
+                    elif num_tps_restantes == 0:               # TP3 atingido → TS para restante
+                        should_ts = True
+                elif expected_tps == 2:
+                    if num_tps_restantes == 1:                 # TP1 atingido
+                        should_be = True
+                    elif num_tps_restantes == 0:               # TP2 atingido → TS para restante
+                        should_ts = True
 
                 # Anti-Race Condition Debounce: Confirma se o status se mantém após 5s
                 if should_be or should_ts:
@@ -97,41 +117,41 @@ def monitorar_posicoes():
                 sl_orders = [o for o in ordens if o["type"] == "STOP_MARKET"]
                 ts_orders = [o for o in ordens if o["type"] in ["TRAILING_STOP_MARKET", "TRAILING_TP_SL"]]
 
-                if should_be:
-                    if len(ts_orders) > 0:
-                        continue # Já tem trailing stop, ignora BE
-
+                # Etapa 1: Break Even (não aplica se já tem Trailing Stop ativo)
+                if should_be and len(ts_orders) == 0:
                     needs_be = False
                     if len(sl_orders) > 0:
                         current_sl_price = float(sl_orders[0].get("stopPrice", 0))
                         if abs(current_sl_price - avg_price) / avg_price > 0.001:
                             needs_be = True
                     else:
-                        needs_be = True # Se não tem SL, precisa criar no Break Even!
-                        
+                        needs_be = True  # Sem SL → cria direto no Break Even
+
                     if needs_be:
-                        logger.debug(f"🛡️ - [Monitor] Condição de Break Even detectada para {symbol}. Aplicando...")
+                        logger.debug(f"🛡️ - [Monitor] Aplicando Break Even para {symbol} em {avg_price}...")
                         broker.cancela_ordem_sl(symbol)
                         time.sleep(0.5)
                         ret_sl = broker.enviar_ordem_sl(symbol, side_sl, quantidade, avg_price)
                         if ret_sl.get("code") == 0:
-                            logger.debug(f"✅ - [Monitor] Break Even ativado com sucesso para {symbol} em {avg_price}.")
+                            logger.debug(f"✅ - [Monitor] Break Even ativado para {symbol} em {avg_price}.")
                         else:
                             logger.error(f"❌ - [Monitor] Erro ao ativar Break Even: {ret_sl}")
-                
+
+                # Etapa 2: Trailing Stop (TP4 atingido — cobre os 10% finais sem TP fixo)
                 elif should_ts:
                     if len(ts_orders) == 0:
-                        logger.debug(f"🚀 - [Monitor] Condição de Trailing Stop detectada para {symbol}. Aplicando...")
+                        logger.debug(f"🚀 - [Monitor] Ativando Trailing Stop para {symbol} (TP4 atingido, 10% restantes abertos)...")
                         broker.cancela_ordem_sl(symbol)
                         time.sleep(0.5)
-                        
+
                         callback_rate = float(os.getenv("TRAILING_STOP_RATE", "1.5"))
                         ret_ts = broker.enviar_trailing_stop(symbol, side_sl, quantidade, callback_rate=callback_rate)
-                        
+
                         if ret_ts.get("code") == 0:
-                            logger.debug(f"✅ - [Monitor] Trailing Stop ativado com sucesso para {symbol} a {callback_rate}%.")
+                            logger.debug(f"✅ - [Monitor] Trailing Stop ativado para {symbol} a {callback_rate}%.")
                         else:
                             logger.error(f"❌ - [Monitor] Erro ao ativar Trailing Stop: {ret_ts}")
+
 
             time.sleep(15)
 

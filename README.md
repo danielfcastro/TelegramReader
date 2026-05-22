@@ -1,315 +1,279 @@
-# 📄 README.md — Projeto Telegram Crypto Signal Bot
+# 📡 TelegramReader — Bot de Trading Automatizado com Gestão de Risco
 
-## 📚 Descrição
-
-Este projeto é dividido em **dois serviços independentes**:
-
-* **TelegramReader**: Monitora mensagens de sinais de trading em grupos ou canais do Telegram e deposita em uma fila.
-* **TradeExecutorSinal**: Recupera mensagem da fila de sinais, identifica sinais pendentes e envia ordens automáticas para a BingX.
-* **TradeExecutorTP**: Recupera mensagem da fila de tp, identifica sinais pendentes e envia ordens automáticas para a BingX.
-
-✅ Arquitetura desacoplada, modular e escalável.
-✅ Configuração fácil para ambiente de testes e produção.
+Bot que lê sinais de trading de um grupo privado do Telegram e os executa automaticamente na corretora **BingX Futures**, com gestão de risco progressiva via Break Even e Trailing Stop.
 
 ---
 
-## 🛠️ Estrutura do Projeto
+## 🗺️ Visão Geral da Arquitetura
+
+O sistema é composto por **3 serviços independentes** que rodam em paralelo, gerenciados pelo `start_all.py` (ou via `systemd`):
 
 ```
-TelegramReader/
-├── .venv/
-├── docs/
-├── fila/
-├── integration/
-│   ├── __init__.py
-│   ├── BingXBroker.py
-│   └── BrokerInterface.py
-├── log/
-│   ├── __init__.py
-│   └── logger_config.py
-├── logs/
-│   └── app.log
-├── message/
-│   ├── mensagem_sinal.py
-│   └── mensagem_tp.py
-├── .env
-├── .gitignore
-├── config.properties
-├── estrutura.txt
-├── minha_sessao.session
-├── README.md
-├── requirements.txt
-├── start_all.py
-├── start_bot.bat
-├── start_bot.sh
-├── TelegramReader.py
-├── TradeExecutorSinal.py
-├── TradeExecutorTP.py
-└── utils.py
+┌─────────────────────────────────────────────────────────────┐
+│                        Telegram Group                       │
+│          (Sinais de entrada + Atualizações de TP)           │
+└───────────────────────────┬─────────────────────────────────┘
+                            │ Mensagem recebida
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    TelegramReader.py                        │
+│  • Escuta mensagens com Telethon                            │
+│  • Classifica: SINAL (trade novo) ou MONITORAMENTO (TP hit) │
+│  • POST /trade  →  TradeExecutor                            │
+│  • PUT  /tp     →  TradeExecutor                            │
+└───────────────────────────┬─────────────────────────────────┘
+                            │ HTTP (localhost)
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    TradeExecutor.py                         │
+│  Flask API porta 8001                                       │
+│  POST /trade → Abre 5 ordens na BingX                       │
+│  PUT  /tp    → Ajusta SL (BE) ou ativa Trailing Stop        │
+└───────────────────────────┬─────────────────────────────────┘
+                            │ API BingX
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   PositionMonitor.py                        │
+│  • Daemon de polling (a cada 15s)                           │
+│  • Fallback independente do Telegram                        │
+│  • Detecta TPs executados via contagem de ordens abertas    │
+│  • Aplica Break Even e Trailing Stop automaticamente        │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📦 Instalação
+## 📋 Estratégia de Execução — 5 Ordens por Sinal
 
-1. Clone ou copie este projeto para sua máquina.
+Cada sinal recebido abre **5 ordens de mercado simultâneas** com proporções específicas do capital alocado:
 
-2. Crie o ambiente virtual Python:
+| Ordem | Volume | TP Fixo | SL | Ação ao ser atingida |
+|-------|--------|---------|-----|----------------------|
+| #1    | 10%    | TP1     | ✅  | Move SL → Break Even |
+| #2    | 20%    | TP2     | ✅  | Move SL → Break Even (se não estiver) |
+| #3    | 50%    | TP3     | ✅  | Move SL → Break Even (se não estiver) |
+| #4    | 10%    | TP4     | ✅  | Ativa Trailing Stop para os 10% restantes |
+| #5    | 10%    | ❌ Nenhum | ✅ | Rastreada **apenas** pelo Trailing Stop |
 
-```bash
-python -m venv venv
+> **Os 10% da Ordem #5 ficam abertos sem TP fixo**, aguardando o Trailing Stop que é ativado quando a Ordem #4 (TP4) é atingida. Isso permite capturar movimentos adicionais além do TP4 sem limitar o upside.
+
+---
+
+## 🛡️ Gestão de Risco Progressiva
+
+### Sequência de eventos após abertura de posição
+
+```
+Entrada
+  │
+  ├─ TP1 atingido (10% fechado)
+  │     └─► SL de todas as ordens → BREAK EVEN (preço de entrada)
+  │          ✅ A partir daqui, pior caso = operação zerada
+  │
+  ├─ TP2 atingido (20% fechado)
+  │     └─► Confirma SL no Break Even (se por algum motivo não estiver)
+  │
+  ├─ TP3 atingido (50% fechado)
+  │     └─► Confirma SL no Break Even (se por algum motivo não estiver)
+  │
+  ├─ TP4 atingido (10% fechado)
+  │     └─► TRAILING STOP ativado sobre os 10% restantes (Ordem #5)
+  │          • Segue o preço com callback configurável (padrão: 1.5%)
+  │          • Captura movimento adicional sem TP fixo
+  │
+  └─ Trailing Stop disparado
+        └─► Posição #5 encerrada automaticamente pela corretora
 ```
 
-3. Ative o ambiente virtual:
+### Anti-Race Condition (PositionMonitor)
+O `PositionMonitor` implementa um **debounce de 5 segundos**: antes de agir, consulta novamente a API para confirmar que o número de TPs realmente mudou. Isso evita ações errôneas causadas por delays na API ou ordens em execução simultânea.
 
-- **Windows**:
+### Detecção de Estado (Stateless)
+O sistema é **stateless** — não usa banco de dados. A lógica de monitoramento funciona assim:
 
-```bash
-venv\Scripts\activate
-```
+- O `TradeExecutor` salva no `active_trades.json` **quantos TPs com preço fixo** foram abertos (ex: `"VELVET-USDT": 4`)
+- O `PositionMonitor` consulta a API e conta os `TAKE_PROFIT_MARKET` ainda abertos
+- A diferença entre o esperado e o atual revela qual TP foi atingido
 
-- **Linux/macOS**:
+| TPs Abertos Restantes | Situação detectada | Ação |
+|-----------------------|-------------------|------|
+| `expected - 1`        | TP1 atingido      | Break Even |
+| `expected - 2`        | TP2 atingido      | Break Even (se não ativo) |
+| `expected - 3`        | TP3 atingido      | Break Even (se não ativo) |
+| `0`                   | TP4 atingido      | Trailing Stop |
 
-```bash
-source venv/bin/activate
-```
+---
 
-4. Instale as dependências:
+## 🔍 Análise Técnica (Opcional)
 
-```bash
-pip install -r requirements.txt
+Antes de executar um sinal, o bot pode filtrar operações contra a tendência via `analise_tecnica.py`:
+
+- **Timeframes analisados:** 15m, 1h e 4h
+- **Indicadores:** EMA 9, EMA 21 e EMA 50
+- **Critério:** Os 3 timeframes devem estar alinhados na direção do sinal (LONG ou SHORT)
+- **Filtro de volume:** Volume recente deve ser superior à média dos últimos 20 candles
+
+Para **desabilitar** a análise técnica e executar todos os sinais diretamente:
+
+```properties
+# config.properties
+use_technical_analysis=false
 ```
 
 ---
 
 ## ⚙️ Configuração
 
-Edite o arquivo `config.properties`:
+### 1. `config.properties`
 
-```ini
-# Telegram API
-api_id=API ID
-api_hash=API HASH
-group_id=ID DO GRUPO QUE SE DESEJA MONITORAR MENSAGENS
-session_name=NOME DO ARQUIVO DE SESSÃO CRIADO AO LOGAR NO TELEGRAM
-
-#BingX API
-bingx_apy_key=BING X API KEY
-bingx_secret_key=BING X SECRET
-
+```properties
+# Credenciais da BingX
+bingx_api_key=SUA_API_KEY
+bingx_secret_key=SUA_SECRET_KEY
+bingx_api_url=https://open-api.bingx.com
 bingx_api_url_testnet=https://open-api-vst.bingx.com
-bingx_api_url=#https://open-api.bingx.com
 
-# Trading Strategy
-trade_percentage=3
+# Credenciais do Telegram
+api_id=SEU_API_ID
+api_hash=SEU_API_HASH
+group_id=ID_DO_GRUPO
+session_name=minha_sessao
 
+# Parâmetros de Trade
+trade_percentage=3        # % do saldo disponível por sinal
+use_technical_analysis=false
 ```
+
+### 2. Variáveis de Ambiente (`.env` — gerado automaticamente)
+
+| Variável | Padrão | Descrição |
+|----------|--------|-----------|
+| `TRADE_PERCENTAGE` | `3` | % do saldo por operação |
+| `TRAILING_STOP_RATE` | `1.5` | Callback do Trailing Stop em % |
+| `USE_TECHNICAL_ANALYSIS` | `false` | Habilita/desabilita filtro técnico |
+| `PORT_EXECUTOR` | `8001` | Porta do TradeExecutor Flask |
+| `IS_TESTNET` | `false` | Usa Testnet ou Mainnet |
+
+### 3. Requisitos obrigatórios na BingX
+> ⚠️ **O bot só funciona com estas configurações na corretora:**
+> - **Margin Mode:** `CROSS` (Cruzada)
+> - **Position Mode:** `ONE-WAY` (Uma direção)
 
 ---
 
-## 🏁 Primeiro Uso
+## 🚀 Como Executar
 
-1. Inicie o sistema (duas formas):
-
-### Forma 1: Script start_all.py
-
+### Instalação de dependências
 ```bash
-python start_all.py --testnet  # Recomendado para executar todos os componentes
+pip install -r requirements.txt
 ```
 
-### Forma 2: Clique duplo no `start_bot.bat` (Windows)
+### Execução manual
 
-> Crie um arquivo `start_bot.bat` com o seguinte conteúdo:
-
-```bat
-@echo off
-cd /d %~dp0
+```bash
+# Ambiente de testes (Testnet)
 python start_all.py --testnet
-pause
-```
-### Forma 2: Executar `start_bot.sh` (Linux Alpine)
 
-> Crie um arquivo `start_bot.sh` com o seguinte conteúdo:
-> 
-```shell
-#!/bin/sh
-cd /root/TelegramReader
-. venv/bin/activate
-python3 start_all.py --mainnet >> /var/log/tradebot.log 2>&1
-```
-> Dê Permissão de execução
-```shell
-chmod +x /root/TelegramReader/start_bot.sh
+# Ambiente de produção (Mainnet)
+python start_all.py --mainnet
 ```
 
-### Crie um script para inicialização automática
-> Crie um arquivo `/etc/init.d/tradebot` com o seguinte conteúdo:
-```
-#!/sbin/openrc-run
+### Como serviço systemd (produção)
 
-name="tradebot"
-description="Bot de sinais para BingX executando no TelegramReader"
-
-command="/root/TelegramReader/start_bot.sh"
-command_background=true
-pidfile="/run/tradebot.pid"
-
-depend() {
-    need net
-}
-```
-#### Configure o serviço
-```
-rc-update add tradebot default
-```
-
-#### Comandos disponíveis
-```
-rc-service tradebot start
-rc-service tradebot stop
-rc-service tradebot restart
-rc-service tradebot status
-```
-
-#### Acompanhar log
-```
-tail -f /var/log/tradebot.log
-```
----
-
-## 🔐 Segurança das Credenciais
-
-O arquivo `.env` é gerado automaticamente e contém suas chaves da API da BingX.
-**Recomenda-se adicioná-lo ao `.gitignore`** para evitar exposição em repositórios públicos.
-
----
-
-## 📋 Logs
-
-- Log da aplicação: `/var/log/tradebot.log`
-
----
-
-## 🧠 Observações
-
-* Projeto utiliza **fila persistente** com `persistqueue`, permitindo reinício seguro mesmo após falhas.
-* Threads separadas para leitura do Telegram, envio de ordens e configuração de TP/SL.
-* Pode rodar como serviço em ambientes Linux.
-* Suporte a múltiplos Take Profits com proporções configuráveis.
-
----
-
-## 📊 Resumo Técnico - Projeto Telegram Trade Bot (BingX Testnet)
-
-Este projeto integra sinais de trade recebidos via Telegram com execução automática de ordens na corretora BingX podendo ser configurado para a rede de teste ou produção.
-
-### ✅ Funcionalidades Implementadas
-
-#### TelegramReader
-
-* Escuta mensagens em grupos do Telegram.
-* Classifica mensagens como sinais de entrada ou monitoramento.
-* Armazena sinais estruturados com múltiplos TP em filas persistentes.
-
-#### TradeExecutorSinal
-
-* Consome sinais da fila `sinais`.
-* Calcula saldo, margem, alavancagem, e quantidade proporcional.
-* Envia ordem para BingX e configura múltiplos Take Profits (TPs).
-* Atualiza banco com ordem enviada e configurações feitas.
-* Registra `proporcao` de cada TP no banco para análise futura e possível reentrada.
-
-#### TradeExecutorTP
-
-* Consome sinais da fila `monitoramentos`.
-* Identifica atingimento de TP2 ou TP4.
-* Realiza operação de Break Even ajustando SL via BingX.
-* Marca no banco como break even executado.
-
-#### Fila Persistente
-
-* Utiliza `persistqueue.SQLiteQueue` para garantir robustez.
-* Resistente a falhas de energia ou reinicializações inesperadas.
-
----
-
-## 🔍 Documentação dos Arquivos-Chave
-
-* `TelegramReader.py`: Leitor principal de mensagens do Telegram.
-* `TradeExecutorSinal.py`: Envia ordens e configura TPs.
-* `TradeExecutorTP.py`: Monitora e executa Break Even.
-* `BingXBroker.py`: Wrapper da API BingX.
-* `utils.py`: Helpers de arredondamento, configuração e parser.
-* `mensagem_sinal.py`: Modelo e validação de mensagens de trade.
-
----
-
-## 📈 Diagrama de Sequência
-
-```mermaid
-%%{ init : { "theme" : "neutral" } }%%
-sequenceDiagram
-    participant Telegram
-    participant Reader
-    participant Fila
-    participant Executor
-    participant BingX
-
-    Telegram->>Reader: Nova mensagem recebida
-    Reader->>Reader: classificar_mensagem()
-    alt tipo == sinal
-        Reader->>Fila: put(sinal)
-    else tipo == monitoramento
-        Reader->>Fila: put(monitoramento)
-    end
-
-    Executor->>Fila: get(sinal)
-    Executor->>BingX: enviar_ordem_tp_sl
-    BingX-->>Executor: resposta
-
-    Executor->>Fila: get(monitoramento)
-    alt TP2 ou TP4
-        Executor->>BingX: ajustar_para_break_even
-        BingX-->>Executor: sucesso
-    end
-```
-
----
-
-## 📚 Sequência de Chamadas Explicada
-
-### 📥 TelegramReader
-
-1. Escuta mensagens usando `Telethon`.
-2. `classificar_mensagem()` determina se é sinal ou monitoramento.
-3. Armazena a mensagem na fila apropriada (`sinais` ou `monitoramentos`).
-
-### ⚙️ TradeExecutorSinal
-
-1. Consome sinais da fila `sinais`.
-2. Valida e transforma a mensagem via `MensagemSinal`.
-3. Calcula quantidade com base em saldo e `trade_percentage`.
-4. Envia ordem com múltiplos TPs usando proporções \[0.1, 0.2, 0.5, 0.2].
-
-### 📈 TradeExecutorTP
-
-1. Consome mensagens de `monitoramentos`.
-2. Se for TP2 ou TP4:
-
-   * Busca ordem ativa relacionada.
-   * Cancela SL atual e envia novo SL para preço de entrada (Break Even).
-
----
-
-## 📖 Geração de documentação
-
-> Navegue até a pasta docs
-- **Linux**
-```shell
-make html
-```
-- **Windows**:
 ```bash
-make.bat html
+# Instalar o serviço
+sudo cp tradebot.service /etc/systemd/system/
+sudo systemctl daemon-reload
+
+# Iniciar / Parar / Reiniciar
+sudo systemctl start tradebot
+sudo systemctl stop tradebot
+sudo systemctl restart tradebot
+
+# Ver status e logs em tempo real
+sudo systemctl status tradebot
+sudo journalctl -u tradebot -f
 ```
+
+### Logs da aplicação
+```bash
+tail -f logs/app.log
+```
+
 ---
+
+## 📁 Estrutura do Projeto
+
+```
+TelegramReader/
+├── TelegramReader.py        # Leitor de mensagens do Telegram (Telethon)
+├── TradeExecutor.py         # API Flask — executa trades e ajusta proteções
+├── PositionMonitor.py       # Daemon de monitoramento de posições abertas
+├── analise_tecnica.py       # Filtro técnico (EMA + Volume)
+├── start_all.py             # Orquestrador dos 3 processos
+├── utils.py                 # Parser de mensagens e utilitários
+├── config.properties        # Configurações principais
+├── active_trades.json       # Estado ativo (ignorado pelo git)
+├── tradebot.service         # Unit file do systemd
+├── integration/
+│   └── BingXBroker.py       # Client da API BingX Futures
+├── message/
+│   ├── mensagem_sinal.py    # Model de sinal de entrada
+│   └── mensagem_tp.py       # Model de atualização de TP
+├── log/
+│   └── logger_config.py     # Configuração de logging
+└── logs/
+    └── app.log              # Log rotativo da aplicação
+```
+
+---
+
+## 📊 Fluxo Completo de um Sinal
+
+```
+1. Telegram → mensagem com símbolo, tipo (LONG/SHORT),
+               alavancagem, SL, TP1, TP2, TP3, TP4
+
+2. TelegramReader classifica como SINAL
+   └─► POST /trade para TradeExecutor
+
+3. TradeExecutor:
+   a. [Opcional] Análise Técnica (EMA 15m/1h/4h + Volume)
+   b. Verifica margem → força CROSS se necessário
+   c. Calcula quantidade total = saldo × TRADE_PERCENTAGE%
+   d. Abre 5 ordens de mercado:
+      - Ordem 1 (10%): TP1 + SL
+      - Ordem 2 (20%): TP2 + SL
+      - Ordem 3 (50%): TP3 + SL
+      - Ordem 4 (10%): TP4 + SL
+      - Ordem 5 (10%): SL apenas (sem TP fixo)
+   e. Salva { "SYMBOL": 4 } em active_trades.json
+
+4. PositionMonitor (a cada 15s):
+   - Conta TAKE_PROFIT_MARKET abertas para cada símbolo ativo
+   - Aplica Break Even ou Trailing Stop conforme tabela acima
+
+5. TradeExecutor /tp (via Telegram, em paralelo):
+   - TP1/2/3 → Break Even (verificando estado atual)
+   - TP4     → Ativa Trailing Stop
+```
+
+---
+
+## 🔧 Variáveis de Proteção
+
+O `PositionMonitor` aplica as proteções **independentemente** do Telegram. Isso garante que mesmo que uma mensagem de TP não chegue (delay, queda do bot, etc.), o Break Even e o Trailing Stop ainda são ativados via polling.
+
+Ambos os mecanismos (`/tp` endpoint e `PositionMonitor`) verificam o estado atual antes de agir:
+- Já está no Break Even? → Não faz nada
+- Trailing Stop já ativo? → Não sobrescreve
+
+---
+
+## 📝 Observações Importantes
+
+- **Sinais com TPs iguais** (ex: TP1 = TP2 = TP3 = TP4): A BingX pode executar todas as ordens de uma vez, zerando o livro de TPs abertos antes que o bot detecte individualmente. O PositionMonitor detectará `0 TPs restantes` e ativará o Trailing Stop diretamente.
+
+- **Slippage**: Em ativos de preço muito baixo (ex: `0.00017`), o preço de execução pode ser maior que o TP1 ou TP2 do sinal. Nesse caso a BingX rejeita a ordem com `101400: TP Price must be greater than Last Price`. O bot loga o erro e continua com as ordens seguintes.
+
+- **active_trades.json**: Arquivo local que guarda `{ "SYMBOL": numero_de_tps }`. É ignorado pelo git (`.gitignore`). Não apagar durante operação.

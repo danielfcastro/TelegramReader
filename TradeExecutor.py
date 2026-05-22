@@ -13,7 +13,8 @@ from log.logger_config import configurar_logging
 from analise_tecnica import analisar
 
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
-proporcoes = [0.1, 0.2, 0.5, 0.2]
+# 5 ordens: 4 com TP fixo (10%+20%+50%+10%) + 1 sem TP (10% rastreado pelo Trailing Stop)
+proporcoes = [0.1, 0.2, 0.5, 0.1, 0.1]
 REQUIRED_MARGIN_TYPE = "CROSSED"
 
 configurar_logging()
@@ -66,36 +67,39 @@ def execute_trade():
         saldo = broker.obter_saldo_disponivel()
         trade_percentage = float(os.getenv("TRADE_PERCENTAGE", "3"))
         valor_trade = saldo * (trade_percentage / 100)
-        
+
         quantidade_total = ajustar_quantidade(valor_trade / preco_mercado, step=0.0001)
-        
-        tps = [msg.tp1, msg.tp2, msg.tp3, msg.tp4]
-        quantidade_acumulada = quantidade_total
+
+        # 5 TPs: os 4 primeiros têm preço fixo, o 5º não tem TP (rastreado pelo Trailing Stop)
+        tps = [msg.tp1, msg.tp2, msg.tp3, msg.tp4, None]
         sucessos = 0
+        tp_count = 0  # Conta apenas ordens COM TP fixo (para o PositionMonitor)
         detalhes_ordens = []
 
         for i, proporcao in enumerate(proporcoes):
-            if i < len(proporcoes) - 1:
-                qtd_proporcional = ajustar_quantidade(quantidade_total * proporcao, step=0.0001)
-                quantidade_acumulada -= qtd_proporcional
-            else:
-                qtd_proporcional = quantidade_acumulada
-            
+            qtd_proporcional = ajustar_quantidade(quantidade_total * proporcao, step=0.0001)
             preco_tp = tps[i]
-            logger.info(f"🚀 - Ordem {i+1}/4: {msg.symbol} | Qtd: {qtd_proporcional} | TP: {preco_tp} | SL: {msg.sl}")
-            
+
+            if preco_tp is not None:
+                logger.info(f"🚀 - Ordem {i+1}/5: {msg.symbol} | Qtd: {qtd_proporcional} | TP: {preco_tp} | SL: {msg.sl}")
+            else:
+                logger.info(f"🚀 - Ordem {i+1}/5: {msg.symbol} | Qtd: {qtd_proporcional} | SL: {msg.sl} | [Sem TP fixo → Trailing Stop]")
+
             _retorno = broker.enviar_ordem_tp_sl(msg, qtd_proporcional, take_profit=preco_tp)
-            
+
             if _retorno["sucesso"]:
                 sucessos += 1
-                detalhes_ordens.append({"tp": i+1, "order_id": _retorno["order_id"]})
+                if preco_tp is not None:
+                    tp_count += 1
+                detalhes_ordens.append({"ordem": i+1, "order_id": _retorno["order_id"], "tp": preco_tp})
             else:
-                logger.error(f"❌ - Erro no TP{i+1}: {_retorno['msg']}")
-            
+                logger.error(f"❌ - Erro na Ordem {i+1}: {_retorno['msg']}")
+
             time.sleep(0.5)
 
         if sucessos > 0:
-            # Salvar state para o PositionMonitor saber quantos TPs foram abertos
+            # Salva a contagem de TPs com preço fixo (não o total de ordens)
+            # O PositionMonitor usa esse valor para detectar quando acionar BE/TS
             try:
                 import json
                 state_file = "active_trades.json"
@@ -103,13 +107,13 @@ def execute_trade():
                 if os.path.exists(state_file):
                     with open(state_file, "r") as f:
                         state = json.load(f)
-                state[msg.symbol] = sucessos
+                state[msg.symbol] = tp_count  # ex: 4 (não 5)
                 with open(state_file, "w") as f:
                     json.dump(state, f)
             except Exception as e:
                 logger.error(f"Erro ao salvar state em active_trades.json: {e}")
 
-            msg_final = f"🏁 - Processamento de sinal concluído. {sucessos}/4 ordens executadas."
+            msg_final = f"🏁 - Processamento concluído. {sucessos}/5 ordens executadas ({tp_count} com TP fixo + 1 para Trailing Stop)."
             logger.info(msg_final)
             return jsonify({"sucesso": True, "msg": msg_final, "detalhes": detalhes_ordens}), 200
         else:
@@ -155,49 +159,63 @@ def process_tp():
         quantidade = abs(float(posicao["positionAmt"]))
         position_side = posicao.get("positionSide", "LONG" if float(posicao["positionAmt"]) > 0 else "SHORT")
 
-        if numero_tp < 4:
-            if numero_tp == 3:
-                logger.info(f"🎯 - TP3 atingido para {symbol}. Ativando Trailing Stop...")
-                side_sl = "SELL" if position_side == "LONG" else "BUY"
+        side_sl = "SELL" if position_side == "LONG" else "BUY"
+
+        if numero_tp <= 3:
+            # TP1, TP2 ou TP3 atingido → Move SL para Break Even (se ainda não estiver)
+            logger.info(f"🎯 - TP{numero_tp} atingido para {symbol}. Verificando Break Even...")
+
+            # Verifica estado atual das ordens
+            ordens_res_sl = broker.obter_ordens_abertas(symbol)
+            sl_orders, ts_orders = [], []
+            if ordens_res_sl and ordens_res_sl.get("code") == 0:
+                ordens_abertas = ordens_res_sl.get("data", {}).get("orders", [])
+                sl_orders = [o for o in ordens_abertas if o["type"] == "STOP_MARKET"]
+                ts_orders = [o for o in ordens_abertas if o["type"] in ["TRAILING_STOP_MARKET", "TRAILING_TP_SL"]]
+
+            if len(ts_orders) > 0:
+                logger.info(f"ℹ️ - {symbol}: Trailing Stop já ativo. Ignorando BE para TP{numero_tp}.")
+                return jsonify({"sucesso": True, "msg": f"TP{numero_tp}: Trailing Stop já ativo, BE ignorado"}), 200
+
+            # Verifica se SL já está no Break Even (tolerância de 0.1%)
+            needs_be = True
+            if len(sl_orders) > 0:
+                current_sl = float(sl_orders[0].get("stopPrice", 0))
+                if abs(current_sl - entry_price) / entry_price <= 0.001:
+                    needs_be = False
+                    logger.info(f"ℹ️ - {symbol}: SL já está no Break Even para TP{numero_tp}.")
+
+            if needs_be:
                 broker.cancela_ordem_sl(symbol)
                 time.sleep(0.5)
-                
-                # Por padrão, trailing stop com callback de 1.5%
-                callback_rate = float(os.getenv("TRAILING_STOP_RATE", "1.5"))
-                ret_ts = broker.enviar_trailing_stop(symbol, side_sl, quantidade, callback_rate=callback_rate)
-                
-                if ret_ts.get("code") == 0:
-                    logger.info(f"✅ - Trailing Stop ativado para {symbol} com callback de {callback_rate}%")
-                    return jsonify({"sucesso": True, "msg": f"TP3 processado e Trailing Stop ativado"}), 200
-                else:
-                    logger.error(f"❌ - Falha ao criar Trailing Stop para {symbol}: {ret_ts.get('msg')}")
-                    return jsonify({"sucesso": False, "msg": "Falha ao ativar Trailing Stop"}), 500
-
-            elif numero_tp == 2:
-                logger.info(f"🎯 - TP2 atingido para {symbol}. Movendo SL para Break Even...")
-                # O SL é o inverso da posição
-                side_sl = "SELL" if position_side == "LONG" else "BUY"
-
-                broker.cancela_ordem_sl(symbol)
-                time.sleep(0.5)
-
                 ret_sl = broker.enviar_ordem_sl(symbol, side_sl, quantidade, entry_price)
                 if ret_sl.get("code") == 0:
-                    logger.info(f"✅ - SL movido com sucesso para {entry_price} (Break Even) para {symbol}")
+                    logger.info(f"✅ - SL movido para Break Even ({entry_price}) para {symbol} no TP{numero_tp}")
                     return jsonify({"sucesso": True, "msg": f"TP{numero_tp} processado e Break Even ativado"}), 200
                 else:
-                    logger.error(f"❌ - Falha ao criar novo SL para {symbol}: {ret_sl.get('msg')}")
+                    logger.error(f"❌ - Falha ao ajustar SL para {symbol}: {ret_sl.get('msg')}")
                     return jsonify({"sucesso": False, "msg": "Falha ao ajustar SL"}), 500
 
-            return jsonify({"sucesso": True, "msg": f"TP{numero_tp} ignorado para ajuste de SL/Trailing Stop"}), 200
+            return jsonify({"sucesso": True, "msg": f"TP{numero_tp} processado (Break Even já ativo)"}), 200
+
+        elif numero_tp == 4:
+            # TP4 atingido → Ativa Trailing Stop para os 10% restantes (Ordem #5 sem TP fixo)
+            logger.info(f"🎯 - TP4 atingido para {symbol}. Ativando Trailing Stop para os 10% restantes...")
+            broker.cancela_ordem_sl(symbol)
+            time.sleep(0.5)
+            callback_rate = float(os.getenv("TRAILING_STOP_RATE", "1.5"))
+            ret_ts = broker.enviar_trailing_stop(symbol, side_sl, quantidade, callback_rate=callback_rate)
+            if ret_ts.get("code") == 0:
+                logger.info(f"✅ - Trailing Stop ativado para {symbol} com callback de {callback_rate}%")
+                return jsonify({"sucesso": True, "msg": "TP4 processado e Trailing Stop ativado"}), 200
+            else:
+                logger.error(f"❌ - Falha ao criar Trailing Stop para {symbol}: {ret_ts.get('msg')}")
+                return jsonify({"sucesso": False, "msg": "Falha ao ativar Trailing Stop"}), 500
 
         else:
-            # TP4 - Encerramento de todas as posições daquele símbolo
-            logger.info(f"🎯 - TP4 atingido para {symbol}. Encerrando posição e cancelando ordens...")
-            broker.cancela_ordem_tp(symbol=symbol)
-            broker.cancela_ordem_sl(symbol=symbol)
-            broker.fecha_ordem_mercado(symbol=symbol)
-            return jsonify({"sucesso": True, "msg": "TP4 processado e posição encerrada"}), 200
+            # TP5+ → Trailing Stop já estava ativo gerenciando o restante
+            logger.info(f"🎯 - TP{numero_tp} para {symbol}: posição já gerenciada pelo Trailing Stop.")
+            return jsonify({"sucesso": True, "msg": f"TP{numero_tp}: Trailing Stop em curso"}), 200
 
     except Exception as e:
         logger.error(f"❌ - Erro em /tp: {e}")
