@@ -185,3 +185,65 @@ def imprimir_configuracoes_ambiente():
     is_testnet = os.getenv("IS_TESTNET", "false").strip('"').lower() == "true"
     logger.info("📈- Iniciando componentes...")
     logger.info("🚀 - Executando trade no broker: %s (Testnet=%s)", os.getenv('BROKER', '').upper(), is_testnet)
+
+def registrar_saida_trade(tipo_saida, symbol):
+    """
+    Registra uma saída de trade (TP, SL ou TS), atualiza o arquivo trade_analytics.json,
+    calcula o Success Rate e grava no app.log de forma persistente.
+    
+    :param tipo_saida: 'TP', 'SL' ou 'TS'
+    :param symbol: Símbolo do trade
+    """
+    import json
+    import os
+    import logging
+    
+    analytics_file = "trade_analytics.json"
+    data = {"tp_hits": 0, "sl_hits": 0, "trailing_hits": 0}
+    
+    # 1. Carrega dados atuais
+    if os.path.exists(analytics_file):
+        try:
+            with open(analytics_file, "r") as f:
+                data = json.load(f)
+        except Exception:
+            pass
+            
+    # Garante que as chaves existam
+    data.setdefault("tp_hits", 0)
+    data.setdefault("sl_hits", 0)
+    data.setdefault("trailing_hits", 0)
+            
+    # 2. Incrementa o contador correto
+    if tipo_saida == 'TP':
+        data["tp_hits"] += 1
+        msg_log = f"🎯 - TP atingido para {symbol}!"
+    elif tipo_saida == 'SL':
+        data["sl_hits"] += 1
+        msg_log = f"❌ - Stop Loss atingido para {symbol}!"
+    elif tipo_saida == 'TS':
+        data["trailing_hits"] += 1
+        msg_log = f"🔥 - Trailing Stop atingido para {symbol}!"
+    else:
+        return
+        
+    # 3. Salva os dados atualizados
+    try:
+        with open(analytics_file, "w") as f:
+            json.dump(data, f, indent=4)
+    except Exception as e:
+        logging.getLogger("utils").error(f"Erro ao salvar analytics: {e}")
+        
+    # 4. Calcula métricas
+    a = data["tp_hits"]
+    b = data["sl_hits"]
+    c = data["trailing_hits"]
+    total = a + b + c
+    
+    success_rate = 0.0
+    if total > 0:
+        success_rate = ((a + c) / total) * 100.0
+        
+    # 5. Loga no app.log
+    logger_out = logging.getLogger("Analytics")
+    logger_out.info(f"{msg_log} | A (TP): {a} | B (SL): {b} | C (TS): {c} | Total: {total} | Success Rate: {success_rate:.2f}%")

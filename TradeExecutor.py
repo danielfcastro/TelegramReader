@@ -1,7 +1,13 @@
 import logging
 import os
+import json
 import time
 from flask import Flask, request, jsonify
+import atexit
+
+# Global counters for outcomes (runtime only, logged to app.log)
+# trade_successful: number of trades where at least one order was created successfully
+trade_successful = 0
 
 # Módulo de banco de dados foi removido (agora 100% Stateless)
 
@@ -21,6 +27,28 @@ configurar_logging()
 
 app = Flask(__name__)
 broker = BingXBroker()
+
+# Register a shutdown hook to log final TP/SL/Trade counts from persistent analytics
+def _log_final_counts():
+    import json
+    import os
+    analytics_file = "trade_analytics.json"
+    tp_val, sl_val, ts_val = 0, 0, 0
+    if os.path.exists(analytics_file):
+        try:
+            with open(analytics_file, "r") as f:
+                data = json.load(f)
+                tp_val = data.get("tp_hits", 0)
+                sl_val = data.get("sl_hits", 0)
+                ts_val = data.get("trailing_hits", 0)
+        except Exception:
+            pass
+    total = tp_val + sl_val + ts_val
+    success_rate = 0.0
+    if total > 0:
+        success_rate = ((tp_val + ts_val) / total) * 100.0
+    logger.info(f"📊 - Resumo final de performance no encerramento: A (TP): {tp_val} | B (SL): {sl_val} | C (TS): {ts_val} | Total: {total} | Success Rate: {success_rate:.2f}%")
+atexit.register(_log_final_counts)
 
 @app.route('/trade', methods=['POST'])
 def execute_trade():
@@ -98,6 +126,10 @@ def execute_trade():
             time.sleep(0.5)
 
         if sucessos > 0:
+            # Increment successful trade counter (at least one order succeeded)
+            global trade_successful
+            trade_successful += 1
+            logger.info(f"✅ - Trade bem sucedido registrado; total trades bem sucedidos: {trade_successful}")
             # Salva a contagem de TPs com preço fixo (não o total de ordens)
             # O PositionMonitor usa esse valor para detectar quando acionar BE/TS
             try:
@@ -144,8 +176,29 @@ def process_tp():
             logger.error(f"❌ - Erro ao consultar posição para {symbol} na corretora: {pos_res}")
             return jsonify({"sucesso": False, "msg": "Erro na consulta de posição"}), 500
 
-        # Se 'data' for vazio, não há posição aberta
+        from utils import registrar_saida_trade
+
+        # Se 'data' for vazio, não há posição aberta → possivelmente SL ou TS hit
         if not pos_res.get("data"):
+            # Carrega o estado salvo para saber se ainda havia TP(s) ativos
+            try:
+                with open('active_trades.json', 'r') as f:
+                    state = json.load(f)
+            except Exception:
+                state = {}
+            if state.get(symbol, 0) > 0:
+                ts_ativo = state.get(f"{symbol}_ts_active", False)
+                if ts_ativo:
+                    registrar_saida_trade('TS', symbol)
+                else:
+                    registrar_saida_trade('SL', symbol)
+                state.pop(symbol, None)
+                state.pop(f"{symbol}_ts_active", None)
+                try:
+                    with open('active_trades.json', 'w') as f:
+                        json.dump(state, f)
+                except Exception:
+                    pass
             logger.warning(f"⚠️ - Nenhuma posição aberta para {symbol}. Ignorando {msg.tp}.")
             return jsonify({"sucesso": True, "msg": "Nenhuma posição aberta"}), 200
 
@@ -161,11 +214,29 @@ def process_tp():
 
         side_sl = "SELL" if position_side == "LONG" else "BUY"
 
-        if numero_tp <= 3:
-            # TP1, TP2 ou TP3 atingido → Move SL para Break Even (se ainda não estiver)
+        # Atualiza os contadores baseando-se nos TPs atingidos e atualiza o active_trades.json
+        try:
+            with open('active_trades.json', 'r') as f:
+                state = json.load(f)
+        except Exception:
+            state = {}
+
+        expected = state.get(symbol, 4)
+        target_remaining = 4 - numero_tp
+        if expected > target_remaining:
+            diff = expected - target_remaining
+            for _ in range(diff):
+                registrar_saida_trade('TP', symbol)
+            state[symbol] = target_remaining
+            try:
+                with open('active_trades.json', 'w') as f:
+                    json.dump(state, f)
+            except Exception as e:
+                logger.error(f"Erro ao salvar active_trades em /tp: {e}")
+
+        if 1 <= numero_tp <= 3:
             logger.info(f"🎯 - TP{numero_tp} atingido para {symbol}. Verificando Break Even...")
 
-            # Verifica estado atual das ordens
             ordens_res_sl = broker.obter_ordens_abertas(symbol)
             sl_orders, ts_orders = [], []
             if ordens_res_sl and ordens_res_sl.get("code") == 0:
@@ -177,7 +248,6 @@ def process_tp():
                 logger.info(f"ℹ️ - {symbol}: Trailing Stop já ativo. Ignorando BE para TP{numero_tp}.")
                 return jsonify({"sucesso": True, "msg": f"TP{numero_tp}: Trailing Stop já ativo, BE ignorado"}), 200
 
-            # Verifica se SL já está no Break Even (tolerância de 0.1%)
             needs_be = True
             if len(sl_orders) > 0:
                 current_sl = float(sl_orders[0].get("stopPrice", 0))
@@ -199,7 +269,6 @@ def process_tp():
             return jsonify({"sucesso": True, "msg": f"TP{numero_tp} processado (Break Even já ativo)"}), 200
 
         elif numero_tp == 4:
-            # TP4 atingido → Ativa Trailing Stop para os 10% restantes (Ordem #5 sem TP fixo)
             logger.info(f"🎯 - TP4 atingido para {symbol}. Ativando Trailing Stop para os 10% restantes...")
             broker.cancela_ordem_sl(symbol)
             time.sleep(0.5)
@@ -207,13 +276,26 @@ def process_tp():
             ret_ts = broker.enviar_trailing_stop(symbol, side_sl, quantidade, callback_rate=callback_rate)
             if ret_ts.get("code") == 0:
                 logger.info(f"✅ - Trailing Stop ativado para {symbol} com callback de {callback_rate}%")
+                
+                # Marca o trailing stop como ativo
+                try:
+                    with open('active_trades.json', 'r') as f:
+                        state = json.load(f)
+                except Exception:
+                    state = {}
+                state[f"{symbol}_ts_active"] = True
+                try:
+                    with open('active_trades.json', 'w') as f:
+                        json.dump(state, f)
+                except Exception:
+                    pass
+
                 return jsonify({"sucesso": True, "msg": "TP4 processado e Trailing Stop ativado"}), 200
             else:
                 logger.error(f"❌ - Falha ao criar Trailing Stop para {symbol}: {ret_ts.get('msg')}")
                 return jsonify({"sucesso": False, "msg": "Falha ao ativar Trailing Stop"}), 500
 
         else:
-            # TP5+ → Trailing Stop já estava ativo gerenciando o restante
             logger.info(f"🎯 - TP{numero_tp} para {symbol}: posição já gerenciada pelo Trailing Stop.")
             return jsonify({"sucesso": True, "msg": f"TP{numero_tp}: Trailing Stop em curso"}), 200
 
