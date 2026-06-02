@@ -104,6 +104,35 @@ O sistema é **stateless** — não usa banco de dados. A lógica de monitoramen
 
 ---
 
+## 📊 Trade Outcome Analytics
+
+O bot possui um sistema de telemetria de performance persistente e em tempo real. Ele monitora a taxa de sucesso das operações consolidando as métricas no arquivo local `trade_analytics.json`.
+
+### Métricas e Classificação
+
+Os trades são classificados em três tipos de desfechos distintos:
+* **A (TP Hits / `tp_hits`):** Incrementado a cada Take Profit fixo (TP1, TP2, TP3, TP4) executado com sucesso na corretora.
+* **B (SL Hits / `sl_hits`):** Incrementado quando a posição é encerrada pelo Stop Loss original ou no Break Even.
+* **C (TS Hits / `trailing_hits`):** Incrementado quando os 10% finais da posição (gerenciados pelo Trailing Stop pós-TP4) são fechados pelo Trailing Stop.
+
+### Taxa de Sucesso (Success Rate)
+
+A taxa de sucesso consolidada da estratégia é calculada dinamicamente pela fórmula:
+
+$$Success\ Rate = \frac{A + C}{A + B + C} \times 100$$
+
+### Funcionamento e Logs em Tempo Real
+- **Persistência Stateless:** As métricas são salvas diretamente em `trade_analytics.json`, o que significa que o bot mantém a exatidão estatística histórica mesmo entre restarts de serviços.
+- **Detecção de Saída:** O daemon `PositionMonitor` identifica quando uma posição ativa foi completamente fechada na corretora comparando-a com `active_trades.json` e determina o tipo de saída através do status do flag `_ts_active` do símbolo.
+- **Relatório de Desligamento (`atexit`):** Ao encerrar o servidor Flask `TradeExecutor`, um hook final registra no `app.log` o resumo acumulado de toda a performance histórica do robô.
+
+Exemplo de log gravado em tempo real no `logs/app.log`:
+```text
+2026-06-02 18:34:23,720 - INFO - Analytics - registrar_saida_trade - 🔥 - Trailing Stop atingido para BTC-USDT! | A (TP): 2 | B (SL): 1 | C (TS): 1 | Total: 4 | Success Rate: 75.00%
+```
+
+---
+
 ## 🔍 Análise Técnica (Opcional)
 
 Antes de executar um sinal, o bot pode filtrar operações contra a tendência via `analise_tecnica.py`:
