@@ -1,0 +1,19 @@
+[Unit]
+Description=Telegram Trade Bot Daemon
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/TelegramReader
+EnvironmentFile=/opt/TelegramReader/daemon.conf
+# O bot é executado diretamente com o Python do ambiente virtual
+ExecStart=/opt/TelegramReader/venv/bin/python /opt/TelegramReader/start_all.py $BOT_ENV
+Restart=always
+RestartSec=5
+# Define a saída de log padrão do systemd (embora o bot escreva no app.log também)
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

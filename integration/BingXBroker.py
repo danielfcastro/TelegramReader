@@ -152,21 +152,17 @@ class BingXBroker(BrokerInterface, ABC):
         except Exception as e:
             logger.exception(f"❌ - Exceção ao ajustar leverage para {symbol}: {e}")
 
-    def enviar_ordem_tp_sl(self, mensagem: MensagemSinal, quantidade):
+    def enviar_ordem_tp_sl(self, mensagem: MensagemSinal, quantidade, take_profit=None):
         """
-        Envia uma ordem de mercado com SL embutido para o par especificado.
-
-        Etapas:
-        1. Define alavancagem.
-        2. Envia ordem com `stopLoss` do tipo STOP_MARKET.
-        3. Retorna dados da ordem ou erro.
+        Envia uma ordem de mercado com SL embutido (e opcionalmente TP) para o par especificado.
 
         :param mensagem: Dados do sinal a ser executado.
         :param quantidade: Quantidade do ativo a negociar.
+        :param take_profit: Preço de Take Profit opcional.
         :return: Resultado da operação (sucesso, order_id, preço, erros).
         """
         side_leverage = "BOTH"
-        logger.debug(f"✅️ - symbol: {mensagem.symbol} - side: {mensagem.tipo_ordem} - leverage: {mensagem.alavancagem} - tp1: {mensagem.tp1} - t2: {mensagem.tp2}  - tp3: {mensagem.tp3}  - tp4: {mensagem.tp4} - sl: {mensagem.sl}")
+        logger.debug(f"✅️ - symbol: {mensagem.symbol} - side: {mensagem.tipo_ordem} - leverage: {mensagem.alavancagem} - sl: {mensagem.sl} - tp_atual: {take_profit}")
 
         try:
             self.set_leverage(symbol=mensagem.symbol, side=side_leverage, leverage=mensagem.alavancagem)
@@ -182,8 +178,16 @@ class BingXBroker(BrokerInterface, ABC):
                     "quantity": quantidade,
                     "stopPrice": mensagem.sl,
                     "workingType": "MARK_PRICE"
-                })
+                }, separators=(',', ':'))
             }
+
+            if take_profit:
+                body["takeProfit"] = json.dumps({
+                    "type": "TAKE_PROFIT_MARKET",
+                    "quantity": quantidade,
+                    "stopPrice": take_profit,
+                    "workingType": "MARK_PRICE"
+                }, separators=(',', ':'))
 
             path = "/openApi/swap/v2/trade/order"
             logger.debug(f"✅️ - Pedido de envio de ordem: path: {path} - body {body}")
@@ -507,4 +511,107 @@ class BingXBroker(BrokerInterface, ABC):
             return response
         except Exception as e:
             logger.exception(f"❌ - Erro ao obter detalhe de ordens: {e}")
+            return {}
+
+    def obter_ordens_abertas(self, symbol=None):
+        """
+        Consulta as ordens abertas na conta.
+        
+        :param symbol: Opcional. Par de negociação. Se None, retorna de todos.
+        :return: Resposta da API com lista de ordens abertas.
+        """
+        try:
+            path = "/openApi/swap/v2/trade/openOrders"
+            params = {}
+            if symbol:
+                params["symbol"] = symbol
+            
+            logger.debug(f"✅️ - Pedido de ordens abertas: path: {path} - params {params}")
+            response = self._send_request("GET", path, params)
+            logger.debug(f"✅ - Resposta do pedido de ordens abertas: {response}")
+            return response
+        except Exception as e:
+            logger.exception(f"❌ - Erro ao obter ordens abertas: {e}")
+            return {}
+
+    def obter_posicao(self, symbol):
+        """
+        Consulta a posição atual aberta para um símbolo.
+
+        :param symbol: Par de negociação.
+        :return: Dados da posição ou dicionário vazio.
+        """
+        try:
+            path = "/openApi/swap/v2/user/positions"
+            body = {"symbol": symbol}
+            logger.debug(f"✅ - Pedido de posição para {symbol}: path: {path}")
+            response = self._send_request("GET", path, body)
+            logger.debug(f"✅ - Resposta do pedido de posição: {response}")
+            return response
+        except Exception as e:
+            logger.exception(f"❌ - Erro ao obter posição para {symbol}: {e}")
+            return {}
+
+    def enviar_ordem_sl(self, symbol, side, quantity, stop_price):
+        """
+        Envia uma ordem de Stop Loss (STOP_MARKET) independente.
+
+        :param symbol: Par de negociação.
+        :param side: Lado da ordem (BUY para fechar SHORT, SELL para fechar LONG).
+        :param quantity: Quantidade a proteger.
+        :param stop_price: Preço de disparo.
+        :return: Resposta da API.
+        """
+        try:
+            path = "/openApi/swap/v2/trade/order"
+            body = {
+                "symbol": symbol,
+                "side": side,
+                "type": "STOP_MARKET",
+                "stopPrice": stop_price,
+                "quantity": quantity,
+                "positionSide": "BOTH",
+                "workingType": "MARK_PRICE",
+                "reduceOnly": True
+            }
+            logger.debug(f"✅ - Pedido de ordem SL: path: {path} - body {body}")
+            response = self._send_request("POST", path, body)
+            logger.debug(f"✅ - Resposta do pedido de ordem SL: {response}")
+            return response
+        except Exception as e:
+            logger.exception(f"❌ - Erro ao enviar ordem SL para {symbol}: {e}")
+            return {}
+
+    def enviar_trailing_stop(self, symbol, side, quantity, activation_price=None, callback_rate=1.0):
+        """
+        Envia uma ordem de Trailing Stop Market para proteger a posição.
+
+        :param symbol: Par de negociação.
+        :param side: Lado da ordem (BUY para fechar SHORT, SELL para fechar LONG).
+        :param quantity: Quantidade a proteger.
+        :param activation_price: Preço de ativação (opcional). Se não fornecido, ativa imediatamente.
+        :param callback_rate: Taxa de retorno em % (ex: 1.0 para 1%).
+        :return: Resposta da API.
+        """
+        try:
+            path = "/openApi/swap/v2/trade/order"
+            body = {
+                "symbol": symbol,
+                "side": side,
+                "type": "TRAILING_STOP_MARKET",
+                "quantity": str(quantity),
+                "positionSide": "BOTH",
+                "priceRate": str(float(callback_rate) / 100.0),
+                "workingType": "MARK_PRICE",
+                "reduceOnly": True
+            }
+            if activation_price:
+                body["activationPrice"] = str(activation_price)
+
+            logger.debug(f"✅ - Pedido de Trailing Stop: path: {path} - body {body}")
+            response = self._send_request("POST", path, body)
+            logger.debug(f"✅ - Resposta do pedido de Trailing Stop: {response}")
+            return response
+        except Exception as e:
+            logger.exception(f"❌ - Erro ao enviar Trailing Stop para {symbol}: {e}")
             return {}
