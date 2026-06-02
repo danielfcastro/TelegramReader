@@ -92,15 +92,17 @@ O `PositionMonitor` implementa um **debounce de 5 segundos**: antes de agir, con
 O sistema é **stateless** — não usa banco de dados. A lógica de monitoramento funciona assim:
 
 - O `TradeExecutor` salva no `active_trades.json` **quantos TPs com preço fixo** foram abertos (ex: `"VELVET-USDT": 4`)
-- O `PositionMonitor` consulta a API e conta os `TAKE_PROFIT_MARKET` ainda abertos
-- A diferença entre o esperado e o atual revela qual TP foi atingido
+- O `PositionMonitor` consulta a API e conta os `TAKE_PROFIT_MARKET` (TPs com preço fixo) ainda abertos
+- A diferença entre o esperado e o atual revela qual TP foi atingido, acionando as proteções e o Trailing Stop para a 5ª ordem (que não possui TP fixo)
 
-| TPs Abertos Restantes | Situação detectada | Ação |
-|-----------------------|-------------------|------|
-| `expected - 1`        | TP1 atingido      | Break Even |
-| `expected - 2`        | TP2 atingido      | Break Even (se não ativo) |
-| `expected - 3`        | TP3 atingido      | Break Even (se não ativo) |
-| `0`                   | TP4 atingido      | Trailing Stop |
+| TPs Fixo Abertos Restantes | Situação detectada | Ação Aplicada |
+|----------------------------|-------------------|---------------|
+| `expected - 1`             | TP1 atingido      | Move Stop Loss para Break Even |
+| `expected - 2`             | TP2 atingido      | Garante Stop Loss no Break Even |
+| `expected - 3`             | TP3 atingido      | Garante Stop Loss no Break Even |
+| `0` (Todos TPs fixos executados) | TP4 atingido   | Cancela SL e ativa Trailing Stop na 5ª ordem (restante de 10%) |
+
+> 💡 **Nota sobre as 5 Ordens:** Das 5 ordens abertas para cada sinal, apenas as 4 primeiras possuem Take Profits de preço fixo (TP1, TP2, TP3 e TP4). A 5ª ordem é aberta sem TP fixo e é gerida exclusivamente pelo Trailing Stop, que passa a monitorá-la assim que a 4ª ordem (TP4) é liquidada (restando 0 ordens com TP fixo abertas na corretora).
 
 ---
 
